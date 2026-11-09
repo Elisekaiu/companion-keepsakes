@@ -1,10 +1,10 @@
 # Companion Keepsakes
 
-[中文](README.md) · this English version is also kept on the [`english` branch](https://github.com/Elisekaiu/companion-keepsakes/tree/english).
+[中文说明](README.zh.md) · [Chinese-first main branch](https://github.com/Elisekaiu/companion-keepsakes/tree/main).
 
 Make a small 3D keepsake with your AI companion, or on your own. **You choose half and seal it. Your companion chooses the other half by reading this page, not by looking at your screen. Then you open it together.**
 
-**Play: https://elisekaiu.github.io/companion-keepsakes/**
+**Play: https://elisekaiu.github.io/companion-keepsakes/?lang=en**
 
 Three recipes:
 

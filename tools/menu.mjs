@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Prints the AI-facing menus, generated from the recipe data so docs never drift.
 //   node tools/menu.mjs              -> markdown (English) for every recipe
-//   node tools/menu.mjs --readme     -> rewrite the MENU sections of README.md (Chinese) and README.en.md (English),
-//                                       and MENU.txt (Chinese) / MENU.en.txt (English) for companions that cannot browse
+//   node tools/menu.mjs --readme     -> rewrite menu sections in README.md / README.en.md (English)
+//                                       and README.zh.md (Chinese); regenerate MENU.txt / MENU.en.txt / MENU.zh.txt
 import { readFileSync, writeFileSync } from 'node:fs';
 import { recipes } from '../js/recipes/index.js';
 import { loc } from '../js/recipes/loc.js';
@@ -77,8 +77,9 @@ function fill(file, lang) {
   writeFileSync(f, s);
 }
 if (process.argv[2] === '--readme') {
-  fill('README.md', 'zh'); fill('README.en.md', 'en');
-  writeFileSync(new URL('../MENU.txt', import.meta.url), plain('zh'));
+  fill('README.zh.md', 'zh'); fill('README.md', 'en'); fill('README.en.md', 'en');
+  writeFileSync(new URL('../MENU.zh.txt', import.meta.url), plain('zh'));
+  writeFileSync(new URL('../MENU.txt', import.meta.url), plain('en'));
   writeFileSync(new URL('../MENU.en.txt', import.meta.url), plain('en'));
-  console.log('README.md, README.en.md, MENU.txt and MENU.en.txt updated');
+  console.log('README.zh.md, README.md, README.en.md and all MENU files updated');
 } else process.stdout.write(all.map(R => md(R, 'en')).join('\n'));

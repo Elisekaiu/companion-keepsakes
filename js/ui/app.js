@@ -17,7 +17,7 @@ const params = new URLSearchParams(location.search);
 const EMBED = params.get('embed');               // "view" (read-only, e.g. inside a cabinet) or "play"
 const HOST = safeOrigin(params.get('host'));     // a parent page that wants the keepsake when it is kept
 const here = () => location.origin + location.pathname;
-const site = () => (location.protocol.startsWith('http') && !/localhost|127\.0\.0\.1/.test(location.host)) ? here() : SITE_URL;
+const site = () => (location.protocol.startsWith('http') && !/localhost|127\.0\.0\.1/.test(location.host)) ? here() + '?lang=' + lang() : SITE_URL;
 setLang(params.get('lang') || store.lang());
 
 // Hosts may prefill the two names (e.g. ?you=Mira&companion=Orin); the person can still change them.

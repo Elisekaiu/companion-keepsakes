@@ -1,7 +1,7 @@
 In text use _ for spaces; never use ~ # %. One line. Numbers below.
 
 [Companion Keepsakes · Tiny Imaginary Planet · planet1]
-Link: https://elisekaiu.github.io/companion-keepsakes/#ai~planet1~half=<ground|sky>~<slot>=<number>~...~word=<...>~line=<...>~why=<...>~wish=<...>~from=<...>
+Link: https://elisekaiu.github.io/companion-keepsakes/?lang=en#ai~planet1~half=<ground|sky>~<slot>=<number>~...~word=<...>~line=<...>~why=<...>~wish=<...>~from=<...>
 GROUND half (what the world stands on: land, water, what grows, who lives there); line = A secret buried here
   land: 1 Soft meadow · 2 Flower field · 3 Honey dunes · 4 First snow · 5 Crystal plain · 6 Glowing moss · 7 Amber woods · 8 Cloudstone
   water: 1 One round sea · 2 Small lakes · 3 River of light · 4 Frozen lake · 5 Floating ponds · 6 Warm springs · 7 No water
@@ -15,7 +15,7 @@ SKY half (what surrounds it: light, moons, what drifts in the air, who visits); 
 BOTH: wonder: 1 Floating island · 2 Crystal spire · 3 Glowing road · 4 Bridge into the sky · 5 Tree of lights · 6 Upward waterfall · 7 Stone archway · 8 A door standing alone
 
 [Companion Keepsakes · Two-Person Talisman · talisman1]
-Link: https://elisekaiu.github.io/companion-keepsakes/#ai~talisman1~half=<silk|metal>~<slot>=<number>~...~word=<...>~line=<...>~why=<...>~wish=<...>~from=<...>
+Link: https://elisekaiu.github.io/companion-keepsakes/?lang=en#ai~talisman1~half=<silk|metal>~<slot>=<number>~...~word=<...>~line=<...>~why=<...>~wish=<...>~from=<...>
 SILK half (the soft part: the silk pouch, the motif stitched on it, its cord, and beads 1, 3 and 5); line = Stitched on the pouch
   silk: 1 Ivory silk · 2 Blush pink · 3 Lilac · 4 Deep indigo · 5 Sage · 6 Vermilion · 7 Pale sky
   motif: 1 Plain silk · 2 Crescent · 3 Plum blossom · 4 Wave · 5 Crane · 6 Star
@@ -31,7 +31,7 @@ METAL half (the hard part: the metal, the charm that hangs beside the pouch, and
   bead6: same numbers as above
 
 [Companion Keepsakes · Memory Snow Globe · globe1]
-Link: https://elisekaiu.github.io/companion-keepsakes/#ai~globe1~half=<moment|keepsake>~<slot>=<number>~...~word=<...>~line=<...>~why=<...>~wish=<...>~from=<...>
+Link: https://elisekaiu.github.io/companion-keepsakes/?lang=en#ai~globe1~half=<moment|keepsake>~<slot>=<number>~...~word=<...>~line=<...>~why=<...>~wish=<...>~from=<...>
 MOMENT half (where it was, the hour and its light, and the weather inside the glass); line = What was happening
   place: 1 A cabin in the woods · 2 A lamplit street · 3 A house by the sea · 4 A train platform · 5 A bench under a tree · 6 A rooftop with string lights · 7 A little bookshop · 8 A lake pier with a rowboat · 9 A garden gate · 10 A window seat
   hour: 1 Early morning · 2 A slow afternoon · 3 Golden hour · 4 Blue hour · 5 Late at night

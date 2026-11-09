@@ -55,7 +55,7 @@ test('every option has Chinese, and the Chinese invitation and card read', () =>
 test('Chinese README: the AI-goes-first example opens a round with nothing left to chance', async () => {
   const { readFileSync } = await import('node:fs');
   const { readAiCode, roundFromAi } = await import('../js/engine/round.js');
-  const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+  const readme = readFileSync(new URL('../README.zh.md', import.meta.url), 'utf8');
   const ex = readme.match(/https:\/\/\S+#ai~planet1~half=sky[^\s`]+/)[0];
   const r = roundFromAi(readAiCode(ex), { human: '小林' });
   assert.equal(r.order, 'ai-first');

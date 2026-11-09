@@ -1,4 +1,4 @@
-// Interface copy. Chinese is the default voice of the public site; English is kept for everyone else.
+// Interface copy. This branch defaults to English; both languages remain available.
 // {name} placeholders are filled by t(key, vars). Recipe content lives with each recipe (see recipes/loc.js).
 
 const zh = {
@@ -227,8 +227,8 @@ const en = {
 };
 
 const dict = { zh, en };
-let current = 'zh';
-export function setLang(l) { current = dict[l] ? l : 'zh'; document.documentElement.lang = dict[current].htmlLang; }
+let current = 'en';
+export function setLang(l) { current = dict[l] ? l : 'en'; document.documentElement.lang = dict[current].htmlLang; }
 export function lang() { return current; }
 export function t(key, vars = {}) {
   let v = key.split('.').reduce((o, k) => o?.[k], dict[current]);

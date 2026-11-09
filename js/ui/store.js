@@ -13,7 +13,7 @@ export const store = {
   names() { return { human: '', ai: '', ...(read().names || {}) }; },
   setNames(n) { const s = read(); s.names = { ...this.names(), ...n }; write(s); },
 
-  lang() { return read().lang || 'zh'; },
+  lang() { return read().lang || 'en'; },
   setLang(l) { const s = read(); s.lang = l; write(s); },
   mode() { return read().mode || 'companion'; },
   setMode(m) { const s = read(); s.mode = m; write(s); },
