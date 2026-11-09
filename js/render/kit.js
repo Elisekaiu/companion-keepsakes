@@ -142,6 +142,12 @@ export function spriteTex(shape = 'dot', color = '#ffffff') {
     g.closePath(); g.fill();
   } else if (shape === 'petal') {
     g.beginPath(); g.ellipse(0, 0, 13, 24, 0.5, 0, 7); g.fill();
+  } else if (shape === 'seed') { // a dandelion seed: a fine fan of threads above a short stem
+    g.strokeStyle = color; g.lineWidth = 1.6; g.lineCap = 'round';
+    for (let i = 0; i < 11; i++) { const a = -Math.PI * 0.9 + i / 10 * Math.PI * 0.8; g.beginPath(); g.moveTo(0, 6); g.lineTo(Math.cos(a) * 26, 6 + Math.sin(a) * 26); g.stroke(); }
+    g.lineWidth = 2.2; g.beginPath(); g.moveTo(0, 6); g.lineTo(0, 28); g.stroke();
+  } else if (shape === 'square') {
+    g.fillRect(-16, -11, 32, 22);
   } else if (shape === 'flake') {
     g.strokeStyle = color; g.lineWidth = 5; g.lineCap = 'round';
     for (let i = 0; i < 3; i++) { g.rotate(Math.PI / 3); g.beginPath(); g.moveTo(-24, 0); g.lineTo(24, 0); g.stroke(); }
@@ -160,6 +166,56 @@ export function points(positions, { size = 0.05, color = '#ffffff', shape = 'dot
     blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending, sizeAttenuation: true, alphaTest: 0.02
   });
   return new THREE.Points(geo, mat);
+}
+
+/**
+ * Give a toon material more volume: a soft fresnel rim (light caught at the edge) and, optionally,
+ * a per-vertex glow read from a float attribute `aGlow` (e.g. lava seams). Returns a handle with the live uniforms.
+ */
+export function enrich(mat, { rim = null, rimK = 0.5, rimPow = 2.6, glow = null } = {}) {
+  const u = { uRim: { value: new THREE.Color(rim || '#ffffff') }, uRimK: { value: rim ? rimK : 0 }, uRimPow: { value: rimPow },
+    uGlow: { value: new THREE.Color(glow || '#000000') }, uGlowK: { value: glow ? 1 : 0 } };
+  mat.onBeforeCompile = sh => {
+    Object.assign(sh.uniforms, u);
+    if (glow) sh.vertexShader = 'attribute float aGlow;\nvarying float vGlow;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n\tvGlow = aGlow;');
+    sh.fragmentShader = 'uniform vec3 uRim; uniform float uRimK; uniform float uRimPow; uniform vec3 uGlow; uniform float uGlowK;\n' + (glow ? 'varying float vGlow;\n' : '') +
+      sh.fragmentShader
+        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' + (glow ? '\ttotalEmissiveRadiance += uGlow * vGlow * uGlowK;\n' : ''))
+        .replace('#include <opaque_fragment>', '\t{ float fr = pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), uRimPow); outgoingLight += uRim * fr * uRimK; }\n#include <opaque_fragment>');
+  };
+  mat.customProgramCacheKey = () => 'enrich' + (glow ? 'g' : '') + (rim ? 'r' : '');
+  mat.needsUpdate = true;
+  return u;
+}
+
+/** Cast and receive soft shadows on everything solid under `root` (not ink hulls, glows, particles or glass). */
+export function shadows(root, { receive = true, skip = () => false } = {}) {
+  root.traverse(o => {
+    if (!(o.isMesh || o.isInstancedMesh) || o.userData.outline || o.userData.inkHull || skip(o)) return;
+    const m = o.material;
+    if (!m || m.transparent || m.blending === THREE.AdditiveBlending || m.side === THREE.BackSide || m.isMeshBasicMaterial || m.isShaderMaterial) return;
+    o.castShadow = true;
+    o.receiveShadow = receive;
+  });
+}
+
+/** A key light that casts soft shadows over a box of half-size `r` around the origin. */
+export function shadowKey(light, r = 2, size = 1024) {
+  light.castShadow = true;
+  light.shadow.mapSize.set(size, size);
+  const c = light.shadow.camera;
+  c.left = -r; c.right = r; c.top = r; c.bottom = -r; c.near = 0.5; c.far = 20;
+  light.shadow.bias = -0.0006; light.shadow.normalBias = 0.012; light.shadow.radius = 3;
+  c.updateProjectionMatrix();
+  return light;
+}
+
+/** A soft additive halo (fake bloom) for small lights. */
+export function halo(color = '#FFE3A0', size = 0.12, opacity = 0.7) {
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: spriteTex('dot', '#ffffff'), color, transparent: true, opacity, depthWrite: false, blending: THREE.AdditiveBlending }));
+  s.scale.setScalar(size);
+  s.raycast = () => {};
+  return s;
 }
 
 export const ease = {

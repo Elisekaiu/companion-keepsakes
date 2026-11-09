@@ -16,6 +16,8 @@ export function loc(R, lang = 'zh') {
   return {
     lang,
     title: Z?.title || R.title,
+    untitled: Z?.untitled || null,
+    tagline: Z?.tagline || R.tagline,
     noun: Z?.noun || R.noun,
     hand: Z?.hand || R.noun,
     card: solo => (solo ? Z?.cardSolo : Z?.card) || R.tagline,

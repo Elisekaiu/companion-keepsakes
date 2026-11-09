@@ -9,6 +9,17 @@ choose half ─▶ hold to seal ─▶ invitation ─▶ companion writes a link
 
 Each step that commits something uses a press-and-hold (seal, open, keep). It is short enough not to be tedious, and deliberate enough that it can't happen by accident.
 
+## Four ways to make one
+
+| Mode | Who chooses | Sealing | What the person does |
+|---|---|---|---|
+| **Half each** (`companion`) | each side one half | each half when chosen; the AI usually goes first | chooses their half blind, then Open Together |
+| **A gift** (`gift`) | the AI, every slot of both halves (`half=all`, shared slots as `<slot>` and `<slot>2`, lines as `line_<half>`) | the whole code, once; the round id is derived from it, so reopening the same gift link always finds the same round | holds to unwrap, then keeps it |
+| **Slowly** (`solo`) | the person, every slot | at "Hold to finish" | the full reveal plays |
+| **Lucky draw** (`solo`, `lucky`) | chance first (a seeded draw of every slot), then the person changes what they like | at "Hold to finish" | the object is visible from the first second; parts kept as drawn are recorded in `chance` and shown as "drawn" in the story |
+
+A gift still follows the rule that nothing is regenerated: the AI's code is the record, kept verbatim, and the merge is the same as for two halves (the same named meetings, told without names because there is one maker). The lucky draw is deliberately not a reveal: someone who wants to skip choosing wants to see the result at once, so the ceremony is a short seal stamped over the finished object instead of a step-by-step opening.
+
 ## Why the planet is the first vertical slice
 
 | | Tiny Planet | Talisman | Snow Globe |
@@ -67,6 +78,10 @@ Order: **Planet → Talisman → Snow Globe.** The globe is the most romantic of
 ## 3D technique
 
 Three.js r170 (vendored, one file, MIT), with everything procedural: toon shading (4-step gradient), inverted-hull ink outlines and instanced scatter. A hand-drawn SVG ornament layer behind the canvas adds orbit rings, dotted trails and four-point sparkles, matching the flash-sheet / crayon references. There are no model files, no loaders and no build step. three.js loads only when a 3D view is needed.
+
+Depth comes from light rather than detail: soft PCF shadows from one key light (trees, houses and wonders shade the ground; inside a globe the scene shades its own floor), a cool back light and a fresnel rim on the ground and water so silhouettes separate from the sky, water tinted by its depth with a line of foam at the shore and a moving shimmer, glows around lit windows and fires. The snow globe's glass carries window reflections fixed to the view (they stay put as the globe turns, as real reflections do), a faint tint on the far wall so it reads as full of water, a metal collar and a contact shadow. Particles are drawn with one small shader so each flake has its own size and petals and confetti tumble.
+
+The talisman does not turn like a turntable: a drag twists it on its hook within a soft limit, the pouch and charm trail the turn and swing past it, and when released it unwinds back towards the front. The stage reserves the space taken by the caption card and the toolbar, and frames the object in what is left.
 
 ## What was cut, and why
 

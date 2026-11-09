@@ -1,8 +1,10 @@
 // Companion Keepsakes — the playable flow.
-// Two ways to make something:
-//   with a companion: choose -> seal (hold) -> invitation -> their link arrives -> Open Together -> reveal -> keep
-//   on your own:      choose everything -> hold to finish -> it takes shape (reveal) -> keep
-import { newRound, sealHuman, sealSolo, readAiCode, acceptAi, roundFromAi, status, mergeRound, invitation, revealCard } from '../engine/round.js';
+// Four ways to make something:
+//   half each (companion): it seals its half first -> you make yours -> Open Together -> reveal -> keep
+//   a gift (gift):         it makes and seals the whole thing -> you unwrap it -> reveal -> keep
+//   slowly (solo):         you choose everything -> hold to finish -> it takes shape (reveal) -> keep
+//   lucky (lucky):         everything is drawn at random, shown at once -> change what you like -> finish -> keep
+import { newRound, sealHuman, sealSolo, readAiCode, acceptAi, roundFromAi, roundFromGift, drawAll, status, mergeRound, invitation, revealCard } from '../engine/round.js';
 import { toLink, fromLink, toKeepsake } from '../engine/keepsake.js';
 import { softDecode, toB64url, fromB64url } from '../engine/codec.js';
 import { recipeByCode, recipes } from '../recipes/index.js';
@@ -25,6 +27,10 @@ setLang(params.get('lang') || store.lang());
   if (you && !n.human) store.setNames({ human: you }); if (comp && !n.ai) store.setNames({ ai: comp }); }
 
 const ORDER = ['planet1', 'globe1', 'talisman1'];
+const MODES = [
+  { key: 'companion', group: 'withAI', icon: null }, { key: 'gift', group: 'withAI', icon: null },
+  { key: 'solo', group: 'mine', icon: null }, { key: 'lucky', group: 'mine', icon: null }
+];
 const MINUTES = { planet1: 5, globe1: 4, talisman1: 4 };
 
 /* ------------------------------------------------------------------ tiny DOM helpers */
@@ -44,7 +50,25 @@ function h(tag, attrs = {}, ...kids) {
   return n;
 }
 function put(node, ...kids) { node.append(...kids.flat(3).filter(k => k != null && k !== false)); return node; }
-function screen(...kids) { document.querySelectorAll('.sheet').forEach(x => x.remove()); const s = h('section.screen', {}, ...kids); app.replaceChildren(s); window.scrollTo(0, 0); return s; }
+function screen(...kids) { document.querySelectorAll('.sheet').forEach(x => x.remove()); unframe(); const s = h('section.screen', {}, ...kids); app.replaceChildren(s); window.scrollTo(0, 0); return s; }
+// While a 3D view is up, the object is framed in the space the overlays leave free (it glides as a card grows or shrinks).
+let framing = null;
+function frameAround(top, bottom, { topShare = 0.75 } = {}) {
+  unframe();
+  if (!stage) return;
+  const upd = () => {
+    const H = window.innerHeight || 1;
+    const tb = top?.isConnected ? top.getBoundingClientRect().bottom : 0;
+    const bt = bottom?.isConnected && bottom.offsetHeight ? H - bottom.getBoundingClientRect().top : 0;
+    stage?.setInsets({ top: Math.max(0, tb) * topShare, bottom: Math.max(0, bt) + 4 });
+  };
+  const ro = new ResizeObserver(upd);
+  [top, bottom].filter(Boolean).forEach(el => ro.observe(el));
+  window.addEventListener('resize', upd);
+  upd();
+  framing = () => { ro.disconnect(); window.removeEventListener('resize', upd); };
+}
+function unframe() { framing?.(); framing = null; stage?.setInsets({}, { instant: true }); }
 function toast(msg) { document.querySelectorAll('.toast').forEach(x => x.remove()); const t2 = h('div.toast', { role: 'status' }, msg); document.body.append(t2); setTimeout(() => t2.remove(), 2600); }
 async function copy(text, done) {
   try { await navigator.clipboard.writeText(text); toast(done); }
@@ -56,6 +80,10 @@ const fmtTime = iso => { const d = new Date(iso); return Number.isFinite(d.getTi
 const setHash = hash => history.replaceState(null, '', location.pathname + location.search + hash);
 const names = () => { const n = store.names(); return { human: n.human || t('you2'), ai: n.ai || t('companionDefault') }; };
 const isSolo = r => r?.mode === 'solo';
+const isGift = r => r?.mode === 'gift';
+const oneMaker = r => isSolo(r) || isGift(r);
+// The merged spec, with a localised fallback title for an unnamed piece.
+const merged = round => { const spec = mergeRound(round), l = L(recipeByCode(round.recipe)); if (!spec.words.length && l.untitled) spec.title = l.untitled; return spec; };
 const L = R => loc(R, lang());
 const CJK = /[⺀-鿿]/;
 
@@ -103,19 +131,159 @@ window.addEventListener('hashchange', route);
 function resume(r) {
   setHash('#r=' + r.id);
   const st = status(r);
+  if (st === 'choosing' && r.lucky) return lucky(r);
   if (st === 'choosing' || st === 'waiting-human') return choose(r);
   if (st === 'waiting-ai') return waiting(r);
-  if (st === 'ready') return isSolo(r) ? reveal(r) : arrived(r);
+  if (st === 'ready') return isSolo(r) ? reveal(r) : isGift(r) ? giftArrived(r) : arrived(r);
   return explore(r);
 }
 function begin(code, mode = store.mode()) {
   const R = recipeByCode(code) || recipes.planet1;
-  if (mode === 'solo') {
+  if (mode === 'solo' || mode === 'lucky') {
     const r = newRound({ recipe: R.code, mode: 'solo', names: { human: store.names().human || '' } });
+    if (mode === 'lucky') {
+      const d = drawAll(R.code, r.id);
+      Object.assign(r, { lucky: true, draft: { picks: d.picks, drawn: d.drawn, lines: {}, name: '', why: '', wish: '' } });
+      store.saveRound(r);
+      return lucky(r);
+    }
     store.saveRound(r);
     return choose(r);
   }
+  if (mode === 'gift') return askGift(R.code);
   return startWithAI(R.code);
+}
+
+/* ------------------------------------------------------------------ a gift: the AI companion makes the whole thing */
+function askGift(code) {
+  const R = recipeByCode(code) || recipes.planet1, l = L(R);
+  const aboutIn = h('input.input', { maxlength: 140, placeholder: t('giftAboutPh') });
+  const message = () => t('giftMsg', { noun: l.noun, repo: REPO_URL }) + (aboutIn.value.trim() ? '\n' + t('giftAbout', { theme: aboutIn.value.trim() }) : '');
+  const msgBox = h('pre.invite.ask', {}, message());
+  aboutIn.addEventListener('input', () => { msgBox.textContent = message(); });
+  const paste = h('textarea.input', { placeholder: t('pastePh'), 'aria-label': t('pasteHead') });
+  screen(
+    h('div.eyebrow', {}, `${l.title} · ${t('modeGift')}`),
+    h('h1.display', {}, t('giftStartTitle', { noun: l.noun, ai: names().ai })),
+    h('ol.steps-guide', {},
+      h('li', {}, h('b', {}, t('step1')),
+        h('div.field', { style: 'margin:10px 0' }, h('label', {}, t('giftAboutAsk')), aboutIn),
+        msgBox,
+        h('div.row', { style: 'margin-top:10px' }, h('button.btn.primary', { type: 'button', on: { click: () => copy(message(), t('askCopied')) } }, t('copyAsk')))),
+      h('li', {}, h('b', {}, t('giftStep2'))),
+      h('li', {}, h('b', {}, t('giftStep3')),
+        h('div.stack', { style: 'margin-top:10px' }, paste, h('button.btn', { type: 'button', on: { click: () => takeCode(paste.value) } }, t('open'))))),
+    h('div.dock', {}, h('div.inner', {}, h('button.btn.ghost', { type: 'button', on: { click: () => home() } }, t('back'))))
+  );
+}
+
+function giftArrived(round) {
+  setHash('#r=' + round.id);
+  const R = recipeByCode(round.recipe), l = L(R), ai = round.names.ai;
+  screen(
+    h('div.eyebrow.center', {}, `${l.title} · ${t('giftFrom', { ai })}`),
+    h('div.gift-art', { html: GIFT_ART }),
+    h('h1.display.center', {}, t('giftTitle', { ai, noun: l.noun })),
+    h('p.lede.center', {}, t('giftLede')),
+    round.theme ? h('p.quote.center', {}, round.theme) : null,
+    h('div.seals', {}, h('figure', {}, wax(round.ai.fp, ai, 'ai', { stamp: true, size: 96 }))),
+    ...(round.ai.warnings || []).map(w => h('p.note.center', {}, w)),
+    h('div.hold-wrap', {}, holdButton(t('unwrap'), { side: 'ai', ms: 1200, onDone: () => reveal(round) }), h('small', {}, t('unwrapNote'))),
+    h('div.dock', {}, h('div.inner', {}, h('button.btn.ghost', { type: 'button', on: { click: () => home() } }, t('later'))))
+  );
+}
+
+/* ------------------------------------------------------------------ lucky: drawn at random, shown at once, then changed by hand */
+async function lucky(round) {
+  const R = recipeByCode(round.recipe), l = L(R);
+  setHash('#r=' + round.id);
+  const draft = round.draft;
+  draft.drawn ||= [];
+  const save = () => { round = { ...round, draft }; store.saveRound(round); };
+  const nm = () => store.names().human || '';
+  const previewRound = () => sealSolo({ ...round, human: null, names: { human: nm(), ai: nm() } }, draft);
+  app.replaceChildren();
+  const st = await getStage();
+  let first = true, lastSpec = null;
+  const chips = h('div.chips', { role: 'list' });
+  const top = h('div.over.top-bar', {},
+    h('div.title-plate', {}, h('div.eyebrow', {}, t('luckyEyebrow', { title: l.title })), h('h1', {}, t('luckyTitle')), h('p', {}, t('luckyLede'))),
+    h('button.iconbtn', { type: 'button', 'aria-label': t('home'), on: { click: () => { stageHost.classList.add('hidden'); stage?.pause(); home(); } } }, '✕'));
+  const panel = h('div.over.lucky-panel', {}, h('div.inner', {}, chips,
+    h('div.row.lucky-actions', {},
+      h('button.btn', { type: 'button', on: { click: () => { const d = drawAll(R.code); draft.picks = d.picks; draft.drawn = d.drawn; save(); navigator.vibrate?.(8); rebuild(); } } }, h('span', { html: ICON_DICE_SMALL }), t('reroll')),
+      h('button.btn.primary', { type: 'button', on: { click: () => finishSheet() } }, t('keepIt')))));
+  app.replaceChildren(top, panel);
+  frameAround(top, panel, { topShare: 0.6 });
+
+  async function rebuild() {
+    const r = previewRound(), spec = merged(r);
+    lastSpec = spec;
+    const p = await buildWorld(st, R, spec, r);
+    p.revealAll();
+    st.setWorld(p, { keepRotation: !first }); first = false;
+    st.autoSpin = 0.1;
+    st.backdrop(spec.palette.bg, spec.palette.dark, round.id, spec.palette.ink);
+    stageHost.querySelector('.stage-ornament').style.opacity = '1';
+    [top, panel].forEach(n => n.classList.toggle('on-dark', spec.palette.dark));
+    st.onPick = what => { const x = spec.ledger.find(e => (e.pick || e.slot) === what); if (x) { const k = keyOfLedger(x); if (k) slotSheet(k); } };
+    renderChips();
+  }
+  // which solo key a ledger entry came from (a shared slot's second pick is '<slot>#2')
+  const keyOfLedger = x => !R.shared.includes(x.slot) ? x.slot : (x.by === 'human' ? x.slot : x.slot + '#2');
+  function renderChips() {
+    chips.replaceChildren(...R.soloOrder.map(k => {
+      const slot = k.replace(/#\d$/, ''), o = R.option(slot, draft.picks[k]), z = l.opt(slot, o), drawn = draft.drawn.includes(k);
+      return h('button.chip', { type: 'button', role: 'listitem', class: drawn ? 'drawn' : 'mine', on: { click: () => slotSheet(k) } },
+        swatch(o), h('span.chip-text', {}, h('small', {}, l.slotTitle(slot) + (k.endsWith('#2') ? ' ²' : '')), h('b', {}, z.name)));
+    }));
+  }
+  function slotSheet(k) {
+    const slot = k.replace(/#\d$/, ''), S = R.slots[slot];
+    const s = sheet(
+      h('div.eyebrow', {}, draft.drawn.includes(k) ? t('drawnTag') : t('chosenTag')),
+      h('h2', {}, l.slotPrompt(slot)),
+      h('div.options.compact', { class: 'human' }, S.options.map((o, i) => [
+        S.grouped && o.group !== S.options[i - 1]?.group ? h('div.opt-group', {}, l.group(o.group)) : null,
+        h('button.opt', { type: 'button', 'aria-pressed': String(draft.picks[k] === o.n), on: { click: () => { draft.picks[k] = o.n; draft.drawn = draft.drawn.filter(x => x !== k); save(); s.close(); rebuild(); } } },
+          swatch(o), h('span.num', {}, o.n), h('b', {}, l.opt(slot, o).name), h('span', {}, l.opt(slot, o).meaning), o.month ? h('em.month', {}, l.month(o.month)) : null)])),
+      h('div.row', { style: 'margin-top:14px' }, h('button.btn', { type: 'button', on: { click: () => {
+        const list = S.options.filter(o => o.n !== draft.picks[k]);
+        draft.picks[k] = list[Math.floor(Math.random() * list.length)].n;
+        if (!draft.drawn.includes(k)) draft.drawn.push(k);
+        save(); s.close(); rebuild();
+      } } }, h('span', { html: ICON_DICE_SMALL }), t('rerollOne'))));
+    s.panel.classList.add('tall');
+  }
+  function finishSheet() {
+    const f = (key, label, hint, max, area, ph, get, set) => h('div.field', {}, h('label', {}, label),
+      h(area ? 'textarea.input' : 'input.input', { maxlength: max, placeholder: ph || null, value: area ? null : get(), on: { input: e => { set(e.target.value); save(); } } }, area ? get() : null),
+      hint ? h('small', {}, hint) : null);
+    const s = sheet(
+      h('div.eyebrow', {}, l.title),
+      h('h2', {}, t('luckyWordsTitle')),
+      h('p.note', {}, t('luckyWordsLede')),
+      h('div.stack', {},
+        f('name', t('soloName'), '', 40, false, t('soloNamePh'), () => draft.name || '', v => { draft.name = v; }),
+        ...Object.keys(R.halves).map(hf => f('line-' + hf, l.lineLabel(hf), l.lineHint(hf), R.text.line.max, true, '', () => draft.lines[hf] || '', v => { draft.lines[hf] = v; })),
+        f('wish', t('soloWish'), t('soloWishHint'), R.text.wish.max, true, '', () => draft.wish || '', v => { draft.wish = v; })),
+      h('div.hold-wrap', { class: 'human' }, holdButton(t('holdFinish'), { side: 'human', onDone: () => { s.close(); finish(); } }), h('small', {}, t('finishNote'))));
+    s.panel.classList.add('tall');
+  }
+  function finish() {
+    try {
+      const r = sealSolo({ ...round, human: null, names: { human: nm(), ai: nm() } }, draft);
+      delete r.draft; delete r.step;
+      r.openedAt = new Date().toISOString();
+      store.saveRound(r);
+      unframe();
+      // a short seal over the thing itself; they have already watched it take shape
+      const stampEl = h('div.over.stamp-over', {}, wax(r.human.fp, nm() || '✦', 'human', { stamp: true, size: 112 }), h('p.hand', {}, t('soloSealed')));
+      app.replaceChildren(stampEl);
+      setTimeout(() => explore(r), 1300);
+    } catch (e) { toast(e.message); }
+  }
+  rebuild();
 }
 
 /* ------------------------------------------------------------------ with an AI companion: the simple way (it goes first) */
@@ -152,7 +320,9 @@ function home(error) {
     h('input.input', { id: 'n-' + k, value: n[k] || '', placeholder: ph, maxlength: 24, on: { change: e => store.setNames({ [k]: e.target.value.trim() }) } }));
   const pending = store.rounds().filter(r => !r.openedAt && (r.human || r.ai || r.draft));
   const kept = store.shelf().length;
-  const modeBtn = (m, title, icon) => h('button.mode-btn', { type: 'button', 'aria-pressed': String(mode === m), on: { click: () => { store.setMode(m); home(); } } }, h('span.mode-icon', { html: icon }), h('b', {}, title));
+  const modeBtn = m => h('button.mode-btn', { type: 'button', 'aria-pressed': String(mode === m.key), on: { click: () => { store.setMode(m.key); home(); } } },
+    h('span.mode-icon', { html: m.icon }), h('span.mode-text', {}, h('b', {}, t('modeName.' + m.key)), h('small', {}, t('modeSub.' + m.key))));
+  const withAI = mode === 'companion' || mode === 'gift';
   const paste = h('input.input', { placeholder: t('pastePh'), 'aria-label': t('pasteHead') });
   screen(
     h('header.topline', {},
@@ -165,20 +335,22 @@ function home(error) {
     error ? h('p.warn', {}, error) : null,
     h('div.modes', {},
       h('div.eyebrow', {}, t('modeQ')),
-      h('div.mode-row', {}, modeBtn('companion', t('modeCompanion'), ICON_TWO), modeBtn('solo', t('modeSolo'), ICON_ONE)),
-      h('p.mode-note', {}, mode === 'solo' ? t('modeSoloNote') : t('modeCompanionNote'))),
-    mode === 'solo'
-      ? h('div.names.one', {}, nameIn('human', t('yourName'), t('yourNamePh')))
-      : h('div.names', {}, nameIn('human', t('you'), t('yourNamePh')), nameIn('ai', t('companion'), t('companionPh'))),
+      h('div.mode-grid', {}, ['withAI', 'mine'].map(g => h('div.mode-group', {},
+        h('div.mode-group-title', {}, t('group.' + g)),
+        h('div.mode-row', {}, MODES.filter(m => m.group === g).map(modeBtn))))),
+      h('p.mode-note', {}, t('modeNote.' + mode))),
+    withAI
+      ? h('div.names', {}, nameIn('human', t('you'), t('yourNamePh')), nameIn('ai', t('companion'), t('companionPh')))
+      : h('div.names.one', {}, nameIn('human', t('yourName'), t('yourNamePh'))),
     h('div.section-head', {}, h('span.hand', {}, t('recipesHead'))),
     h('div.recipes', {}, ORDER.map((code, i) => recipeCard(code, i, mode))),
-    mode === 'companion' ? h('div.paste', {}, h('div.eyebrow', {}, t('pasteHead')), h('div.row', {}, paste, h('button.btn.small', { type: 'button', on: { click: () => takeCode(paste.value) } }, t('open')))) : null,
+    withAI ? h('div.paste', {}, h('div.eyebrow', {}, t('pasteHead')), h('div.row', {}, paste, h('button.btn.small', { type: 'button', on: { click: () => takeCode(paste.value) } }, t('open')))) : null,
     h('div.row.shelf-link', {}, h('button.btn.ghost', { type: 'button', on: { click: () => { location.hash = 'shelf'; } } }, h('span', { html: ICON_CABINET }), kept ? t('shelfCount', { n: kept }) : t('shelf'))),
     pending.length ? h('div.pending', {}, h('div.eyebrow', {}, t('inProgress')), h('ul', {}, pending.map(r => {
       const R = recipeByCode(r.recipe);
       const st = status(r), nm = r.names?.ai || names().ai;
       return h('li', {},
-        h('span', {}, h('b', {}, L(R).title), ' · ', isSolo(r) ? t('st.choosing') : t('st.' + st, { ai: nm })),
+        h('span', {}, h('b', {}, L(R).title), ' · ', r.lucky ? t('stLucky') : isSolo(r) ? t('st.choosing') : isGift(r) ? t('stGift', { ai: nm }) : t('st.' + st, { ai: nm })),
         h('button.btn.small', { type: 'button', on: { click: () => resume(r) } }, t('continue')));
     }))) : null,
     h('footer.foot', {}, h('span', {}, t('footer')), ' · ', h('a', { href: REPO_URL, target: '_blank', rel: 'noopener' }, t('footerLink')))
@@ -193,8 +365,9 @@ function recipeCard(code, i, mode) {
     h('span.card-body', {},
       h('span.hand', {}, l.hand),
       h('h3', {}, l.title),
-      h('p', {}, l.card(mode === 'solo')),
-      h('span.card-foot', {}, h('span.begin', {}, t('begin'), ' →'), h('span.meta', {}, t('minutes', { n: MINUTES[code] })))));
+      h('p', {}, mode === 'gift' ? l.tagline : l.card(mode === 'solo' || mode === 'lucky')),
+      h('span.card-foot', {}, h('span.begin', {}, t(mode === 'gift' ? 'beginGift' : mode === 'lucky' ? 'beginLucky' : 'begin'), ' →'),
+        h('span.meta', {}, mode === 'gift' ? t('metaGift') : mode === 'lucky' ? t('metaLucky') : t('minutes', { n: MINUTES[code] })))));
 }
 
 function takeCode(text) {
@@ -371,6 +544,14 @@ function importMine(b64) {
 function handleAi(raw) {
   const parsed = readAiCode(raw);
   if (!parsed.ok) return home(parsed.error);
+  if (parsed.gift) {
+    const nm = store.names();
+    const gift = roundFromGift(parsed, { human: nm.human || t('you2'), ai: nm.ai || t('companionDefault') });
+    const known = store.round(gift.id);
+    if (known) return resume(known); // the same gift, opened again: exactly as it was first received
+    store.saveRound(gift);
+    return giftArrived(gift);
+  }
   let r = parsed.roundId ? store.round(parsed.roundId) : null;
   if (r) {
     try { r = acceptAi(r, parsed); } catch (e) { toast(e.message); return resume(r); }
@@ -439,9 +620,9 @@ async function buildWorld(st, R, spec, round) {
 /* ------------------------------------------------------------------ reveal */
 async function reveal(round) {
   const R = recipeByCode(round.recipe), l = L(R);
-  const solo = isSolo(round);
+  const solo = isSolo(round), gift = isGift(round), one = oneMaker(round);
   round = { ...round, openedAt: round.openedAt || new Date().toISOString() };
-  const spec = mergeRound(round);
+  const spec = merged(round);
   app.replaceChildren();
   const st = await getStage();
   const p = await buildWorld(st, R, spec, round);
@@ -451,10 +632,11 @@ async function reveal(round) {
   stageHost.querySelector('.stage-ornament').style.opacity = '0';
   p.prepareReveal();
 
-  const top = h('div.over.top-bar', {}, h('div.title-plate', {}, h('div.eyebrow', {}, solo ? t('openingSolo') : t('opening', { id: round.id }))),
+  const top = h('div.over.top-bar', {}, h('div.title-plate', {}, h('div.eyebrow', {}, solo ? t('openingSolo') : gift ? t('openingGift', { ai: round.names.ai }) : t('opening', { id: round.id }))),
     h('button.iconbtn', { type: 'button', 'aria-label': t('skip'), on: { click: () => finish() } }, '»'));
   const cap = h('div.over.caption');
   app.replaceChildren(top, cap);
+  frameAround(top, cap, { topShare: 0.5 });
   const steps = R.revealSteps(spec);
   const extra = [];
   if (spec.why.human || spec.why.ai) extra.push({ kind: 'why' });
@@ -462,8 +644,8 @@ async function reveal(round) {
   const all = [...steps, ...extra];
   let i = -1, busy = false, ended = false;
 
-  const sideOf = by => solo || by === 'human' ? 'human' : 'ai';
-  const nameOf = by => by === 'human' ? round.names.human : round.names.ai;
+  const sideOf = by => solo ? 'human' : gift ? 'ai' : by === 'human' ? 'human' : 'ai';
+  const nameOf = by => gift || by !== 'human' ? round.names.ai : round.names.human;
   const dots = () => h('div.dots', {}, all.map((_, k) => h('i', { class: k <= i ? 'on' : '' })));
   const nextBtn = (label = t('next')) => h('button.btn.small.primary', { type: 'button', on: { click: () => advance() } }, label);
   const outBack = k2 => { const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(k2 - 1, 3) + c1 * Math.pow(k2 - 1, 2); };
@@ -490,27 +672,27 @@ async function reveal(round) {
       const z = l.opt(s.slot, s.pick);
       card.classList.add(sideOf(s.by));
       put(card, h('div.by', {}, h('i'), solo ? t('placedSolo', { slot: l.slotTitle(s.slot) }) : t('placedBy', { name: nameOf(s.by), slot: l.slotTitle(s.slot) })),
-        h('h2', {}, z.name), h('div.meaning', {}, z.meaning), chance ? h('div.note', {}, t('leftToStars')) : null);
+        h('h2', {}, z.name), h('div.meaning', {}, z.meaning), chance ? h('div.note', {}, solo ? t('drawnLucky') : t('leftToStars')) : null);
     } else if (s.kind === 'pair') {
       (s.show || []).forEach((slot, k) => show(slot, k * 0.35));
       focus(s.focus);
       const echoR = spec.resonances.find(r => r.id === 'echo');
       put(card, h('div.by', {}, h('i'), l.pairTitle || s.title),
-        h('div.pair', {}, s.picks.map(w => { const z = l.opt(R.shared[0], w); return h('div', { class: sideOf(w.by) }, solo ? null : h('div.by', {}, h('i'), nameOf(w.by)), h('b', {}, z.name), h('span.meaning', { style: 'font-size:15px' }, z.meaning)); })),
+        h('div.pair', {}, s.picks.map(w => { const z = l.opt(R.shared[0], w); return h('div', { class: sideOf(w.by) }, one ? null : h('div.by', {}, h('i'), nameOf(w.by)), h('b', {}, z.name), h('span.meaning', { style: 'font-size:15px' }, z.meaning)); })),
         echoR ? h('p.hand', { style: 'margin:10px 0 0;color:var(--gold)' }, l.resonance(echoR)) : null);
     } else if (s.kind === 'resonance') {
       const r = spec.resonances.find(x => x.text === s.text) || { text: s.text };
       put(card, h('div.by', {}, h('i', { style: 'background:var(--gold)' }), t('somethingNew')), h('div.meaning', { style: 'margin-top:8px;font-size:19px;color:var(--ink)' }, l.resonance(r)));
     } else if (s.kind === 'name') {
       put(card, h('div.by', {}, h('i'), t('itsName')),
-        h('h2', {}, !solo && s.words.length > 1 ? s.words.map((w, k) => [k && !CJK.test(w.text) ? ' ' : '', h('span', { class: sideOf(w.by), style: 'border-bottom:2px solid var(--side)' }, w.text)]) : s.title),
-        solo ? null : h('div.note', {}, s.words.map(w => `${nameOf(w.by)}：“${w.text}”`).join(' · ')));
+        h('h2', {}, !one && s.words.length > 1 ? s.words.map((w, k) => [k && !CJK.test(w.text) ? ' ' : '', h('span', { class: sideOf(w.by), style: 'border-bottom:2px solid var(--side)' }, w.text)]) : spec.title),
+        solo ? null : gift ? h('div.note', {}, t('namedBy', { ai: round.names.ai })) : h('div.note', {}, s.words.map(w => `${nameOf(w.by)}：“${w.text}”`).join(' · ')));
     } else if (s.kind === 'lines') {
       const shown = s.lines.filter(x => x.text);
       if (!shown.length) return advance();
       shown.forEach((ln, k) => {
         const label = l.lineLabel(ln.half) || ln.label;
-        const box = h('div', { class: sideOf(ln.by), style: k ? 'margin-top:10px' : '' }, h('div.by', {}, h('i'), solo ? label : `${label} · ${nameOf(ln.by)}`));
+        const box = h('div', { class: sideOf(ln.by), style: k ? 'margin-top:10px' : '' }, h('div.by', {}, h('i'), one ? label : `${label} · ${nameOf(ln.by)}`));
         if (ln.find) {
           const find = h('button.btn.small', { type: 'button', on: { click: async () => { show(ln.find); await focus(ln.find); find.replaceWith(h('p.quote', {}, ln.text)); } } }, l.findLabel(ln.key) || ln.findLabel || 'Find it');
           box.append(find);
@@ -519,8 +701,8 @@ async function reveal(round) {
         put(card, box);
       });
     } else if (s.kind === 'why') {
-      put(card, h('div.by', {}, h('i'), solo ? t('whySolo') : t('whyTogether')), h('div.pair', { class: solo ? 'one' : '' },
-        ['human', 'ai'].filter(k => spec.why[k]).map(k => h('div', { class: sideOf(k) }, solo ? null : h('div.by', {}, h('i'), nameOf(k)), h('span.meaning', { style: 'color:var(--ink)' }, spec.why[k])))));
+      put(card, h('div.by', {}, h('i'), solo ? t('whySolo') : gift ? t('whyGift', { ai: round.names.ai }) : t('whyTogether')), h('div.pair', { class: one ? 'one' : '' },
+        ['human', 'ai'].filter(k => spec.why[k]).map(k => h('div', { class: sideOf(k) }, one ? null : h('div.by', {}, h('i'), nameOf(k)), h('span.meaning', { style: 'color:var(--ink)' }, spec.why[k])))));
     } else if (s.kind === 'wishes') {
       const n = ['human', 'ai'].filter(k => spec.wish[k]);
       const env = k => { const e = h('button.envelope', { type: 'button', class: sideOf(k), on: { click: () => { e.classList.add('open'); navigator.vibrate?.(10); } } }, h('span.dot'), h('div.text', {}, spec.wish[k]), h('small', {}, solo ? '✦' : (lang() === 'zh' ? `来自${nameOf(k)}` : `from ${nameOf(k)}`))); return e; };
@@ -550,8 +732,8 @@ async function reveal(round) {
 /* ------------------------------------------------------------------ explore + keep */
 async function explore(round, { keepWorld = false, visiting = false } = {}) {
   const R = recipeByCode(round.recipe), l = L(R);
-  const solo = isSolo(round);
-  const spec = mergeRound(round);
+  const solo = isSolo(round), gift = isGift(round), one = oneMaker(round);
+  const spec = merged(round);
   const st = await getStage();
   if (!keepWorld) {
     const p = await buildWorld(st, R, spec, round);
@@ -562,7 +744,7 @@ async function explore(round, { keepWorld = false, visiting = false } = {}) {
   }
   st.autoSpin = 0.12;
   const hidden = spec.lines.find(x => x.find && x.text);
-  const who = by => solo ? t('you2') : by === 'human' ? round.names.human : round.names.ai;
+  const who = by => solo ? t('you2') : gift || by !== 'human' ? round.names.ai : round.names.human;
   st.onPick = what => {
     if (hidden && what === hidden.find) return toast('“' + hidden.text + '”');
     const x = spec.ledger.find(e => (e.pick || e.slot) === what);
@@ -571,13 +753,14 @@ async function explore(round, { keepWorld = false, visiting = false } = {}) {
   const id = `${round.recipe}-${round.id}-${round.human.fp}`;
   const refreshHash = () => { const k = toLink(round); setHash(k.slice(k.indexOf('#'))); };
   refreshHash();
-  const sideOf = by => solo || by === 'human' ? 'human' : 'ai';
+  const sideOf = by => solo ? 'human' : gift ? 'ai' : by === 'human' ? 'human' : 'ai';
   const dateStr = fmtDate(round.openedAt || round.ai.sealedAt);
-  const by = solo ? (round.names.human ? t('bySolo', { a: round.names.human, date: dateStr }) : t('bySoloNoName', { date: dateStr })) : t('byTwo', { a: round.names.human, b: round.names.ai, date: dateStr });
+  const by = solo ? (round.names.human ? t('bySolo', { a: round.names.human, date: dateStr }) : t('bySoloNoName', { date: dateStr }))
+    : gift ? t('byGift', { ai: round.names.ai, date: dateStr }) : t('byTwo', { a: round.names.human, b: round.names.ai, date: dateStr });
   const top = h('div.over.top-bar', {},
     h('div.title-plate', {},
-      h('div.eyebrow', {}, solo ? l.title : `${l.title} · ${t('roundN', { id: round.id })}`),
-      h('h1', {}, !solo && spec.words.length > 1 ? spec.words.map((w, k) => [k && !CJK.test(w.text) ? ' ' : '', h('span.w', { class: sideOf(w.by) }, w.text)]) : spec.title),
+      h('div.eyebrow', {}, solo ? l.title : gift ? `${l.title} · ${t('giftFrom', { ai: round.names.ai })}` : `${l.title} · ${t('roundN', { id: round.id })}`),
+      h('h1', {}, !one && spec.words.length > 1 ? spec.words.map((w, k) => [k && !CJK.test(w.text) ? ' ' : '', h('span.w', { class: sideOf(w.by) }, w.text)]) : spec.title),
       h('p', {}, by)),
     EMBED === 'view' ? null : h('button.iconbtn', { type: 'button', 'aria-label': t('home'), on: { click: () => { stageHost.classList.add('hidden'); stage?.pause(); home(); } } }, '✕'));
   const kept = () => !HOST && store.onShelf(id);
@@ -591,11 +774,13 @@ async function explore(round, { keepWorld = false, visiting = false } = {}) {
   [top, bar].forEach(n => n.classList.toggle('on-dark', spec.palette.dark));
   hint.style.color = spec.palette.dark ? '#C9C3DE' : '';
   app.replaceChildren(top, hint, bar);
+  frameAround(top, bar);
   setTimeout(() => hint.remove(), 4200);
 
   async function share() {
     const url = toLink(round, site());
-    const text = solo ? t('shareTextSolo', { title: spec.title, a: round.names.human || t('you2'), noun: l.noun }) : t('shareText', { title: spec.title, a: round.names.human, b: round.names.ai, noun: l.noun });
+    const text = solo ? t('shareTextSolo', { title: spec.title, a: round.names.human || t('you2'), noun: l.noun })
+      : gift ? t('shareTextGift', { title: spec.title, ai: round.names.ai, noun: l.noun }) : t('shareText', { title: spec.title, a: round.names.human, b: round.names.ai, noun: l.noun });
     if (navigator.share) { try { await navigator.share({ title: spec.title, text, url }); return; } catch { } }
     copy(url, t('linkCopied'));
   }
@@ -625,7 +810,7 @@ async function explore(round, { keepWorld = false, visiting = false } = {}) {
     const eng = already ? null : engraving();
     eng?.el.querySelectorAll('input').forEach((inp, k) => inp.addEventListener('input', () => { if (k === 0) plaque.querySelector('b').textContent = inp.value || spec.title; else plaque.querySelector('span').textContent = inp.value || dateStr; }));
     const panel = sheet(h('div.eyebrow', {}, t('keepEyebrow')), h('h2', {}, already ? t('keptAlready') : t('keepTitle')),
-      h('p.note', {}, HOST ? t('keepNoteHost') : solo ? t('keepNoteSolo') : t('keepNote')),
+      h('p.note', {}, HOST ? t('keepNoteHost') : solo ? t('keepNoteSolo') : gift ? t('keepNoteGift', { ai: round.names.ai }) : t('keepNote')),
       plaque, eng?.el,
       already ? null : h('div.hold-wrap', {}, holdButton(t('holdPlace'), { ms: 1000, onDone: () => place() })));
     async function place() {
@@ -646,7 +831,7 @@ async function explore(round, { keepWorld = false, visiting = false } = {}) {
     const s = sheet(h('h2', {}, t('takeWith')), h('div.stack', {},
       world3d?.setPlaque ? h('button.btn', { type: 'button', on: { click: () => { s.close(); engraveSheet(); } } }, t('engrave')) : null,
       h('button.btn', { type: 'button', on: { click: () => { s.close(); postcard(st, round, spec); } } }, t('postcard')),
-      solo ? null : h('button.btn', { type: 'button', on: { click: () => copy(revealCard(round, lang()), t('tellCopied', { ai: round.names.ai })) } }, t('tellAI', { ai: round.names.ai })),
+      solo ? null : h('button.btn', { type: 'button', on: { click: () => copy(revealCard(round, lang()), t('tellCopied', { ai: round.names.ai })) } }, t(gift ? 'tellAIGift' : 'tellAI', { ai: round.names.ai })),
       h('button.btn', { type: 'button', on: { click: () => download(`${spec.title.replace(/[^\w\- ⺀-鿿]+/g, '').trim() || 'keepsake'}.keepsake.json`, JSON.stringify(toKeepsake(round), null, 2), 'application/json') } }, t('download')),
       h('button.btn', { type: 'button', on: { click: () => copy(toLink(round, site()), t('linkCopied')) } }, t('copyLink')),
       EMBED ? null : h('button.btn.ghost', { type: 'button', on: { click: () => { s.close(); stageHost.classList.add('hidden'); stage?.pause(); location.hash = 'shelf'; } } }, t('openShelf'))));
@@ -659,8 +844,9 @@ async function explore(round, { keepWorld = false, visiting = false } = {}) {
 
 function storySheet(round, spec) {
   const R = recipeByCode(round.recipe), l = L(R);
-  const solo = isSolo(round);
-  const item = x => { const z = l.opt(x.slot, x.id || x); return h('div.story-item', {}, h('dt', {}, l.slotTitle(x.slot)), h('dd', {}, h('b', {}, z.name), h('span', {}, z.meaning))); };
+  const solo = isSolo(round), gift = isGift(round);
+  const drawn = x => (spec.chance[x.by] || []).includes(x.slot);
+  const item = x => { const z = l.opt(x.slot, x.id || x); return h('div.story-item', {}, h('dt', {}, l.slotTitle(x.slot), solo && drawn(x) ? h('em.tag', {}, t('drawnTag')) : null), h('dd', {}, h('b', {}, z.name), h('span', {}, z.meaning))); };
   const quote = (label, text) => text ? h('div', {}, h('div.eyebrow', { style: 'margin-top:12px' }, label), h('p.quote', {}, text)) : null;
   const col = who => {
     const half = who === 'human' ? round.human : round.ai;
@@ -670,17 +856,17 @@ function storySheet(round, spec) {
     return h('div', { class: who }, h('h3', {}, t('addedBy', { name: who === 'human' ? round.names.human : round.names.ai, half: l.halfTitle(half.half) })),
       h('div.story-col', {}, items), quote(l.lineLabel(ln.half), ln.text), quote(t('why'), half.why), quote(t('hiddenLine'), half.wish));
   };
-  const soloCol = () => h('div', { class: 'human' }, h('h3', {}, t('addedSolo')), h('div.story-col', {}, spec.ledger.map(item)),
-    spec.lines.map(ln => quote(l.lineLabel(ln.half), ln.text)), quote(t('soloWhy'), round.human.why), quote(t('hiddenLine'), round.human.wish));
+  const soloCol = () => h('div', { class: gift ? 'ai' : 'human' }, h('h3', {}, gift ? t('addedGift', { ai: round.names.ai }) : t('addedSolo')), h('div.story-col', {}, spec.ledger.map(item)),
+    spec.lines.map(ln => quote(l.lineLabel(ln.half), ln.text)), quote(gift ? t('why') : t('soloWhy'), round.human.why), quote(t('hiddenLine'), round.human.wish));
   const tt = round.human.sealedAt, ta = round.ai.sealedAt;
   sheet(
-    h('div.eyebrow', {}, solo ? l.title : `${l.title} · ${t('roundN', { id: round.id })}`),
+    h('div.eyebrow', {}, solo ? l.title : gift ? `${l.title} · ${t('giftFrom', { ai: round.names.ai })}` : `${l.title} · ${t('roundN', { id: round.id })}`),
     h('h2', {}, round.plaque?.name || spec.title),
     round.theme ? h('p.meaning', {}, round.theme) : null,
-    solo ? soloCol() : [col('human'), col('ai')],
+    solo || gift ? soloCol() : [col('human'), col('ai')],
     spec.resonances.length ? h('div', {}, h('h3', {}, t('between')), spec.resonances.map(r => h('p.meaning', {}, l.resonance(r)))) : null,
     h('h3', {}, t('seals')),
-    h('p.prov', {}, solo ? t('sealSolo', { name: round.names.human || t('you2'), t: fmtTime(tt) }) : [
+    h('p.prov', {}, solo ? t('sealSolo', { name: round.names.human || t('you2'), t: fmtTime(tt) }) : gift ? t('sealGift', { ai: round.names.ai, fp: round.ai.fp, t: fmtTime(ta) }) : [
       t('sealHuman', { name: round.names.human, fp: round.human.fp, t: fmtTime(tt) }),
       t('sealAi', { name: round.names.ai, fp: round.ai.fp, t: fmtTime(ta) }),
       round.order === 'ai-first' ? t('sealAiFirst', { name: round.names.human }) : round.ai.sealMatch ? t('sealAnswered', { fp: round.human.fp }) : (lang() === 'zh' ? '。' : '. ')
@@ -733,12 +919,12 @@ async function postcard(st, round, spec) {
   g.textAlign = 'center'; g.fillStyle = ink;
   g.font = `500 78px ${serif}`; g.fillText(round.plaque?.name || spec.title, W / 2, 1250, W - 120);
   g.font = '500 26px "DM Sans", "Noto Serif SC", sans-serif'; g.fillStyle = ink2;
-  const solo = isSolo(round), d = fmtDate(round.openedAt || new Date());
-  g.fillText(solo ? `${round.names.human ? round.names.human + '   ·   ' : ''}${d}` : `${round.names.human}  &  ${round.names.ai}   ·   ${d}`, W / 2, 1306);
+  const solo = isSolo(round), gift = isGift(round), d = fmtDate(round.openedAt || new Date());
+  g.fillText(solo ? `${round.names.human ? round.names.human + '   ·   ' : ''}${d}` : gift ? `${t('giftFrom', { ai: round.names.ai })}   ·   ${d}` : `${round.names.human}  &  ${round.names.ai}   ·   ${d}`, W / 2, 1306);
   const shown = spec.lines.find(x => x.text && !x.find);
   if (shown) { g.font = `italic 400 38px ${serif}`; g.fillStyle = ink; wrap(g, '“' + shown.text + '”', W / 2, 1390, 940, 50); }
   g.font = '500 32px Caveat, "Noto Serif SC", cursive'; g.fillStyle = ink2;
-  g.fillText(solo ? t('postcardLineSolo', { noun: l.noun }) : t('postcardLine', { noun: l.noun }), W / 2, 1510);
+  g.fillText(solo ? t('postcardLineSolo', { noun: l.noun }) : gift ? t('postcardLineGift', { noun: l.noun, ai: round.names.ai }) : t('postcardLine', { noun: l.noun }), W / 2, 1510);
   c.toBlob(b => { const a = h('a', { href: URL.createObjectURL(b), download: `${spec.title}.png` }); document.body.append(a); a.click(); a.remove(); }, 'image/png');
 }
 function loadImg(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
@@ -809,6 +995,18 @@ const ORNAMENT = `<svg viewBox="0 0 240 40" aria-hidden="true"><path d="M20 22c3
   <circle cx="70" cy="18" r="1.6" fill="#C9BDE6"/><circle cx="172" cy="24" r="1.6" fill="#C9BDE6"/></svg>`;
 const ICON_TWO = `<svg viewBox="0 0 36 24" aria-hidden="true"><circle cx="13" cy="12" r="8" fill="#F2D3DA" stroke="#4A4560" stroke-width="1"/><circle cx="23" cy="12" r="8" fill="#CFDBF2" fill-opacity=".85" stroke="#4A4560" stroke-width="1"/></svg>`;
 const ICON_ONE = `<svg viewBox="0 0 36 24" aria-hidden="true"><circle cx="18" cy="12" r="8" fill="#F3E3C6" stroke="#4A4560" stroke-width="1"/><path d="M18 7l1.2 3.4 3.4 1.2-3.4 1.2L18 16l-1.2-3.4-3.4-1.2 3.4-1.2z" fill="#C9A96E"/></svg>`;
+const ICON_GIFT = `<svg viewBox="0 0 36 24" aria-hidden="true"><rect x="9" y="9" width="18" height="12" rx="1.5" fill="#E3EAF6" stroke="#4A4560" stroke-width="1"/><rect x="7.5" y="6" width="21" height="4" rx="1" fill="#F2D3DA" stroke="#4A4560" stroke-width="1"/><path d="M18 6v15" stroke="#BF9C5E" stroke-width="1.6"/><path d="M18 6c-3-4-7-3-5 0m5 0c3-4 7-3 5 0" fill="none" stroke="#BF9C5E" stroke-width="1.2"/></svg>`;
+const ICON_DICE = `<svg viewBox="0 0 36 24" aria-hidden="true"><rect x="10" y="4" width="16" height="16" rx="4" fill="#F7EBD3" stroke="#4A4560" stroke-width="1" transform="rotate(-10 18 12)"/><g fill="#4A4560"><circle cx="14.6" cy="9.2" r="1.3"/><circle cx="18" cy="12" r="1.3"/><circle cx="21.4" cy="14.8" r="1.3"/></g><path d="M29 5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" fill="#C9A96E"/></svg>`;
+const ICON_DICE_SMALL = `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="vertical-align:-3px;margin-right:6px"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="1.4"/><g fill="currentColor"><circle cx="8.6" cy="8.6" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="15.4" cy="15.4" r="1.4"/></g></svg>`;
+const GIFT_ART = `<svg viewBox="0 0 160 120" aria-hidden="true"><defs><linearGradient id="gb" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#E9EEF8"/><stop offset="1" stop-color="#CFDAF0"/></linearGradient></defs>
+  <ellipse cx="80" cy="108" rx="46" ry="5" fill="#3D3950" opacity=".08"/>
+  <rect x="42" y="52" width="76" height="54" rx="4" fill="url(#gb)" stroke="#4A4560" stroke-width="1.2"/>
+  <rect x="36" y="40" width="88" height="16" rx="3" fill="#F6E3E7" stroke="#4A4560" stroke-width="1.2"/>
+  <path d="M80 40v66" stroke="#BF9C5E" stroke-width="5"/><path d="M80 40v66" stroke="#E6CF98" stroke-width="1.4"/>
+  <path d="M80 40c-10-16-30-16-24-2 3 6 16 4 24 2zm0 0c10-16 30-16 24-2-3 6-16 4-24 2z" fill="#F2D3DA" stroke="#4A4560" stroke-width="1.1"/>
+  <circle cx="80" cy="40" r="4" fill="#BF9C5E"/>
+  <path d="M128 22l1.6 4.2 4.2 1.6-4.2 1.6-1.6 4.2-1.6-4.2-4.2-1.6 4.2-1.6z" fill="#E3C47E"/><path d="M30 30l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2z" fill="#A9C2E6"/><circle cx="138" cy="60" r="1.8" fill="#C9BDE6"/><circle cx="24" cy="70" r="1.6" fill="#E8B8C6"/></svg>`;
 const ICON_CABINET = `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" style="vertical-align:-3px;margin-right:6px"><path d="M5 21V9a7 7 0 0 1 14 0v12z" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M3.5 21h17M5 15h14" stroke="currentColor" stroke-width="1.1"/><circle cx="12" cy="11.6" r="2" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>`;
 
+Object.assign(MODES[0], { icon: ICON_TWO }); Object.assign(MODES[1], { icon: ICON_GIFT }); Object.assign(MODES[2], { icon: ICON_ONE }); Object.assign(MODES[3], { icon: ICON_DICE });
 route();

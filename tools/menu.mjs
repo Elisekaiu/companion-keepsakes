@@ -50,7 +50,8 @@ function md(R, lang) {
 }
 function text(R, lang) {
   const L = loc(R, lang), zh = lang === 'zh';
-  const lines = [`[${zh ? '纪念品工坊' : 'Companion Keepsakes'} · ${L.title} · ${R.code}]`, `${zh ? '链接' : 'Link'}: ${SITE_URL}#ai~${R.code}~half=<${Object.keys(R.halves).join('|')}>~<slot>=<number>~...~word=<...>~line=<...>~why=<...>~wish=<...>~from=<...>`];
+  const lines = [`[${zh ? '纪念品工坊' : 'Companion Keepsakes'} · ${L.title} · ${R.code}]`, `${zh ? '链接' : 'Link'}: ${SITE_URL}#ai~${R.code}~half=<${Object.keys(R.halves).join('|')}>~<slot>=<number>~...~word=<...>~line=<...>~why=<...>~wish=<...>~from=<...>`,
+    `${zh ? '送一整件' : 'Whole gift'}: ${SITE_URL}#ai~${R.code}~half=all~<${zh ? '两半的每一项' : 'every slot of both halves'}>=<number>~${R.shared.map(x => `${x}=<n>~${x}2=<n>~`).join('')}name=<...>~${Object.keys(R.halves).map(hf => `line_${hf}=<...>`).join('~')}~why=<...>~wish=<...>~from=<...>`];
   for (const half of Object.keys(R.halves)) {
     lines.push(zh ? `「${L.halfTitle(half)}」half=${half}（${L.halfBlurb(half)}）；line = ${L.lineLabel(half)}` : `${half.toUpperCase()} half (${R.halves[half].blurb}); line = ${R.halves[half].line.label}`);
     const seen = new Set();

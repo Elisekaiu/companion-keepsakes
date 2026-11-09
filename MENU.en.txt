@@ -2,20 +2,22 @@ In text use _ for spaces; never use ~ # %. One line. Numbers below.
 
 [Companion Keepsakes · Tiny Imaginary Planet · planet1]
 Link: https://elisekaiu.github.io/companion-keepsakes/?lang=en#ai~planet1~half=<ground|sky>~<slot>=<number>~...~word=<...>~line=<...>~why=<...>~wish=<...>~from=<...>
+Whole gift: https://elisekaiu.github.io/companion-keepsakes/?lang=en#ai~planet1~half=all~<every slot of both halves>=<number>~wonder=<n>~wonder2=<n>~name=<...>~line_ground=<...>~line_sky=<...>~why=<...>~wish=<...>~from=<...>
 GROUND half (what the world stands on: land, water, what grows, who lives there); line = A secret buried here
-  land: 1 Soft meadow · 2 Flower field · 3 Honey dunes · 4 First snow · 5 Crystal plain · 6 Glowing moss · 7 Amber woods · 8 Cloudstone
-  water: 1 One round sea · 2 Small lakes · 3 River of light · 4 Frozen lake · 5 Floating ponds · 6 Warm springs · 7 No water
-  growth: 1 Round trees · 2 Little pines · 3 Giant mushrooms · 4 Crystal trees · 5 Lantern flowers · 6 Candyfloss trees · 7 Tall grass and reeds
-  dwelling: 1 Cottage · 2 Lighthouse · 3 Observatory · 4 Glass greenhouse · 5 Small shrine · 6 Castle tower · 7 Windmill · 8 Little train
+  land: 1 Soft meadow · 2 Flower field · 3 Honey dunes · 4 First snow · 5 Crystal plain · 6 Glowing moss · 7 Amber woods · 8 Cloudstone · 9 Lavender hills · 10 Tea terraces · 11 Sleeping volcano
+  water: 1 One round sea · 2 Small lakes · 3 River of light · 4 Frozen lake · 5 Floating ponds · 6 Warm springs · 7 No water · 8 Sea of stars · 9 Rainbow pools
+  growth: 1 Round trees · 2 Little pines · 3 Giant mushrooms · 4 Crystal trees · 5 Lantern flowers · 6 Candyfloss trees · 7 Tall grass and reeds · 8 Cherry blossom trees · 9 Round cacti · 10 Sunflowers
+  dwelling: 1 Cottage · 2 Lighthouse · 3 Observatory · 4 Glass greenhouse · 5 Small shrine · 6 Castle tower · 7 Windmill · 8 Little train · 9 Treehouse · 10 Little bakery · 11 A camping tent
 SKY half (what surrounds it: light, moons, what drifts in the air, who visits); line = The one rule of this world
-  sky: 1 Pink dawn · 2 Clear noon · 3 Long sunset · 4 Blue hour · 5 Starry night · 6 Aurora night · 7 Eclipse
-  moon: 1 One small moon · 2 Twin moons · 3 Rings · 4 Rings and a moon · 5 A passing comet · 6 A close crescent · 7 A tiny second sun
-  air: 1 Drifting clouds · 2 Snowfall · 3 Falling petals · 4 Fireflies · 5 A rainbow · 6 Meteor shower · 7 Soap bubbles · 8 Soft rain
-  visitor: 1 Floating whale · 2 Paper cranes · 3 Lantern jellyfish · 4 Sky koi · 5 A flock of birds · 6 Hot-air balloon · 7 A sleeping fox
-BOTH: wonder: 1 Floating island · 2 Crystal spire · 3 Glowing road · 4 Bridge into the sky · 5 Tree of lights · 6 Upward waterfall · 7 Stone archway · 8 A door standing alone
+  sky: 1 Pink dawn · 2 Clear noon · 3 Long sunset · 4 Blue hour · 5 Starry night · 6 Aurora night · 7 Eclipse · 8 Lilac dusk · 9 Milky Way
+  moon: 1 One small moon · 2 Twin moons · 3 Rings · 4 Rings and a moon · 5 A passing comet · 6 A close crescent · 7 A tiny second sun · 8 A string of tiny moons · 9 A sister planet
+  air: 1 Drifting clouds · 2 Snowfall · 3 Falling petals · 4 Fireflies · 5 A rainbow · 6 Meteor shower · 7 Soap bubbles · 8 Soft rain · 9 Sky lanterns · 10 Dandelion seeds
+  visitor: 1 Floating whale · 2 Paper cranes · 3 Lantern jellyfish · 4 Sky koi · 5 A flock of birds · 6 Hot-air balloon · 7 A sleeping fox · 8 Butterflies · 9 A little owl · 10 A gentle sky dragon
+BOTH: wonder: 1 Floating island · 2 Crystal spire · 3 Glowing road · 4 Bridge into the sky · 5 Tree of lights · 6 Upward waterfall · 7 Stone archway · 8 A door standing alone · 9 Giant hourglass · 10 A swing hung from nothing · 11 A mailbox for the future
 
 [Companion Keepsakes · Two-Person Talisman · talisman1]
 Link: https://elisekaiu.github.io/companion-keepsakes/?lang=en#ai~talisman1~half=<silk|metal>~<slot>=<number>~...~word=<...>~line=<...>~why=<...>~wish=<...>~from=<...>
+Whole gift: https://elisekaiu.github.io/companion-keepsakes/?lang=en#ai~talisman1~half=all~<every slot of both halves>=<number>~name=<...>~line_silk=<...>~line_metal=<...>~why=<...>~wish=<...>~from=<...>
 SILK half (the soft part: the silk pouch, the motif stitched on it, its cord, and beads 1, 3 and 5); line = Stitched on the pouch
   silk: 1 Ivory silk · 2 Blush pink · 3 Lilac · 4 Deep indigo · 5 Sage · 6 Vermilion · 7 Pale sky
   motif: 1 Plain silk · 2 Crescent · 3 Plum blossom · 4 Wave · 5 Crane · 6 Star
@@ -32,12 +34,13 @@ METAL half (the hard part: the metal, the charm that hangs beside the pouch, and
 
 [Companion Keepsakes · Memory Snow Globe · globe1]
 Link: https://elisekaiu.github.io/companion-keepsakes/?lang=en#ai~globe1~half=<moment|keepsake>~<slot>=<number>~...~word=<...>~line=<...>~why=<...>~wish=<...>~from=<...>
+Whole gift: https://elisekaiu.github.io/companion-keepsakes/?lang=en#ai~globe1~half=all~<every slot of both halves>=<number>~object=<n>~object2=<n>~name=<...>~line_moment=<...>~line_keepsake=<...>~why=<...>~wish=<...>~from=<...>
 MOMENT half (where it was, the hour and its light, and the weather inside the glass); line = What was happening
-  place: 1 A cabin in the woods · 2 A lamplit street · 3 A house by the sea · 4 A train platform · 5 A bench under a tree · 6 A rooftop with string lights · 7 A little bookshop · 8 A lake pier with a rowboat · 9 A garden gate · 10 A window seat
-  hour: 1 Early morning · 2 A slow afternoon · 3 Golden hour · 4 Blue hour · 5 Late at night
-  weather: 1 First snow · 2 Soft rain · 3 Cherry petals · 4 Autumn leaves · 5 Fireflies · 6 Falling stars · 7 Golden dust · 8 Bubbles
+  place: 1 A cabin in the woods · 2 A lamplit street · 3 A house by the sea · 4 A train platform · 5 A bench under a tree · 6 A rooftop with string lights · 7 A little bookshop · 8 A lake pier with a rowboat · 9 A garden gate · 10 A window seat · 11 A corner café · 12 A Ferris wheel at the fair · 13 A campsite with a small fire · 14 A lighthouse on the rocks
+  hour: 1 Early morning · 2 A slow afternoon · 3 Golden hour · 4 Blue hour · 5 Late at night · 6 Bright noon · 7 Pink dusk · 8 Under the northern lights
+  weather: 1 First snow · 2 Soft rain · 3 Cherry petals · 4 Autumn leaves · 5 Fireflies · 6 Falling stars · 7 Golden dust · 8 Bubbles · 9 Confetti · 10 Dandelion seeds · 11 Silver glitter
 KEEPSAKE half (the base it stands on, the shape of the glass, and a finishing touch); line = Engraved on the base
-  base: 1 Walnut wood · 2 White marble · 3 Brass · 4 Porcelain, gold rim · 5 Pale oak · 6 Night-blue lacquer
-  glass: 1 A classic globe · 2 A bell-jar dome · 3 A tall teardrop · 4 A little orb on a pedestal
-  finish: 1 Nothing more · 2 A ribbon bow · 3 A ring of pearls · 4 A thin gold band · 5 Pressed flowers · 6 A wind-up key
-BOTH: object: 1 An open umbrella · 2 Two cups of tea · 3 A sealed letter · 4 A bicycle · 5 A sleeping cat · 6 A paper lantern · 7 A small snowman · 8 A stack of books · 9 A paper boat · 10 A small bouquet · 11 A record player
+  base: 1 Walnut wood · 2 White marble · 3 Brass · 4 Porcelain, gold rim · 5 Pale oak · 6 Night-blue lacquer · 7 Celadon glaze · 8 Dusty-rose velvet · 9 Polished silver
+  glass: 1 A classic globe · 2 A bell-jar dome · 3 A tall teardrop · 4 A little orb on a pedestal · 5 An egg-shaped glass · 6 A faceted glass
+  finish: 1 Nothing more · 2 A ribbon bow · 3 A ring of pearls · 4 A thin gold band · 5 Pressed flowers · 6 A wind-up key · 7 A star on top · 8 A lace trim · 9 A tiny bell
+BOTH: object: 1 An open umbrella · 2 Two cups of tea · 3 A sealed letter · 4 A bicycle · 5 A sleeping cat · 6 A paper lantern · 7 A small snowman · 8 A stack of books · 9 A paper boat · 10 A small bouquet · 11 A record player · 12 A sleeping dog · 13 An old camera · 14 A little sled · 15 A small cake · 16 A telescope · 17 A potted plant

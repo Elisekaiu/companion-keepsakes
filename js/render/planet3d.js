@@ -1,7 +1,7 @@
 // Tiny Planet renderer. Deterministic: (spec, seed) -> the same world every time.
 // Every object is registered under the slot that caused it, so the reveal can build the world
 // one sealed pick at a time, and the story can point at what came from whom.
-import { THREE, toon, glow, mesh, group, stand, outline, mixHex, shade, noise3, fib, points, spriteTex, setInk, inkMaterial, indexed } from './kit.js';
+import { THREE, toon, glow, mesh, group, stand, outline, mixHex, shade, noise3, fib, points, spriteTex, setInk, inkMaterial, indexed, enrich, shadows, shadowKey, halo } from './kit.js';
 import { rngFor } from '../engine/codec.js';
 export { THREE };
 
@@ -14,16 +14,19 @@ export const SPOTS = {
   wonderA: V(0.78, 0.12, 0.62),
   secret: V(0.15, -0.25, -0.95)
 };
+// A sleeping volcano (land: ember) rises on the far upper side, so turning the world finds it.
+const VOLCANO = V(-0.42, 0.5, -0.76);
 
 const CANOPY = {
   meadow: ['#7FB77E', '#93C88A', '#A8D69A'], flowers: ['#86BF86', '#F2B6C6', '#9ECF91'], dunes: ['#A9B97F', '#C3C98E', '#8FA674'],
   snow: ['#6F9C8C', '#7FAE9C', '#FFFFFF'], crystal: ['#B9A6EE', '#D4C6FA', '#9C8BE0'], moss: ['#4E9E90', '#68C2AE', '#3E8580'],
-  autumn: ['#E58E5A', '#F0B35F', '#D46E58'], cloud: ['#B9E3D3', '#F6C9DA', '#D9D0F5']
+  autumn: ['#E58E5A', '#F0B35F', '#D46E58'], cloud: ['#B9E3D3', '#F6C9DA', '#D9D0F5'],
+  lavender: ['#8FAE7E', '#A3BD8C', '#7D9E74'], terraces: ['#6FA466', '#84B873', '#5E965E'], ember: ['#6E8C6A', '#7FA07A', '#5E7A64']
 };
 
-export function build(spec, seed) { return buildPlanet(spec, seed); }
+export function build(spec, seed, opts = {}) { return buildPlanet(spec, seed, opts); }
 
-export function buildPlanet(spec, seed) {
+export function buildPlanet(spec, seed, { renderer } = {}) {
   const rand = rngFor(seed, 'planet');
   const N = noise3(rand);
   const pal = spec.palette;
@@ -38,12 +41,15 @@ export function buildPlanet(spec, seed) {
 
   /* ---------------- terrain ---------------- */
   const land = P.land.id, water = P.water.id;
-  const coverage = { sea: 0.42, lakes: 0.16, frozen: 0.2, springs: 0.08 }[water] || 0;
-  const amp = { dunes: 0.22, cloud: 0.2, snow: 0.3, crystal: 0.34 }[land] || 0.3;
+  const coverage = { sea: 0.42, lakes: 0.16, frozen: 0.2, springs: 0.08, starsea: 0.38, pools: 0.12 }[water] || 0;
+  const amp = { dunes: 0.22, cloud: 0.2, snow: 0.3, crystal: 0.34, lavender: 0.26, terraces: 0.5, ember: 0.3 }[land] || 0.3;
+  const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   const raw = dir => {
     let h = N(dir.x * 1.7 + 3, dir.y * 1.7, dir.z * 1.7, 4);
     if (land === 'dunes') h += 0.05 * Math.sin((dir.x * 9 + dir.z * 5) + N(dir.x * 3, dir.y * 3, dir.z * 3) * 6);
     if (land === 'cloud') h = Math.abs(h) * 0.9 + 0.03 * N(dir.x * 6, dir.y * 6, dir.z * 6);
+    if (land === 'lavender') h += 0.018 * Math.sin((dir.x * 3 + dir.y * 2) * 22); // the rows of a lavender field
+    if (land === 'ember') { const d = dir.dot(VOLCANO); h += 0.5 * sstep(0.84, 0.985, d) - 0.22 * sstep(0.985, 1, d); }
     for (const k of ['dwelling', 'wonderH', 'wonderA', 'secret']) {
       const d = dir.dot(SPOTS[k]);
       if (d > 0.93) h = Math.max(h, 0.12 + (d - 0.93) * 0.4);
@@ -59,9 +65,12 @@ export function buildPlanet(spec, seed) {
   // With water, the lowest `coverage` share of the ground sits under the sea. Without it, the world stays round.
   const T = coverage ? sorted[Math.floor(sorted.length * coverage)] : sorted[Math.floor(sorted.length * 0.5)];
   const lo = sorted[0], hi = sorted[sorted.length - 1];
+  // Tea terraces: the slope is cut into soft steps.
+  const STEP = 0.055;
+  const step = land === 'terraces' ? (x => { const q = x / STEP, f = q - Math.floor(q); return (Math.floor(q) + sstep(0.8, 1, f)) * STEP; }) : (x => x);
   const radiusOf = coverage
-    ? (h => h > T ? 1.004 + amp * (h - T) : 0.97 - amp * 0.8 * (T - h))
-    : (h => 1 + amp * 0.45 * (h - T));
+    ? (h => h > T ? 1.004 + amp * step(h - T) : 0.97 - amp * 0.8 * (T - h))
+    : (h => 1 + amp * 0.45 * (h > T ? step(h - T) : h - T));
   const surface = dir => radiusOf(raw(dir.clone().normalize()));
   const colors = new Float32Array(pos.count * 3);
   const c0 = new THREE.Color(pal.land[0]), c1 = new THREE.Color(pal.land[1]), c2 = new THREE.Color(pal.land[2]);
@@ -75,12 +84,31 @@ export function buildPlanet(spec, seed) {
     // soft patches, so the ground reads as painted rather than flat
     const patch = N(dirs[i].x * 4.1 + 9, dirs[i].y * 4.1, dirs[i].z * 4.1, 2);
     if (patch > 0.08) c.lerp(c2, Math.min(0.45, (patch - 0.08) * 2.2)); else if (patch < -0.1) c.lerp(c1, Math.min(0.4, (-0.1 - patch) * 2));
+    // a little ambient occlusion: valleys sit slightly in shadow, so the relief reads in 3D
+    c.multiplyScalar(0.88 + 0.12 * Math.min(1, Math.max(0, e)));
+    if (land === 'ember') { const d = dirs[i].dot(VOLCANO); if (d > 0.9) c.lerp(new THREE.Color('#4E4452'), sstep(0.9, 0.99, d) * 0.6); }
+    // tea rows: every other terrace a shade lighter, with a pale edge where it steps down
+    if (land === 'terraces' && h > T) { const q = (h - T) / STEP, f = q - Math.floor(q); if (Math.floor(q) % 2) c.lerp(c2, 0.35); if (f > 0.8) c.lerp(new THREE.Color('#E8DDB8'), 0.35); }
     colors.set([c.r, c.g, c.b], i * 3);
   }
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  // Lava seams (ember): thin glowing lines where a second noise crosses zero, brightest near the crater.
+  if (land === 'ember') {
+    const gl = new Float32Array(pos.count);
+    for (let i = 0; i < pos.count; i++) {
+      // a smooth, wide function reads well even at vertex resolution: soft warm veins, brightest at the crater
+      const d = dirs[i], n2 = N(d.x * 2.6 + 11, d.y * 2.6, d.z * 2.6, 2), seam = Math.pow(Math.max(0, 1 - Math.abs(n2) * 7), 2.2);
+      const crater = sstep(0.965, 0.995, d.dot(VOLCANO)), slope = sstep(0.86, 0.97, d.dot(VOLCANO));
+      gl[i] = Math.min(1, seam * 0.45 + crater + slope * seam * 0.4);
+    }
+    geo.setAttribute('aGlow', new THREE.BufferAttribute(gl, 1));
+  }
   geo.computeVertexNormals();
   const landMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: toon('#fff').gradientMap });
   if (land === 'moss') { landMat.emissive = new THREE.Color(pal.glow); landMat.emissiveIntensity = spec.flags.glowLand ? 0.32 : 0.1; }
+  // the sky's light caught at the world's edge, on the ground itself
+  const landFx = enrich(landMat, { rim: pal.dark ? mixHex(pal.light, '#8E9CFF', 0.3) : mixHex(pal.bg[1], '#FFFFFF', 0.25), rimK: pal.dark ? 0.3 : 0.32, rimPow: pal.dark ? 3.2 : 2.6, glow: land === 'ember' ? pal.glow : null });
+  if (land === 'ember') tickers.push(t => { landFx.uGlowK.value = 0.6 + 0.18 * Math.sin(t * 1.3) + 0.06 * Math.sin(t * 3.7); });
   const terrain = outline(new THREE.Mesh(geo, landMat), 0.009);
   add('land', terrain);
   // A soft atmosphere: the sky's own light, caught at the world's edge.
@@ -98,9 +126,20 @@ export function buildPlanet(spec, seed) {
   // Land details that belong to the land pick.
   const landDirs = fib(1400).filter(d => raw(d) > T + 0.015 && !nearSpot(d, 0.22));
   shuffle(landDirs, rand);
-  if (land === 'flowers') add('land', scatterInstanced(landDirs.slice(0, 320), surface, [
-    { geo: new THREE.IcosahedronGeometry(0.014, 1), color: '#ffffff', y: 0.012, palette: pal.dots }
+  if (land === 'flowers' || land === 'lavender') add('land', scatterInstanced(landDirs.slice(0, land === 'lavender' ? 380 : 320), surface, [
+    land === 'lavender'
+      ? { geo: new THREE.ConeGeometry(0.009, 0.045, 5), color: '#9B86D6', y: 0.022, palette: pal.dots }
+      : { geo: new THREE.IcosahedronGeometry(0.014, 1), color: '#ffffff', y: 0.012, palette: pal.dots }
   ], rand, 0.9, 1.3));
+  if (land === 'ember') {
+    // the crater glows and breathes a little smoke; with snow or rain falling on it, a column of steam
+    const top = VOLCANO.clone().multiplyScalar(surface(VOLCANO) + 0.01);
+    const crater = halo(pal.glow, 0.34, 0.75); crater.position.copy(top); add('land', crater);
+    const puffs = new THREE.Group(); stand(puffs, VOLCANO, surface(VOLCANO) + 0.02); add('land', puffs);
+    const n = spec.flags.steam ? 9 : 5;
+    for (let k = 0; k < n; k++) puffs.add(mesh(new THREE.IcosahedronGeometry(0.03, 1), toon(spec.flags.steam ? '#FFFFFF' : '#B9AEB8', { opacity: 0.75 })));
+    tickers.push(t => { crater.material.opacity = 0.55 + 0.25 * Math.sin(t * 1.3); puffs.children.forEach((p, k) => { const ph = (t * 0.22 + k / n) % 1; p.position.set(Math.sin(ph * 5 + k) * 0.03, ph * (spec.flags.steam ? 0.5 : 0.3), Math.cos(ph * 4 + k) * 0.02); p.scale.setScalar(0.6 + ph * (spec.flags.steam ? 2.4 : 1.6)); p.material.opacity = 0.7 * (1 - ph); }); });
+  }
   if (land === 'crystal' || land === 'snow') add('land', scatterInstanced(landDirs.slice(320, land === 'crystal' ? 360 : 345), surface, [
     { geo: new THREE.OctahedronGeometry(0.03, 0), color: land === 'crystal' ? pal.shards : '#F4F8FF', y: 0.02, sy: 2.2, ink: 0.08, opts: { flat: true, emissive: land === 'crystal' ? '#6F5BC9' : '#000', emissiveIntensity: 0.15 } }
   ], rand, 0.6, 1.5));
@@ -108,8 +147,31 @@ export function buildPlanet(spec, seed) {
   /* ---------------- water ---------------- */
   if (coverage) {
     const wc = pal.water;
-    const wm = toon(wc, { opacity: water === 'frozen' ? 0.96 : 0.86, emissive: spec.flags.reflect ? '#3E9C94' : (water === 'frozen' ? '#AFCFE8' : '#000'), emissiveIntensity: spec.flags.reflect ? 0.35 : (water === 'frozen' ? 0.15 : 0) });
-    add('water', new THREE.Mesh(new THREE.SphereGeometry(0.988, 72, 48), wm));
+    // Depth you can see: shallow water is pale, deep water darker, and a soft line of foam at the shore.
+    const wgeo = new THREE.SphereGeometry(0.988, 96, 64), wp = wgeo.attributes.position, wcol = new Float32Array(wp.count * 3), wv = new THREE.Vector3();
+    const shallow = new THREE.Color(mixHex(wc, '#FFFFFF', water === 'starsea' ? 0.12 : 0.38)), deep = new THREE.Color(shade(wc, water === 'starsea' ? 0.7 : 0.8)), foam = new THREE.Color(water === 'starsea' ? '#B9C4FF' : '#FFFFFF'), wcc = new THREE.Color();
+    const poolCols = (P.water.pools || []).map(x => new THREE.Color(x));
+    for (let i = 0; i < wp.count; i++) {
+      wv.fromBufferAttribute(wp, i).normalize();
+      const hgt = raw(wv), dpt = Math.min(1, Math.max(0, (T - hgt) / Math.max(0.001, T - lo)));
+      if (poolCols.length) { const k = Math.floor((N(wv.x * 2.3 + 5, wv.y * 2.3, wv.z * 2.3, 1) + 0.5) * poolCols.length * 1.6); wcc.copy(poolCols[((k % poolCols.length) + poolCols.length) % poolCols.length]).lerp(deep, dpt * 0.25); }
+      else wcc.copy(shallow).lerp(deep, Math.pow(dpt, 0.7));
+      if (water !== 'frozen' && dpt < 0.06) wcc.lerp(foam, (1 - dpt / 0.06) * 0.55);
+      wcol.set([wcc.r, wcc.g, wcc.b], i * 3);
+    }
+    wgeo.setAttribute('color', new THREE.BufferAttribute(wcol, 3));
+    const wm = new THREE.MeshToonMaterial({ color: '#FFFFFF', vertexColors: true, gradientMap: toon('#fff').gradientMap, transparent: true, opacity: water === 'frozen' ? 0.96 : 0.9,
+      emissive: spec.flags.reflect ? '#3E9C94' : (water === 'frozen' ? '#AFCFE8' : '#000'), emissiveIntensity: spec.flags.reflect ? 0.35 : (water === 'frozen' ? 0.15 : 0) });
+    enrich(wm, { rim: pal.dark ? '#9FB0FF' : '#FFFFFF', rimK: 0.45, rimPow: 3 });
+    add('water', new THREE.Mesh(wgeo, wm));
+    // moving light on the surface (not on ice)
+    if (water !== 'frozen') add('water', glints(water === 'starsea' ? '#E9ECFF' : pal.dark ? '#DDE4FF' : '#FFFFFF', water === 'starsea' ? (spec.flags.starMirror ? 1.5 : 1.1) : pal.dark ? 0.9 : 0.6, tickers));
+    if (water === 'starsea') {
+      const low = fib(900).filter(d => raw(d) < T - 0.01); shuffle(low, rand);
+      const sp = new Float32Array(low.length * 3); low.forEach((d, i) => { const q = d.clone().multiplyScalar(0.992); sp.set([q.x, q.y, q.z], i * 3); });
+      const stars = points(sp, { size: 0.05, color: '#FFF6D8', shape: 'star', additive: true });
+      add('water', stars); tickers.push(t => { stars.material.opacity = 0.65 + 0.35 * Math.sin(t * 2.1); });
+    }
     if (water === 'springs') {
       const low = fib(500).filter(d => raw(d) < T - 0.01);
       shuffle(low, rand);
@@ -147,7 +209,7 @@ export function buildPlanet(spec, seed) {
   /* ---------------- growth ---------------- */
   const growth = P.growth.id;
   const canopy = CANOPY[land] || CANOPY.meadow;
-  const gCount = { round: 42, pines: 60, mushrooms: 14, crystaltrees: 26, lanterns: 70, puffs: 30, reeds: 90 }[growth];
+  const gCount = { round: 42, pines: 60, mushrooms: 14, crystaltrees: 26, lanterns: 70, puffs: 30, reeds: 90, cherry: 40, cacti: 34, sunflowers: 64 }[growth];
   const gDirs = landDirs.slice(420, 420 + gCount);
   const trunk = '#9C7A63';
   const templates = {
@@ -157,7 +219,10 @@ export function buildPlanet(spec, seed) {
     crystaltrees: [{ geo: new THREE.CylinderGeometry(0.005, 0.008, 0.05, 5), color: '#B5A3D8', y: 0.025 }, { geo: new THREE.OctahedronGeometry(0.045, 0), color: '#CFC2FF', y: 0.09, sy: 1.5, ink: 0.08, opts: { opacity: 0.85, flat: true, emissive: '#7A68D8', emissiveIntensity: 0.25 }, palette: ['#CFC2FF', '#BFE6FF', '#FFD6EC'] }],
     lanterns: [{ geo: new THREE.CylinderGeometry(0.003, 0.003, 0.06, 4), color: '#6E8F70', y: 0.03 }, { geo: new THREE.IcosahedronGeometry(0.016, 1), color: '#FFD98A', y: 0.065, glow: true, palette: spec.flags.glowGrowth ? ['#FFE7A3', '#FFD27A', '#FFF2C8'] : ['#F5C987', '#F4B69A', '#F6DFA0'] }],
     puffs: [{ geo: new THREE.CylinderGeometry(0.006, 0.009, 0.07, 5), color: '#C9A88E', y: 0.035 }, { geo: new THREE.IcosahedronGeometry(0.045, 2), color: '#F8C7DA', y: 0.095, ink: 0.08, palette: ['#F8C7DA', '#C6E3F7', '#FBE4B0', '#D9CCF7'] }],
-    reeds: [{ geo: new THREE.ConeGeometry(0.008, 0.09, 4), color: canopy[1], y: 0.045, palette: canopy }]
+    reeds: [{ geo: new THREE.ConeGeometry(0.008, 0.09, 4), color: canopy[1], y: 0.045, palette: canopy }],
+    cherry: [{ geo: new THREE.CylinderGeometry(0.007, 0.011, 0.065, 6), color: '#8E6B5E', y: 0.032 }, { geo: new THREE.IcosahedronGeometry(0.046, 1), color: '#F6C1CF', y: 0.09, ink: 0.1, palette: ['#F6C1CF', '#F9D7E0', '#F2A9BE', '#FFF3F6'] }],
+    cacti: [{ geo: new THREE.SphereGeometry(0.03, 12, 9), color: '#86BD8F', y: 0.03, sy: 1.4, ink: 0.1, palette: ['#86BD8F', '#78B087', '#9CCB9A'] }, { geo: new THREE.IcosahedronGeometry(0.011, 0), color: '#F4A9C0', y: 0.074, palette: ['#F4A9C0', '#FFE08A', '#FFFFFF', '#F7B98A'] }],
+    sunflowers: [{ geo: new THREE.CylinderGeometry(0.003, 0.004, 0.08, 4), color: '#6E9A58', y: 0.04 }, { geo: new THREE.CylinderGeometry(0.024, 0.024, 0.006, 12).rotateX(Math.PI / 2), color: '#F6CF52', y: 0.085, ink: 0.12, palette: ['#F6CF52', '#F4BE3C', '#F9DC74'] }, { geo: new THREE.CylinderGeometry(0.011, 0.011, 0.008, 10).rotateX(Math.PI / 2).translate(0, 0, 0.003), color: '#7A5233', y: 0.085 }]
   };
   add('growth', scatterInstanced(gDirs, surface, templates[growth], rand, 0.7, 1.25));
   if (growth === 'lanterns' && spec.flags.glowGrowth) {
@@ -194,10 +259,14 @@ export function buildPlanet(spec, seed) {
 
   /* ---------------- sky: light, background things ---------------- */
   const sky = P.sky.id;
-  const hemi = new THREE.HemisphereLight(pal.light, pal.dark ? '#4A4F7E' : '#E9DDE6', pal.dark ? 0.95 : 1.25);
-  const key = new THREE.DirectionalLight(pal.light, pal.dark ? 1.5 : 1.9);
+  const hemi = new THREE.HemisphereLight(pal.light, pal.dark ? '#4A4F7E' : '#E9DDE6', pal.dark ? 0.9 : 1.15);
+  const key = new THREE.DirectionalLight(pal.light, pal.dark ? 1.6 : 2.0);
   key.position.set(-3, 3.5, 4);
-  const lights = group(hemi, key);
+  shadowKey(key, 2.5, (typeof window !== 'undefined' && window.innerWidth > 700) ? 2048 : 1280);
+  // a cool light from behind, so the silhouette separates from the sky
+  const back = new THREE.DirectionalLight(pal.dark ? '#AFC0FF' : mixHex(pal.bg[1], '#FFFFFF', 0.4), pal.dark ? 0.9 : 0.7);
+  back.position.set(3, 1.5, -4);
+  const lights = group(hemi, key, back);
   skyLayer.add(lights);
   if (pal.dark) {
     const n = 260, sp = new Float32Array(n * 3);
@@ -208,7 +277,8 @@ export function buildPlanet(spec, seed) {
   }
   if (sky === 'aurora') add('sky', aurora(tickers), skyLayer);
   if (sky === 'eclipse') add('sky', eclipse(), skyLayer);
-  if (sky === 'dawn' || sky === 'sunset' || sky === 'noon') {
+  if (sky === 'milkyway') add('sky', milkyWay(rand, tickers), skyLayer);
+  if (sky === 'dawn' || sky === 'sunset' || sky === 'noon' || sky === 'lilac') {
     const sun = new THREE.Sprite(new THREE.SpriteMaterial({ map: spriteTex('dot', '#ffffff'), color: sky === 'noon' ? '#FFF6D8' : '#FFD7B0', transparent: true, opacity: 0.9, depthWrite: false }));
     sun.position.set(-2.6, 1.9, -3); sun.scale.setScalar(1.6);
     add('sky', sun, skyLayer);
@@ -224,6 +294,11 @@ export function buildPlanet(spec, seed) {
   /* ---------------- visitor ---------------- */
   const vis = buildVisitor(P.visitor.id, spec, surface, tickers, rand, pal);
   add('visitor', vis);
+
+  /* ---------------- depth: soft shadows, lit windows that glow ---------------- */
+  shadows(world);
+  terrain.castShadow = true; terrain.receiveShadow = true;
+  if (pal.dark) world.traverse(o => { if (o.isMesh && o.material?.userData?.window && !o.userData.haloed) { o.userData.haloed = true; const hh = halo('#FFD98A', 0.09, 0.8); o.add(hh); } });
 
   /* ---------------- api ---------------- */
   let time = 0;
@@ -311,7 +386,7 @@ function edges(m, color = '#2E2A44') {
 /* ----------------------------------------------------------------- dwellings */
 function buildDwelling(id, spec, tickers, rand) {
   const s = 1;
-  const winGlow = glow('#FFE3A0');
+  const winGlow = glow('#FFE3A0'); winGlow.userData.window = true;
   const cream = toon('#F6EEE2'), rose = toon('#E58F8C'), blueRoof = toon('#8DA6E0'), wood = toon('#B98D6E');
   const ink = 0.05;
   switch (id) {
@@ -387,6 +462,53 @@ function buildDwelling(id, spec, tickers, rand) {
         mesh(new THREE.CylinderGeometry(0.035, 0.055, 0.16, 8), toon('#EADCC8'), { pos: [0, 0.08, 0], ink }),
         mesh(new THREE.ConeGeometry(0.045, 0.06, 8), rose, { pos: [0, 0.19, 0], ink }),
         blades
+      );
+    }
+    case 'treehouse': {
+      const g = group(
+        mesh(new THREE.CylinderGeometry(0.022, 0.034, 0.24, 8), toon('#9C7A63'), { pos: [0, 0.12, 0], ink }),
+        mesh(new THREE.IcosahedronGeometry(0.115, 1), toon('#86BF86'), { pos: [0, 0.3, -0.02], ink: 0.06 }),
+        mesh(new THREE.IcosahedronGeometry(0.08, 1), toon('#9ED29A'), { pos: [0.07, 0.26, 0.04], ink: 0.06 }),
+        mesh(new THREE.BoxGeometry(0.11, 0.012, 0.1), wood, { pos: [0, 0.17, 0.06], ink: 0.1 }),
+        mesh(new THREE.BoxGeometry(0.075, 0.06, 0.06), cream, { pos: [0, 0.206, 0.07], ink }),
+        mesh(new THREE.ConeGeometry(0.065, 0.045, 4), rose, { pos: [0, 0.258, 0.07], rot: [0, Math.PI / 4, 0], ink }),
+        mesh(new THREE.PlaneGeometry(0.022, 0.022), winGlow, { pos: [0.015, 0.21, 0.101] })
+      );
+      for (const x of [-0.016, 0.016]) g.add(mesh(new THREE.BoxGeometry(0.004, 0.17, 0.004), wood, { pos: [x, 0.085, 0.13], rot: [-0.25, 0, 0] }));
+      for (let i = 0; i < 5; i++) g.add(mesh(new THREE.BoxGeometry(0.036, 0.004, 0.004), wood, { pos: [0, 0.02 + i * 0.032, 0.118 + i * 0.008] }));
+      return g;
+    }
+    case 'bakery': {
+      const awn = new THREE.Group();
+      for (let i = 0; i < 6; i++) awn.add(mesh(new THREE.BoxGeometry(0.028, 0.004, 0.05), toon(i % 2 ? '#FFF6EE' : '#E9909C'), { pos: [-0.07 + i * 0.028, 0, 0.02] }));
+      awn.position.set(0, 0.085, 0.06); awn.rotation.x = 0.4;
+      const smoke = new THREE.Group(); smoke.position.set(-0.045, 0.2, -0.02);
+      for (let k = 0; k < 4; k++) smoke.add(mesh(new THREE.IcosahedronGeometry(0.016, 1), toon('#FFFFFF', { opacity: 0.75 })));
+      tickers.push(t => smoke.children.forEach((p, k) => { const ph = (t * 0.3 + k / 4) % 1; p.position.set(Math.sin(ph * 5 + k) * 0.012, ph * 0.16, 0); p.scale.setScalar(0.6 + ph * 1.6); p.material.opacity = 0.75 * (1 - ph); }));
+      return group(
+        mesh(new THREE.BoxGeometry(0.16, 0.1, 0.12), toon('#F8EBDA'), { pos: [0, 0.05, 0], ink }),
+        mesh(new THREE.ConeGeometry(0.13, 0.08, 4), toon('#B5806A'), { pos: [0, 0.14, 0], rot: [0, Math.PI / 4, 0], scale: [1, 1, 0.8], ink }),
+        mesh(new THREE.BoxGeometry(0.022, 0.05, 0.022), toon('#C9B3A2'), { pos: [-0.045, 0.17, -0.02], ink }),
+        mesh(new THREE.PlaneGeometry(0.05, 0.035), winGlow, { pos: [-0.035, 0.05, 0.061] }),
+        mesh(new THREE.PlaneGeometry(0.028, 0.05), toon('#9B6F5A'), { pos: [0.04, 0.025, 0.061] }),
+        mesh(new THREE.TorusGeometry(0.012, 0.004, 6, 12), toon('#E6B66A'), { pos: [0.04, 0.078, 0.064] }),
+        awn, smoke
+      );
+    }
+    case 'tent': {
+      const tri = new THREE.Shape(); tri.moveTo(-0.075, 0); tri.lineTo(0, 0.1); tri.lineTo(0.075, 0); tri.closePath();
+      const tg = new THREE.ExtrudeGeometry(tri, { depth: 0.13, bevelEnabled: false }); tg.translate(0, 0, -0.065);
+      const fire = new THREE.Group(); fire.position.set(0.09, 0, 0.09);
+      for (const r of [0.4, -0.5]) fire.add(mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.04, 5), wood, { pos: [0, 0.004, 0], rot: [Math.PI / 2, r, 0] }));
+      const flame = mesh(new THREE.ConeGeometry(0.012, 0.03, 6), glow('#FFB45C'), { pos: [0, 0.018, 0] });
+      const fh = halo('#FFB45C', 0.14, 0.8); fh.position.y = 0.02; fire.add(flame, fh);
+      if (spec.palette.dark) { const l = new THREE.PointLight('#FFB070', 0.9, 0.6, 2); l.position.y = 0.04; fire.add(l); }
+      tickers.push(t => { const f = 0.85 + 0.2 * Math.sin(t * 13) * Math.sin(t * 7.3); flame.scale.set(1, f, 1); fh.material.opacity = 0.55 + 0.3 * f - 0.25; });
+      return group(
+        mesh(tg, toon('#E9A07A'), { ink }),
+        mesh(new THREE.PlaneGeometry(0.03, 0.05), winGlow, { pos: [0, 0.025, 0.066] }),
+        mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.03, 4), wood, { pos: [0, 0.11, 0.06] }),
+        fire
       );
     }
     case 'train': {
@@ -500,6 +622,37 @@ function buildWonder(id, spot, surface, tickers, rand, pal, idx) {
       g.add(mesh(new THREE.PlaneGeometry(0.17, 0.1), new THREE.MeshBasicMaterial({ color: '#E9E1FF', transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false }), { pos: [0, 0.05, 0] }));
       break;
     }
+    case 'hourglass': {
+      const wood = toon('#B08A6E'), glass = toon('#E6F2FF', { opacity: 0.5 }), sand = toon('#F2CF8A');
+      g.add(mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.018, 16), wood, { pos: [0, 0.009, 0], ink }), mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.018, 16), wood, { pos: [0, 0.32, 0], ink }));
+      for (let i = 0; i < 3; i++) { const a = i / 3 * Math.PI * 2; g.add(mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.3, 5), wood, { pos: [Math.cos(a) * 0.062, 0.165, Math.sin(a) * 0.062] })); }
+      g.add(mesh(new THREE.ConeGeometry(0.05, 0.145, 16, 1, true), glass, { pos: [0, 0.092, 0], rot: [Math.PI, 0, 0] }), mesh(new THREE.ConeGeometry(0.05, 0.145, 16, 1, true), glass, { pos: [0, 0.238, 0] }));
+      const pile = mesh(new THREE.ConeGeometry(0.04, 0.04, 14), sand, { pos: [0, 0.038, 0] }), top = mesh(new THREE.ConeGeometry(0.034, 0.05, 14), sand, { pos: [0, 0.205, 0], rot: [Math.PI, 0, 0] });
+      const stream = mesh(new THREE.CylinderGeometry(0.0025, 0.0025, 0.12, 4), glow('#F6D79A'), { pos: [0, 0.12, 0] });
+      g.add(pile, top, stream);
+      tickers.push(t => { const k = (t * 0.03 + idx * 0.4) % 1; top.scale.setScalar(1 - k * 0.7); pile.scale.set(0.5 + k * 0.6, 0.4 + k * 0.7, 0.5 + k * 0.6); stream.material.opacity = 1; });
+      break;
+    }
+    case 'swing': {
+      const holder = new THREE.Group(); holder.position.y = 0.56; g.add(holder);
+      const seat = mesh(new THREE.BoxGeometry(0.09, 0.008, 0.035), toon('#C99B78'), { pos: [0, -0.48, 0], ink: 0.15 });
+      holder.add(seat);
+      for (const x of [-0.04, 0.04]) holder.add(line([new THREE.Vector3(x, -0.48, 0), new THREE.Vector3(x * 0.6, 0, 0)], pal.dark ? '#E6E3FF' : '#7A6C80', 0.75));
+      const star = new THREE.Sprite(new THREE.SpriteMaterial({ map: spriteTex('star'), color: '#FFF1B8', transparent: true, depthWrite: false })); star.scale.setScalar(0.09); holder.add(star);
+      tickers.push(t => { holder.rotation.x = Math.sin(t * 1.5 + idx) * 0.32; star.material.rotation = t * 0.5; });
+      break;
+    }
+    case 'mailbox': {
+      const blue = toon('#8FA7D9'), red = toon('#D9635B');
+      g.add(mesh(new THREE.CylinderGeometry(0.007, 0.008, 0.13, 6), toon('#8E6E5E'), { pos: [0, 0.065, 0] }));
+      g.add(mesh(new THREE.BoxGeometry(0.06, 0.04, 0.1), blue, { pos: [0, 0.15, 0], ink }), mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.1, 14, 1, false, 0, Math.PI), blue, { pos: [0, 0.17, 0], rot: [Math.PI / 2, Math.PI / 2, 0], ink }));
+      const flag = group(mesh(new THREE.BoxGeometry(0.004, 0.05, 0.004), red, { pos: [0, 0.025, 0] }), mesh(new THREE.BoxGeometry(0.004, 0.018, 0.024), red, { pos: [0, 0.042, 0.012] }));
+      flag.position.set(0.033, 0.14, -0.02); g.add(flag);
+      const letter = mesh(new THREE.BoxGeometry(0.035, 0.024, 0.003), toon('#FFF8EC'), { pos: [0, 0.152, 0.052], ink: 0.2 });
+      g.add(letter);
+      tickers.push(t => { const k = (t * 0.12 + idx * 0.5) % 1; flag.rotation.x = k < 0.5 ? -Math.min(1, k * 8) * 1.2 : -1.2 * Math.max(0, 1 - (k - 0.5) * 8); letter.position.z = 0.05 + Math.max(0, Math.sin(k * Math.PI * 2)) * 0.012; });
+      break;
+    }
     case 'door': {
       const frame = toon('#F3ECE4'), panel = toon('#8FA7D9');
       g.add(mesh(new THREE.BoxGeometry(0.014, 0.17, 0.02), frame, { pos: [-0.05, 0.085, 0], ink: 0.1 }));
@@ -518,6 +671,53 @@ function buildWonder(id, spot, surface, tickers, rand, pal, idx) {
   return g;
 }
 
+/* ----------------------------------------------------------------- water light */
+function glints(color, k, tickers) {
+  const mat = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color(color) }, uK: { value: k } },
+    vertexShader: 'varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }',
+    fragmentShader: `uniform float uTime; uniform vec3 uColor; uniform float uK; varying vec3 vP; varying vec3 vN; varying vec3 vV;
+      float hash(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+      float vnoise(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(mix(hash(i), hash(i + vec3(1,0,0)), f.x), mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y),
+                   mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x), mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y), f.z); }
+      void main(){
+        // two drifting noise fields; only where both peak does a tiny glint appear, and it twinkles
+        float a = vnoise(vP * 90.0 + vec3(uTime * 0.6, uTime * 0.45, -uTime * 0.5));
+        float b = vnoise(vP * 47.0 - vec3(uTime * 0.25, -uTime * 0.2, uTime * 0.3));
+        float s = smoothstep(0.8, 0.97, a * b * 1.55);
+        float facing = smoothstep(0.25, 0.8, dot(vN, vV));
+        gl_FragColor = vec4(uColor, s * facing * 0.6 * uK);
+      }`
+  });
+  tickers.push(t => { mat.uniforms.uTime.value = t; });
+  const m = new THREE.Mesh(new THREE.SphereGeometry(0.9905, 96, 64), mat);
+  m.raycast = () => {};
+  return m;
+}
+
+function milkyWay(rand, tickers) {
+  const g = new THREE.Group();
+  const n = 900, p = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const x = (rand() - 0.5) * 15, spread = (rand() + rand() + rand() - 1.5) * 0.9;
+    p.set([x, x * 0.42 + spread, -5 - rand() * 2], i * 3);
+  }
+  const band = points(p, { size: 0.045, color: '#F4F0FF', shape: 'dot', opacity: 0.8, additive: true });
+  g.add(band);
+  const c = document.createElement('canvas'); c.width = 256; c.height = 64;
+  const x = c.getContext('2d'), gr = x.createLinearGradient(0, 0, 0, 64);
+  gr.addColorStop(0, 'rgba(170,160,255,0)'); gr.addColorStop(0.5, 'rgba(210,190,255,0.55)'); gr.addColorStop(1, 'rgba(170,160,255,0)');
+  x.fillStyle = gr; x.fillRect(0, 0, 256, 64);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const glowBand = new THREE.Mesh(new THREE.PlaneGeometry(16, 2.4), new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending }));
+  glowBand.position.set(0, 0, -6); glowBand.rotation.z = Math.atan(0.42);
+  g.add(glowBand);
+  tickers.push(t => { band.material.opacity = 0.7 + 0.15 * Math.sin(t * 1.1); });
+  return g;
+}
+
 /* ----------------------------------------------------------------- sky things */
 function aurora(tickers) {
   const g = new THREE.Group();
@@ -528,7 +728,7 @@ function aurora(tickers) {
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
       uniforms: { t: { value: 0 }, c: { value: new THREE.Color(color) }, ph: { value: ph } },
       vertexShader: 'uniform float t; uniform float ph; varying vec2 vUv; void main(){ vUv=uv; vec3 p=position; p.y+=sin(p.x*0.9+t*0.5+ph)*0.35; p.z+=cos(p.x*0.6+t*0.3+ph)*0.5; gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0);} ',
-      fragmentShader: 'uniform vec3 c; uniform float t; varying vec2 vUv; void main(){ float a=smoothstep(0.0,0.35,vUv.y)*smoothstep(1.0,0.45,vUv.y); a*=0.35+0.65*pow(0.5+0.5*sin(vUv.x*70.0+sin(vUv.x*9.0+t*0.7)*3.0),2.0); gl_FragColor=vec4(c, a*0.5);} '
+      fragmentShader: 'uniform vec3 c; uniform float t; varying vec2 vUv; void main(){ float a=smoothstep(0.0,0.35,vUv.y)*(1.0-smoothstep(0.45,1.0,vUv.y)); a*=0.35+0.65*pow(0.5+0.5*sin(vUv.x*70.0+sin(vUv.x*9.0+t*0.7)*3.0),2.0); gl_FragColor=vec4(c, a*0.5);} '
     });
     mats.push(mat);
     const m = new THREE.Mesh(geo, mat);
@@ -617,6 +817,19 @@ function buildMoons(id, spec, tickers, rand, pal) {
     tickers.push(t => { m.position.y = Math.sin(t * 0.8) * 0.05; m.rotation.y = Math.sin(t * 0.4) * 0.25; });
     g.add(holder);
   }
+  if (id === 'moonlets') {
+    for (let k = 0; k < 5; k++) g.add(orbit(moonBall(0.04 + (k % 2) * 0.012, k % 2 ? '#D9CCF6' : pearl, 0.08), 1.75, 0.2, 0.42, 0.5 + k * 0.34, tickers));
+  }
+  if (id === 'sibling') {
+    const geo = new THREE.IcosahedronGeometry(0.2, 4), cols = [], pp = geo.attributes.position, cc = new THREE.Color();
+    for (let i = 0; i < pp.count; i++) { const yy = pp.getY(i) / 0.2; cc.set(Math.sin(yy * 7) > 0.2 ? (pal.dark ? '#B9A6E8' : '#F2C9B8') : (pal.dark ? '#8E9AD6' : '#E8B7C6')); cols.push(cc.r, cc.g, cc.b); }
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+    const sis = mesh(geo, new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: toon('#fff').gradientMap }), { ink: 0.05 });
+    const ring = mesh(new THREE.RingGeometry(0.27, 0.36, 48), new THREE.MeshBasicMaterial({ color: pal.dark ? '#D7CCF2' : '#F3E0C2', transparent: true, opacity: 0.7, side: THREE.DoubleSide, depthWrite: false }), { rot: [Math.PI / 2 - 0.5, 0, 0.2] });
+    const body = group(sis, ring);
+    tickers.push(t => { sis.rotation.y = t * 0.3; });
+    g.add(orbit(body, 2.45, 0.07, 0.28, 2.2, tickers));
+  }
   if (id === 'sun2') {
     const sun = group(mesh(new THREE.IcosahedronGeometry(0.11, 3), glow('#FFD58A')));
     const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: spriteTex('dot'), color: '#FFC37A', transparent: true, opacity: 0.8, depthWrite: false, blending: THREE.AdditiveBlending }));
@@ -699,6 +912,25 @@ function buildAir(id, spec, surface, tickers, rand, pal, landDirs) {
       }));
       // Meteors belong to the sky around the world, not to the world: re-parented by the stage.
       g.userData.skyFixed = true;
+      break;
+    }
+    case 'skylanterns': {
+      const n = 16, base = [];
+      const from = spec.flags.lanternTrail ? SPOTS.dwelling : null;
+      for (let i = 0; i < n; i++) {
+        const lan = group(mesh(new THREE.BoxGeometry(0.026, 0.034, 0.026), glow(['#FFD27A', '#FFC48A', '#FFE29E'][i % 3])), halo('#FFC870', 0.1, 0.55));
+        g.add(lan);
+        const d = from ? from.clone().add(new THREE.Vector3((rand() - 0.5) * 0.35, (rand() - 0.5) * 0.2, (rand() - 0.5) * 0.35)).normalize() : landDirs[(i * 17) % landDirs.length] || new THREE.Vector3(0, 1, 0);
+        base.push({ lan, d, ph: rand() });
+      }
+      tickers.push(t => base.forEach((o, i) => { const k = (t * 0.06 + o.ph) % 1; o.lan.position.copy(o.d).multiplyScalar(surface(o.d) + 0.04 + k * 1.1); o.lan.position.x += Math.sin(t * 0.8 + i) * 0.02 * k; o.lan.scale.setScalar(k > 0.85 ? Math.max(0.001, 1 - (k - 0.85) / 0.15) : Math.min(1, k * 8)); }));
+      break;
+    }
+    case 'dandelion': {
+      const p = points(shellPts(150, 1.05, 1.9), { size: 0.075, color: pal.dark ? '#F2F0FF' : '#FFFFFF', shape: 'seed', opacity: 0.95 });
+      g.add(p);
+      const a = p.geometry.attributes.position, v = new THREE.Vector3(), up = new THREE.Vector3(0.3, 1, 0.2).normalize();
+      tickers.push((t, dt) => { for (let i = 0; i < a.count; i++) { v.fromBufferAttribute(a, i); v.applyAxisAngle(up, dt * (0.05 + (i % 5) * 0.012)); v.setLength(v.length() + Math.sin(t * 0.7 + i) * 0.0008); a.setXYZ(i, v.x, v.y, v.z); } a.needsUpdate = true; });
       break;
     }
     case 'bubbles': {
@@ -812,6 +1044,56 @@ function buildVisitor(id, spec, surface, tickers, rand, pal) {
       const b = group(env, basket);
       for (const [x, z] of [[0.02, 0.02], [-0.02, 0.02], [0.02, -0.02], [-0.02, -0.02]]) b.add(line([new THREE.Vector3(x, -0.18, z), new THREE.Vector3(x * 3, -0.09, z * 3)], '#6B5B6E'));
       flyAround(b, 1.7, 0.07, 0.35, 0.3, 0.05);
+      break;
+    }
+    case 'butterflies': {
+      const cols = ['#F7B6D6', '#A9CDF0', '#F6DE97', '#C6B4F6', '#B9E3B0', '#FFFFFF'];
+      cols.forEach((col, i) => {
+        const wm = toon(col, { side: THREE.DoubleSide });
+        const wing = sx => { const sh = new THREE.Shape(); sh.moveTo(0, 0); sh.bezierCurveTo(sx * 0.03, 0.035, sx * 0.07, 0.03, sx * 0.06, -0.002); sh.bezierCurveTo(sx * 0.055, -0.03, sx * 0.02, -0.035, 0, -0.006); const m = new THREE.Mesh(new THREE.ShapeGeometry(sh), wm); m.rotation.x = -Math.PI / 2; return group(m); };
+        const L = wing(-1), Rw = wing(1);
+        const bf = group(L, Rw, mesh(new THREE.CapsuleGeometry(0.004, 0.03, 3, 6), toon('#4A4560'), { rot: [0, 0, Math.PI / 2] }));
+        tickers.push(t => { const f = Math.sin(t * 11 + i * 1.7) * 0.9; L.rotation.x = f; Rw.rotation.x = -f; });
+        const holder = group(bf); holder.rotation.y = Math.PI / 2;
+        flyAround(group(holder), 1.16 + (i % 3) * 0.05, 0.16 + (i % 2) * 0.05, 0.9 - i * 0.32, i * 1.1, 0.05);
+      });
+      break;
+    }
+    case 'owl': {
+      const brown = toon('#B39A86'), cream = toon('#F4EADC'), dark = toon('#3E3448');
+      const eyeL = mesh(new THREE.SphereGeometry(0.014, 10, 8), toon('#FFFFFF'), { pos: [-0.017, 0.085, 0.034] }), eyeR = mesh(new THREE.SphereGeometry(0.014, 10, 8), toon('#FFFFFF'), { pos: [0.017, 0.085, 0.034] });
+      eyeL.add(mesh(new THREE.SphereGeometry(0.007, 8, 6), dark, { pos: [0, 0, 0.01] })); eyeR.add(mesh(new THREE.SphereGeometry(0.007, 8, 6), dark, { pos: [0, 0, 0.01] }));
+      const owl = group(
+        mesh(new THREE.SphereGeometry(0.042, 14, 10), brown, { pos: [0, 0.05, 0], scale: [1, 1.2, 0.9], ink: 0.08 }),
+        mesh(new THREE.SphereGeometry(0.03, 12, 8), cream, { pos: [0, 0.045, 0.02], scale: [1, 1.2, 0.7] }),
+        mesh(new THREE.ConeGeometry(0.01, 0.022, 4), brown, { pos: [-0.024, 0.11, 0], rot: [0, 0, 0.3] }), mesh(new THREE.ConeGeometry(0.01, 0.022, 4), brown, { pos: [0.024, 0.11, 0], rot: [0, 0, -0.3] }),
+        mesh(new THREE.ConeGeometry(0.006, 0.012, 4), toon('#E6B66A'), { pos: [0, 0.073, 0.042], rot: [Math.PI / 2 + 0.3, 0, 0] }),
+        eyeL, eyeR,
+        mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.09, 5), toon('#8E6E5E'), { pos: [0, 0.008, 0], rot: [0, 0, Math.PI / 2] })
+      );
+      const d = SPOTS.dwelling.clone().applyAxisAngle(new THREE.Vector3(0, 0, 1), 0.32).applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.25).normalize();
+      stand(owl, d, surface(d) + 0.08, 0.4);
+      const perch = mesh(new THREE.CylinderGeometry(0.005, 0.007, 0.09, 5), toon('#8E6E5E'), { pos: [0, -0.045, 0] }); owl.add(perch);
+      const awake = spec.flags.owlAwake;
+      tickers.push(t => { const blink = (t % 3.7) < 0.12 ? 0.1 : (awake ? 1 : 0.35); eyeL.scale.y = eyeR.scale.y = blink; owl.rotation.y = 0.4 + Math.sin(t * 0.5) * 0.35; });
+      g.add(owl);
+      break;
+    }
+    case 'dragon': {
+      const segs = [], n = 18, body = toon('#A8DCCB'), belly = toon('#F3EBDD');
+      for (let i = 0; i < n; i++) {
+        const r = 0.04 * (1 - i / n * 0.75);
+        const seg = mesh(new THREE.SphereGeometry(r, 12, 9), i % 3 === 1 ? belly : body, { ink: 0.07 });
+        if (i % 3 === 0 && i > 0 && i < n - 2) seg.add(mesh(new THREE.ConeGeometry(r * 0.5, r * 1.2, 4), toon('#F3C27A'), { pos: [0, r * 0.9, 0] }));
+        g.add(seg); segs.push(seg);
+      }
+      const head = segs[0];
+      head.scale.set(1.25, 1, 1.4);
+      head.add(mesh(new THREE.ConeGeometry(0.008, 0.035, 5), toon('#F3C27A'), { pos: [-0.015, 0.04, -0.01], rot: [-0.5, 0, 0.3] }), mesh(new THREE.ConeGeometry(0.008, 0.035, 5), toon('#F3C27A'), { pos: [0.015, 0.04, -0.01], rot: [-0.5, 0, -0.3] }));
+      head.add(mesh(new THREE.SphereGeometry(0.007, 6, 6), toon('#2B2950'), { pos: [-0.02, 0.012, 0.025] }), mesh(new THREE.SphereGeometry(0.007, 6, 6), toon('#2B2950'), { pos: [0.02, 0.012, 0.025] }));
+      const tilt = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.35, 0, -0.25)), nx = new THREE.Vector3(), Z = new THREE.Vector3(0, 0, 1);
+      const at = (a, k, out) => out.set(Math.cos(a) * 1.5, Math.sin(a * 3 + k * 0.4) * 0.09, -Math.sin(a) * 1.5).applyQuaternion(tilt);
+      tickers.push(t => { segs.forEach((sg, i) => { const a = t * 0.18 - i * 0.055; at(a, i, sg.position); if (i === 0) { at(a + 0.02, 0, nx).sub(sg.position).normalize(); sg.quaternion.setFromUnitVectors(Z, nx); } }); });
       break;
     }
     case 'fox': {
