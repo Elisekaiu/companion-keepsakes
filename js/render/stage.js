@@ -201,7 +201,7 @@ export function createStage(host, { transparent = true } = {}) {
       host.style.setProperty('--sky-a', bg[0]);
       host.style.setProperty('--sky-b', bg[1]);
       host.classList.toggle('is-dark', !!dark);
-      drawOrnament(orn, seed, ink, dark, fr().ornament || 'orbits');
+      drawOrnament(orn, seed, ink, dark, fr().ornament || 'starry');
     },
     /** Reserve screen space for overlays ({top, bottom} in CSS pixels); the object glides into the space left. */
     setInsets({ top = 0, bottom = 0 } = {}, { instant = false } = {}) {
@@ -268,8 +268,8 @@ function drawOrnament(svg, seed, ink, dark, style = 'orbits') {
     add('path', { d: `M${x} ${y - s} Q${x + k} ${y - k} ${x + s} ${y} Q${x + k} ${y + k} ${x} ${y + s} Q${x - k} ${y + k} ${x - s} ${y} Q${x - k} ${y - k} ${x} ${y - s}Z`, fill: color, opacity: 0.9 });
   };
   if (style === 'none') return;
-  if (style === 'sparkles') { // a jeweller's card: no lines, a few soft glints
-    for (let i = 0; i < 9; i++) {
+  if (style === 'sparkles' || style === 'starry') { // no orbit lines: a few soft glints (more of them around a planet)
+    for (let i = 0; i < (style === 'starry' ? 18 : 9); i++) {
       const a = r() * Math.PI * 2, d = 24 + r() * 26, x = 50 + Math.cos(a) * d * 0.8, y = 50 + Math.sin(a) * d;
       if (x < 4 || x > 96 || y < 4 || y > 96) continue;
       i % 3 ? sparkle(x, y, 0.5 + r() * 1.1, accents[i % 4]) : add('circle', { cx: x, cy: y, r: 0.2 + r() * 0.3, fill: accents[(i + 1) % 4], opacity: 0.6 });

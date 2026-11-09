@@ -342,3 +342,78 @@ html[lang="en"] .quote { font-style: italic; }
 .story-item em.tag { font: 500 15px/1 var(--hand); font-style: normal; color: var(--gold); margin-left: 6px; letter-spacing: 0; }
 .stamp-over { inset: 0; display: grid; place-content: center; justify-items: center; gap: 6px; background: color-mix(in srgb, var(--paper) 35%, transparent); animation: fade .3s both; }
 .stamp-over .hand { font-size: 28px; color: var(--ink); margin: 0; }
+
+/* ---------- the greeting card: a pop-up card for the sealed lines ---------- */
+.gc-overlay { position: fixed; inset: 0; z-index: 30; overflow: hidden; touch-action: none; animation: fade .35s both;
+  background: radial-gradient(120% 85% at 50% 38%, rgba(74, 44, 54, .38), rgba(28, 16, 24, .78)); -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px); }
+.gc-overlay.out { animation: fadeOut .35s both; }
+@keyframes fadeOut { to { opacity: 0; } }
+.gc { position: absolute; left: 50%; top: calc(50% + var(--H) * .36); width: 0; height: 0; perspective: calc(var(--H) * 3.2); cursor: pointer; }
+.gc:not(.open):not(.closing) { animation: gcBob 3.4s ease-in-out infinite; }
+@keyframes gcBob { 50% { transform: translateY(-7px); } }
+.gc-cam, .gc-scene { position: absolute; left: 0; top: 0; transform-style: preserve-3d; }
+.gc-face > svg, .gc-layer > svg, .gc-floor > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.gc-floor { position: absolute; top: 0; transform-origin: 50% 0; transform: rotateX(90deg); border-radius: 3px; box-shadow: 0 30px 60px -10px rgba(20, 8, 14, .45); }
+.gc-shadow { position: absolute; height: 12px; border-radius: 50%; background: radial-gradient(closest-side, rgba(80, 30, 40, .45), transparent); opacity: 0; transition: opacity .8s ease var(--d); }
+.gc.open .gc-shadow { opacity: 1; }
+.gc-back { position: absolute; transform-origin: 50% 100%; transform: rotateX(-86deg); transform-style: preserve-3d; transition: transform 1.45s cubic-bezier(.22, .8, .25, 1.04); }
+.gc.open .gc-back { transform: rotateX(7deg); }
+.gc.closing .gc-back { transition: transform .85s cubic-bezier(.5, 0, .7, .4) .25s; }
+.gc-face { position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 3px; overflow: hidden; }
+.gc-inside { box-shadow: inset 0 -30px 40px -30px rgba(120, 60, 70, .25); }
+.gc-inside::after { content: ""; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: soft-light; opacity: 0;
+  background: linear-gradient(115deg, transparent 38%, rgba(255, 238, 200, .9) 50%, transparent 62%); background-size: 260% 100%; background-position: 120% 0; }
+.gc.open .gc-inside::after { animation: gcSheen 5s 1.4s ease-in-out infinite; }
+@keyframes gcSheen { 0% { opacity: 0; background-position: 120% 0; } 15% { opacity: 1; } 45% { opacity: 1; background-position: -20% 0; } 60%, 100% { opacity: 0; background-position: -20% 0; } }
+.gc-cover { transform: rotateX(180deg); }
+.gc-cover-text { position: absolute; left: 0; right: 0; top: 70%; display: grid; justify-items: center; gap: 2px; color: var(--ink); text-align: center; }
+.gc-cover-text .script { font: 400 calc(var(--W) * .13)/1 'Pinyon Script', cursive; }
+.gc-cover-text b { font: 400 calc(var(--W) * .055)/1.4 "Xiaolai SC", "Kaiti SC", STKaiti, serif; letter-spacing: .12em; opacity: .85; }
+.gc-layer { position: absolute; transform-origin: 50% 100%; transform: translateZ(var(--z)) rotateX(-89deg);
+  transition: transform .95s cubic-bezier(.3, 1.45, .5, 1) var(--d), filter .95s ease var(--d); filter: drop-shadow(0 2px 2px rgba(80, 30, 40, .15)) brightness(.9); }
+.gc.open .gc-layer { transform: translateZ(var(--z)) rotateX(0deg); filter: drop-shadow(0 6px 7px rgba(80, 30, 40, .22)) brightness(1); }
+.gc.closing .gc-layer { transition: transform .55s cubic-bezier(.5, 0, .8, .5), filter .55s; }
+.gc .tw { animation: gcTw 2.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.gc .tw:nth-of-type(3n) { animation-delay: -1s; } .gc .tw:nth-of-type(3n+1) { animation-delay: -1.9s; }
+@keyframes gcTw { 50% { opacity: .35; transform: scale(.7); } }
+.gc-seal { transform-box: fill-box; transform-origin: center; transition: transform .45s cubic-bezier(.3, 1.6, .5, 1), opacity .35s ease .2s; filter: drop-shadow(0 3px 2px rgba(80, 30, 40, .3)); }
+.gc:not(.open):not(.closing):hover .gc-seal { transform: scale(1.04); }
+.gc.open .gc-seal { transform: scale(1.22) rotate(-8deg); opacity: 0; }
+/* the words on the arch */
+.gc-words { position: absolute; left: 14%; right: 14%; top: 19%; bottom: 15%; display: flex; flex-direction: column; color: var(--ink); overflow: hidden; text-align: left; }
+.gc-words.scroll { overflow-y: auto; }
+.gc-head { text-align: center; font-size: calc(var(--W) * .036); letter-spacing: .2em; opacity: 0; color: color-mix(in srgb, var(--ink) 70%, transparent); }
+.gc-head .script { display: block; font: 400 calc(var(--W) * .075)/1.05 'Pinyon Script', cursive; letter-spacing: 0; color: var(--ink); margin-bottom: 2px; }
+.gc-to { margin: 10px 0 2px; font-size: 16px; opacity: 0; }
+.gc-body { margin: 6px 0 0; font-size: 18px; line-height: 1.85; letter-spacing: .04em; white-space: pre-wrap; word-break: break-word;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  .7 0 0 0 .5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  .7 0 0 0 .5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"); -webkit-mask-size: 90px; mask-size: 90px; } /* a faint pencil grain in the ink */
+.gc-body span { opacity: 0; }
+.gc-body.short { text-align: center; margin-top: 18px; font-size: 20px; }
+.gc-sign { margin-top: auto; padding-top: 8px; text-align: right; font-size: 15px; opacity: 0; }
+.gc.open .gc-head, .gc.open .gc-to { animation: fade .9s 1.2s both; opacity: 1; }
+.gc-words.writing .gc-body span { animation: gcInk 1s ease forwards; }
+@keyframes gcInk { 0% { opacity: 0; color: var(--gold); } 35% { opacity: 1; color: var(--gold); } 100% { opacity: 1; color: var(--ink); } }
+.gc-words.writing .gc-sign { animation: fade 1.2s 2.6s both; opacity: 1; }
+html[lang="en"] .gc-body { line-height: 1.6; }
+/* sparkles thrown out as it opens */
+.gc-burst { position: absolute; left: 0; top: calc(var(--H) * -.55); }
+.gc-burst i { position: absolute; width: 6px; height: 6px; border-radius: 50%; opacity: 0; box-shadow: 0 0 8px rgba(255, 230, 170, .9); }
+.gc.open .gc-burst i { animation: gcBurst 1.6s cubic-bezier(.2, .7, .3, 1) var(--delay) both; }
+@keyframes gcBurst { 0% { opacity: 0; transform: translate(0, 0) scale(.2); } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--x), var(--y)) scale(var(--s)); } }
+.gc-hint { position: absolute; left: 50%; bottom: calc(28px + var(--safe-b)); transform: translateX(-50%); border: 0; background: rgba(255, 250, 244, .92); color: #5B2A33; border-radius: 999px; padding: 10px 20px; font: 400 17px/1 "Xiaolai SC", "Kaiti SC", STKaiti, serif; letter-spacing: .08em; animation: gcPulse 2.2s ease-in-out infinite; box-shadow: 0 10px 24px -14px rgba(0, 0, 0, .6); }
+@keyframes gcPulse { 50% { transform: translateX(-50%) scale(1.05); } }
+.gc-bar { position: absolute; left: 0; right: 0; bottom: calc(22px + var(--safe-b)); display: flex; justify-content: center; align-items: center; gap: 14px; opacity: 0; pointer-events: none; transition: opacity .6s; }
+.gc-bar.on { opacity: 1; pointer-events: auto; }
+.gc-bar .btn { min-width: 140px; font-family: "Xiaolai SC", "Kaiti SC", STKaiti, serif; letter-spacing: .08em; background: #FFF8F1; color: #5B2A33; }
+.gc-count { color: rgba(255, 245, 238, .8); font: 400 15px/1 "Xiaolai SC", "Kaiti SC", STKaiti, serif; letter-spacing: .1em; }
+/* the reveal step that holds the cards */
+.card-invite { display: flex; align-items: center; gap: 14px; width: 100%; margin-top: 10px; padding: 12px 14px; border: 1px solid var(--hair); border-radius: 18px; background: linear-gradient(135deg, #FBEDEA, #F6E3EC); color: #5B2A33; text-align: left; box-shadow: 0 10px 24px -18px rgba(90, 30, 50, .6); }
+.card-invite .mini { flex: none; width: 54px; height: 44px; border-radius: 6px; background: #F5DAD5; position: relative; box-shadow: inset 0 0 0 1px rgba(191, 100, 118, .35); animation: gcBob 3s ease-in-out infinite; }
+.card-invite .mini::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 7px; margin-left: -3.5px; background: #F3C1CA; box-shadow: 0 0 0 1px rgba(191, 100, 118, .5); }
+.card-invite .mini svg { position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; margin: -13px; filter: drop-shadow(0 1px 1px rgba(80, 30, 40, .3)); }
+.card-invite b { display: block; font: 600 17px/1.3 var(--display); }
+.card-invite small { font: 400 12.5px/1.4 var(--ui); opacity: .75; }
+.card-quotes { margin-top: 10px; display: grid; gap: 6px; }
+.card-quotes p { margin: 0; font: 500 16px/1.6 var(--display); color: var(--ink); }
+.card-quotes p small { display: block; font-size: 12px; color: var(--ink-3); letter-spacing: .08em; }
+@media (prefers-reduced-motion: reduce) { .gc-layer, .gc-back { transition: none !important; } }
