@@ -33,21 +33,47 @@ export const shared = [];
 
 const o = (n, id, name, meaning, extra = {}) => ({ n, id, name, meaning, ...extra });
 
+// The bead table. Numbers are permanent (links made earlier must keep reading the same bead);
+// new beads are only ever appended. `group` and `month` arrange the menu; `shape`/`mat` drive the renderer.
+const G1 = 'Birthstones', G2 = 'Soft & warm', G3 = 'Stones that catch light', G4 = 'Earth stones';
 const BEADS = [
-  o(1, 'pearl', 'Freshwater pearl', 'patience, made slowly', { shape: 'pearl', mat: 'pearl', color: '#F3ECE2' }),
-  o(2, 'clear', 'Clear crystal', 'nothing hidden between us', { shape: 'facet', mat: 'glass', color: '#F4F8FF' }),
-  o(3, 'rose', 'Rose quartz', 'tenderness', { shape: 'round', mat: 'stone', color: '#F2C6CF' }),
-  o(4, 'moonstone', 'Moonstone', 'for the nights apart', { shape: 'round', mat: 'moon', color: '#E6ECF6' }),
-  o(5, 'aqua', 'Aquamarine', 'a calm crossing', { shape: 'facet', mat: 'glass', color: '#74BEE0' }),
-  o(6, 'amethyst', 'Amethyst', 'a quiet mind', { shape: 'facet', mat: 'glass', color: '#9473D6' }),
-  o(7, 'citrine', 'Citrine', 'small daily joys', { shape: 'facet', mat: 'glass', color: '#EDB940' }),
-  o(8, 'jade', 'Pale jade', 'growing, steadily', { shape: 'round', mat: 'stone', color: '#B9DDB9' }),
-  o(9, 'garnet', 'Garnet', 'devotion', { shape: 'facet', mat: 'glass', color: '#B8323F' }),
-  o(10, 'smoky', 'Smoky quartz', 'holding the hard days', { shape: 'facet', mat: 'glass', color: '#86766A' }),
-  o(11, 'frost', 'Frosted glass', 'a soft, quiet light', { shape: 'round', mat: 'frost', color: '#EEF2F8' }),
-  o(12, 'lapis', 'Lapis', 'the truth, told kindly', { shape: 'round', mat: 'stone', color: '#34509C' })
+  // Birthstones, January to December
+  o(9, 'garnet', 'Garnet', 'devotion', { group: G1, month: 'January', shape: 'facet', mat: 'glass', color: '#B8323F' }),
+  o(6, 'amethyst', 'Amethyst', 'a quiet mind', { group: G1, month: 'February', shape: 'facet', mat: 'glass', color: '#9473D6' }),
+  o(5, 'aqua', 'Aquamarine', 'a calm crossing', { group: G1, month: 'March', shape: 'facet', mat: 'glass', color: '#74BEE0' }),
+  o(29, 'herkimer', 'Herkimer diamond', 'still clear under pressure', { group: G1, month: 'April', shape: 'herkimer', mat: 'glass', color: '#F7FAFF' }),
+  o(15, 'emerald', 'Emerald', 'love that keeps renewing', { group: G1, month: 'May', shape: 'facet', mat: 'glass', color: '#1F9D6B' }),
+  o(1, 'pearl', 'Freshwater pearl', 'patience, made slowly', { group: G1, month: 'June', shape: 'pearl', mat: 'pearl', color: '#F3ECE2' }),
+  o(4, 'moonstone', 'Moonstone', 'for the nights apart', { group: G1, month: 'June', shape: 'round', mat: 'moon', color: '#E6ECF6' }),
+  o(13, 'ruby', 'Ruby', 'a brave heart', { group: G1, month: 'July', shape: 'bicone', mat: 'glass', color: '#C21E3A' }),
+  o(17, 'peridot', 'Peridot', 'light after a hard time', { group: G1, month: 'August', shape: 'facet', mat: 'glass', color: '#9CC64A' }),
+  o(14, 'sapphire', 'Sapphire', 'faithfulness', { group: G1, month: 'September', shape: 'bicone', mat: 'glass', color: '#2747A8' }),
+  o(16, 'opal', 'Opal', 'every colour at once', { group: G1, month: 'October', shape: 'round', mat: 'opal', color: '#F3EFF4' }),
+  o(7, 'citrine', 'Citrine', 'small daily joys', { group: G1, month: 'November', shape: 'facet', mat: 'glass', color: '#EDB940' }),
+  o(18, 'turquoise', 'Turquoise', 'a safe journey', { group: G1, month: 'December', shape: 'round', mat: 'veined', color: '#3EB7B0' }),
+  o(27, 'tanzanite', 'Tanzanite', 'rare, and found once', { group: G1, month: 'December', shape: 'bicone', mat: 'glass', color: '#5B4FC9' }),
+  // Soft & warm
+  o(28, 'baroque', 'Baroque pearl', 'beautiful because it is uneven', { group: G2, shape: 'baroque', mat: 'pearl', color: '#F1E8DE' }),
+  o(31, 'shell', 'Mother-of-pearl', 'a home you can carry', { group: G2, shape: 'disc', mat: 'shell', color: '#F4EEF0' }),
+  o(20, 'amber', 'Amber', 'a moment kept warm', { group: G2, shape: 'round', mat: 'amber', color: '#E08A1E' }),
+  o(3, 'rose', 'Rose quartz', 'tenderness', { group: G2, shape: 'round', mat: 'stone', color: '#F2C6CF' }),
+  o(30, 'morganite', 'Morganite', 'love, without fear', { group: G2, shape: 'bicone', mat: 'glass', color: '#F0B2A6' }),
+  o(11, 'frost', 'Frosted glass', 'a soft, quiet light', { group: G2, shape: 'round', mat: 'frost', color: '#EEF2F8' }),
+  // Stones that catch light
+  o(19, 'labradorite', 'Labradorite', 'a flash of light when you least expect it', { group: G3, shape: 'round', mat: 'labra', color: '#5E6670' }),
+  o(24, 'sunstone', 'Sunstone', 'warmth on a cold day', { group: G3, shape: 'round', mat: 'glitter', color: '#E8925A' }),
+  o(2, 'clear', 'Clear crystal', 'nothing hidden between us', { group: G3, shape: 'facet', mat: 'glass', color: '#F4F8FF' }),
+  o(25, 'fluorite', 'Fluorite', 'a clear head', { group: G3, shape: 'facet', mat: 'banded', bands: ['#B9A2E8', '#E9F3F0', '#8FD1B4', '#C9B9F2'], color: '#C6B8EE' }),
+  o(10, 'smoky', 'Smoky quartz', 'holding the hard days', { group: G3, shape: 'facet', mat: 'glass', color: '#86766A' }),
+  // Earth stones
+  o(8, 'jade', 'Pale jade', 'growing, steadily', { group: G4, shape: 'round', mat: 'stone', color: '#B9DDB9' }),
+  o(12, 'lapis', 'Lapis', 'the truth, told kindly', { group: G4, shape: 'round', mat: 'glitter', color: '#34509C' }),
+  o(21, 'tiger', "Tiger's eye", 'steady courage', { group: G4, shape: 'round', mat: 'banded', bands: ['#5C3612', '#B8792A', '#E2B154', '#8A5420'], color: '#B8792A' }),
+  o(23, 'malachite', 'Malachite', 'change, gently', { group: G4, shape: 'round', mat: 'banded', bands: ['#0E5A3A', '#2F9E6A', '#7ED3A2', '#1B7A4C'], color: '#2F9E6A' }),
+  o(26, 'aventurine', 'Green aventurine', 'a little luck', { group: G4, shape: 'round', mat: 'glitter', color: '#5FA36A' }),
+  o(22, 'onyx', 'Black onyx', 'strength, quietly', { group: G4, shape: 'round', mat: 'onyx', color: '#17161C' })
 ];
-const beadSlot = k => ({ title: `Bead ${k}`, prompt: `Bead ${k} of 6 on the strand.`, options: BEADS });
+const beadSlot = k => ({ title: `Bead ${k}`, prompt: `Bead ${k} of 6 on the strand.`, options: BEADS, grouped: true });
 
 export const slots = {
   silk: {
@@ -139,6 +165,7 @@ function mix(a, b, t) {
 }
 
 const low = s => s.charAt(0).toLowerCase() + s.slice(1);
+const p_charm = p => p.charm.name.toLowerCase();
 const hasBead = (p, id) => [1, 2, 3, 4, 5, 6].some(k => p['bead' + k].id === id);
 // Named meetings between the two halves. Each one names both people and changes nothing they chose.
 const RESONANCES = [
@@ -152,6 +179,9 @@ const RESONANCES = [
   { id: 'key-pouch', when: p => p.charm.id === 'key', say: (s, m) => `${m}'s little key hangs beside ${s}'s pouch, as if it opens it.` },
   { id: 'bell-pouch', when: p => p.charm.id === 'bell', say: (s, m) => `${m}'s bell rests against ${s}'s pouch; it rings softly when you walk.` },
   { id: 'crane-wave', when: p => p.motif.id === 'crane' && p.charm.id === 'butterfly', say: (s, m) => `${s}'s crane and ${m}'s butterfly: two things that fly, on one charm.` },
+  { id: 'amber-sun', when: p => hasBead(p, 'amber') && hasBead(p, 'sunstone'), say: () => `Amber and sunstone: two small, kept warmths.` },
+  { id: 'labradorite-moon', when: p => hasBead(p, 'labradorite') && ['moon', 'star'].includes(p.charm.id), say: (s, m, p) => `The labradorite flashes blue whenever ${m}'s ${p_charm(p)} turns.` },
+  { id: 'pearls', when: p => hasBead(p, 'pearl') && hasBead(p, 'baroque'), say: () => `A round pearl and an uneven one: both pearls, both right.` },
   { id: 'gold-gold', when: p => p.cord.id === 'gold' && ['gold', 'brass'].includes(p.metal.id), say: () => `Gold cord and warm metal: it reads as one piece.` }
 ];
 
@@ -170,6 +200,11 @@ export function merge(h, a, ctx = {}) {
   const silkBeads = new Set([1, 3, 5].map(k => p['bead' + k].id));
   const shared = [...new Set([2, 4, 6].map(k => p['bead' + k].id).filter(id => silkBeads.has(id)))];
   for (const id of shared) resonances.push({ id: 'echo-' + id, text: `You both chose ${low(BEADS.find(b => b.id === id).name)} without knowing; it sits on both sides of the strand.` });
+  // Birthstones: if a month appears on both sides, say so.
+  const months = side => new Set((side === 'silk' ? [1, 3, 5] : [2, 4, 6]).map(k => p['bead' + k].month).filter(Boolean));
+  const ms = months('silk'), mm = months('metal');
+  const bothMonths = [...ms].filter(m => mm.has(m));
+  if (bothMonths.length) resonances.push({ id: 'month', text: `Two stones from ${bothMonths.join(' and ')} met on the strand.` });
   for (const r of RESONANCES) if (r.when(p)) resonances.push({ id: r.id, text: r.say(S.name, M.name, p) });
 
   const first = ctx.order === 'ai-first' ? a : h, second = first === h ? a : h;

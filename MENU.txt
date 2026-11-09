@@ -20,12 +20,12 @@ SILK half (the soft part: the silk pouch, the motif stitched on it, its cord, an
   silk: 1 Ivory silk · 2 Blush pink · 3 Lilac · 4 Deep indigo · 5 Sage · 6 Vermilion · 7 Pale sky
   motif: 1 Plain silk · 2 Crescent · 3 Plum blossom · 4 Wave · 5 Crane · 6 Star
   cord: 1 Red cord · 2 Gold cord · 3 White cord · 4 Navy cord · 5 Pink cord · 6 Moss cord
-  bead1: 1 Freshwater pearl · 2 Clear crystal · 3 Rose quartz · 4 Moonstone · 5 Aquamarine · 6 Amethyst · 7 Citrine · 8 Pale jade · 9 Garnet · 10 Smoky quartz · 11 Frosted glass · 12 Lapis
+  bead1: 9 Garnet · 6 Amethyst · 5 Aquamarine · 29 Herkimer diamond · 15 Emerald · 1 Freshwater pearl · 4 Moonstone · 13 Ruby · 17 Peridot · 14 Sapphire · 16 Opal · 7 Citrine · 18 Turquoise · 27 Tanzanite · 28 Baroque pearl · 31 Mother-of-pearl · 20 Amber · 3 Rose quartz · 30 Morganite · 11 Frosted glass · 19 Labradorite · 24 Sunstone · 2 Clear crystal · 25 Fluorite · 10 Smoky quartz · 8 Pale jade · 12 Lapis · 21 Tiger's eye · 23 Malachite · 26 Green aventurine · 22 Black onyx
   bead3: same numbers as above
   bead5: same numbers as above
 METAL half (the hard part: the metal, the charm that hangs beside the pouch, and beads 2, 4 and 6); line = Engraved on the back of the charm
   metal: 1 Bright silver · 2 Soft gold · 3 Rose gold · 4 Antique brass
   charm: 1 Crescent moon · 2 Star · 3 Heart · 4 Glass butterfly · 5 Little key · 6 Small bell · 7 White flower · 8 Green leaf · 9 Cherries
-  bead2: 1 Freshwater pearl · 2 Clear crystal · 3 Rose quartz · 4 Moonstone · 5 Aquamarine · 6 Amethyst · 7 Citrine · 8 Pale jade · 9 Garnet · 10 Smoky quartz · 11 Frosted glass · 12 Lapis
+  bead2: 9 Garnet · 6 Amethyst · 5 Aquamarine · 29 Herkimer diamond · 15 Emerald · 1 Freshwater pearl · 4 Moonstone · 13 Ruby · 17 Peridot · 14 Sapphire · 16 Opal · 7 Citrine · 18 Turquoise · 27 Tanzanite · 28 Baroque pearl · 31 Mother-of-pearl · 20 Amber · 3 Rose quartz · 30 Morganite · 11 Frosted glass · 19 Labradorite · 24 Sunstone · 2 Clear crystal · 25 Fluorite · 10 Smoky quartz · 8 Pale jade · 12 Lapis · 21 Tiger's eye · 23 Malachite · 26 Green aventurine · 22 Black onyx
   bead4: same numbers as above
   bead6: same numbers as above

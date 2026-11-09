@@ -18,7 +18,7 @@ Every part of the finished object can be traced back to who chose it.
 3. **Hold to seal.** Your choices are now fixed. The page shows your seal (a code like `R3HH5X`).
 4. Copy the invitation and send it to your companion with a link to this README. The invitation carries your seal, never your choices.
 5. Your companion replies with a link. Open it (or paste it into the page): *something was added*. Hold **Open Together**.
-6. Turn the world in your hand. If you both like it, **Keep this** puts it on your shelf. You can also share it as a link, save a postcard, or download the keepsake file.
+6. Turn it in your hand (on a talisman, touch a gem and it swings; tap any part to see its meaning and who placed it). If you both like it, **Keep this** puts it on your shelf. You can also share it as a link, save a postcard, or download the keepsake file.
 
 Everything stays in your browser. The site has no server, no account, and no database. A keepsake link contains the whole object, so anyone you send it to can open it.
 
@@ -184,7 +184,7 @@ The world does not have to obey reality.
 
 #### Two-Person Talisman — `talisman1`
 
-A refined bag charm: a lobster clasp, a strand of six beads, a charm hanging beside a small silk pouch. The silk half places beads 1, 3 and 5; the metal half places beads 2, 4 and 6, so on the strand you alternate. If you both pick the same bead, it sparkles. Aim for a piece that looks finely made rather than busy: a few colours chosen on purpose usually beat six different ones.
+A refined bag charm: a lobster clasp, a strand of six beads, a charm hanging beside a small silk pouch. The silk half places beads 1, 3 and 5; the metal half places beads 2, 4 and 6, so on the strand you alternate. If you both pick the same bead, it sparkles. Aim for a piece that looks finely made rather than busy: a few colours chosen on purpose usually beat six different ones. There are 31 beads: a birthstone for every month (if you know their birth month, or yours, that is a very personal pick), soft and warm things, stones that catch light, and earth stones.
 
 <!-- MENU:talisman1 -->
 ##### If your half is **silk** — the soft part: the silk pouch, the motif stitched on it, its cord, and beads 1, 3 and 5
@@ -225,20 +225,39 @@ A refined bag charm: a lobster clasp, a strand of six beads, a charm hanging bes
 
 **`bead1`** — Bead 1 of 6 on the strand.
 
-| # | Bead 1 | Meaning |
-|---|---|---|
-| 1 | Freshwater pearl | patience, made slowly |
-| 2 | Clear crystal | nothing hidden between us |
-| 3 | Rose quartz | tenderness |
-| 4 | Moonstone | for the nights apart |
-| 5 | Aquamarine | a calm crossing |
-| 6 | Amethyst | a quiet mind |
-| 7 | Citrine | small daily joys |
-| 8 | Pale jade | growing, steadily |
-| 9 | Garnet | devotion |
-| 10 | Smoky quartz | holding the hard days |
-| 11 | Frosted glass | a soft, quiet light |
-| 12 | Lapis | the truth, told kindly |
+| # | Bead | Meaning | Kind |
+|---|---|---|---|
+| 9 | Garnet | devotion | January birthstone |
+| 6 | Amethyst | a quiet mind | February birthstone |
+| 5 | Aquamarine | a calm crossing | March birthstone |
+| 29 | Herkimer diamond | still clear under pressure | April birthstone |
+| 15 | Emerald | love that keeps renewing | May birthstone |
+| 1 | Freshwater pearl | patience, made slowly | June birthstone |
+| 4 | Moonstone | for the nights apart | June birthstone |
+| 13 | Ruby | a brave heart | July birthstone |
+| 17 | Peridot | light after a hard time | August birthstone |
+| 14 | Sapphire | faithfulness | September birthstone |
+| 16 | Opal | every colour at once | October birthstone |
+| 7 | Citrine | small daily joys | November birthstone |
+| 18 | Turquoise | a safe journey | December birthstone |
+| 27 | Tanzanite | rare, and found once | December birthstone |
+| 28 | Baroque pearl | beautiful because it is uneven | soft & warm |
+| 31 | Mother-of-pearl | a home you can carry | soft & warm |
+| 20 | Amber | a moment kept warm | soft & warm |
+| 3 | Rose quartz | tenderness | soft & warm |
+| 30 | Morganite | love, without fear | soft & warm |
+| 11 | Frosted glass | a soft, quiet light | soft & warm |
+| 19 | Labradorite | a flash of light when you least expect it | stones that catch light |
+| 24 | Sunstone | warmth on a cold day | stones that catch light |
+| 2 | Clear crystal | nothing hidden between us | stones that catch light |
+| 25 | Fluorite | a clear head | stones that catch light |
+| 10 | Smoky quartz | holding the hard days | stones that catch light |
+| 8 | Pale jade | growing, steadily | earth stones |
+| 12 | Lapis | the truth, told kindly | earth stones |
+| 21 | Tiger's eye | steady courage | earth stones |
+| 23 | Malachite | change, gently | earth stones |
+| 26 | Green aventurine | a little luck | earth stones |
+| 22 | Black onyx | strength, quietly | earth stones |
 
 **`bead3`** — Bead 3 of 6 on the strand. Same table as `bead1`.
 

@@ -17,6 +17,7 @@ export function createStage(host, { transparent = true } = {}) {
   const pivot = new THREE.Group(); // user rotation is applied here
   scene.add(pivot);
 
+  let lastBackdrop = null;
   let current = null, dist = 6, zoom = 1, running = true, last = performance.now(), autoSpin = 0.12, idleFor = 99;
   const tweens = [];
   const vel = { x: 0, y: 0 };
@@ -57,14 +58,25 @@ export function createStage(host, { transparent = true } = {}) {
     const k = 4.2 / Math.max(300, host.clientHeight);
     vel.x = dx * k; vel.y = dy * k;
     turn(vel.x, vel.y);
+    current?.drag?.(vel.x, vel.y);
     idleFor = 0;
+  });
+  // Hovering with a mouse brushes past parts that respond to touch (e.g. a bead swings).
+  let lastHover = null, hoverAt = 0, hx = 0;
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerType !== 'mouse' || e.buttons || !current?.touch) return;
+    const now = performance.now(), dx = e.clientX - hx; hx = e.clientX;
+    if (now - hoverAt < 40) return; hoverAt = now;
+    const what = pickAt(e);
+    if (what && what !== lastHover) current.touch(what, Math.min(1.6, 0.4 + Math.abs(dx) / 12), Math.sign(dx));
+    lastHover = what;
   });
   const end = e => {
     ptrs.delete(e.pointerId);
     if (ptrs.size < 2) pinch = null;
     if (ptrs.size === 0) {
       drag = null;
-      if (downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) < 6 && performance.now() - downAt.t < 400) tap(e);
+      if (downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) < 8 && performance.now() - downAt.t < 700) tap(e);
     }
   };
   canvas.addEventListener('pointerup', end);
@@ -73,23 +85,30 @@ export function createStage(host, { transparent = true } = {}) {
   const clampZ = z => Math.min(1.5, Math.max(0.45, z));
   const qx = new THREE.Quaternion(), qy = new THREE.Quaternion(), X = new THREE.Vector3(1, 0, 0), Y = new THREE.Vector3(0, 1, 0);
   function turn(ax, ay) {
+    if (fr().turn === 'y') ay = 0;
     qy.setFromAxisAngle(Y, ax); qx.setFromAxisAngle(X, ay);
     pivot.quaternion.premultiply(qy).premultiply(qx);
   }
 
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   let onPick = null;
-  function tap(e) {
-    if (!onPick) return;
+  function pickAt(e) {
     const r = canvas.getBoundingClientRect();
     ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    const hits = ray.intersectObjects(pivot.children, true);
-    for (const h of hits) {
+    for (const h of ray.intersectObjects(pivot.children, true)) {
+      if (!h.object.visible) continue;
       let o = h.object;
       while (o && !o.userData.pick) o = o.parent;
-      if (o) { onPick(o.userData.pick); return; }
+      if (o) return o.userData.pick;
     }
+    return null;
+  }
+  function tap(e) {
+    const what = pickAt(e);
+    if (!what) return;
+    current?.touch?.(what, 1.3);
+    onPick?.(what);
   }
 
   /* -------- loop -------- */
@@ -127,13 +146,15 @@ export function createStage(host, { transparent = true } = {}) {
       if (!api) return;
       pivot.add(api.world); scene.add(api.skyLayer);
       zoom = 1; size();
+      if (lastBackdrop) this.backdrop(...lastBackdrop); // the backdrop style belongs to the object
       if (!keepRotation) { pivot.quaternion.identity(); turn(0, api.frame ? 0 : 0.18); }
     },
     backdrop(bg, dark, seed = 'x', ink = '#6B6386') {
+      lastBackdrop = [bg, dark, seed, ink];
       host.style.setProperty('--sky-a', bg[0]);
       host.style.setProperty('--sky-b', bg[1]);
       host.classList.toggle('is-dark', !!dark);
-      drawOrnament(orn, seed, ink, dark);
+      drawOrnament(orn, seed, ink, dark, fr().ornament || 'orbits');
     },
     tween(dur, fn, e = ease.outCubic, delay = 0) {
       return new Promise(done => tweens.push({ dur, fn, ease: e, delay, t: 0, done }));
@@ -171,7 +192,7 @@ export function createStage(host, { transparent = true } = {}) {
 }
 
 /* -------- hand-drawn ornament: orbit rings, dotted trails, four-point sparkles -------- */
-function drawOrnament(svg, seed, ink, dark) {
+function drawOrnament(svg, seed, ink, dark, style = 'orbits') {
   const r = rngFor(seed, 'ornament');
   const NS = 'http://www.w3.org/2000/svg';
   svg.replaceChildren();
@@ -190,6 +211,19 @@ function drawOrnament(svg, seed, ink, dark) {
   };
   const accents = dark ? ['#F7E38C', '#9FE6F0', '#F4B8D0', '#C9B8FF'] : ['#F2CF5B', '#69C8D8', '#EE9DB4', '#9C8BE0'];
   const op = dark ? 0.55 : 0.5;
+  const sparkle = (x, y, s, color) => {
+    const k = s * 0.22;
+    add('path', { d: `M${x} ${y - s} Q${x + k} ${y - k} ${x + s} ${y} Q${x + k} ${y + k} ${x} ${y + s} Q${x - k} ${y + k} ${x - s} ${y} Q${x - k} ${y - k} ${x} ${y - s}Z`, fill: color, opacity: 0.9 });
+  };
+  if (style === 'none') return;
+  if (style === 'sparkles') { // a jeweller's card: no lines, a few soft glints
+    for (let i = 0; i < 9; i++) {
+      const a = r() * Math.PI * 2, d = 24 + r() * 26, x = 50 + Math.cos(a) * d * 0.8, y = 50 + Math.sin(a) * d;
+      if (x < 4 || x > 96 || y < 4 || y > 96) continue;
+      i % 3 ? sparkle(x, y, 0.5 + r() * 1.1, accents[i % 4]) : add('circle', { cx: x, cy: y, r: 0.2 + r() * 0.3, fill: accents[(i + 1) % 4], opacity: 0.6 });
+    }
+    return;
+  }
   add('path', { d: wobblyEllipse(50, 50, 41, 41, 0, 0.012), fill: 'none', stroke: ink, 'stroke-width': 0.22, opacity: op * 0.8 });
   add('path', { d: wobblyEllipse(50, 50, 46, 44, r() * 3, 0.02), fill: 'none', stroke: accents[Math.floor(r() * 4)], 'stroke-width': 0.35, 'stroke-dasharray': '0.1 1.6', 'stroke-linecap': 'round', opacity: op + 0.2 });
   add('path', { d: wobblyEllipse(50, 50, 48, 17, -0.35 + r() * 0.2, 0.01), fill: 'none', stroke: ink, 'stroke-width': 0.18, opacity: op * 0.6 });
@@ -198,10 +232,6 @@ function drawOrnament(svg, seed, ink, dark) {
     const a = r() * Math.PI * 2, rr = [41, 46, 44][i];
     add('circle', { cx: 50 + Math.cos(a) * rr, cy: 50 + Math.sin(a) * rr, r: 0.8 + r() * 1.2, fill: accents[i], opacity: 0.85 });
   }
-  const sparkle = (x, y, s, color) => {
-    const k = s * 0.22;
-    add('path', { d: `M${x} ${y - s} Q${x + k} ${y - k} ${x + s} ${y} Q${x + k} ${y + k} ${x} ${y + s} Q${x - k} ${y + k} ${x - s} ${y} Q${x - k} ${y - k} ${x} ${y - s}Z`, fill: color, opacity: 0.9 });
-  };
   for (let i = 0; i < 14; i++) {
     const a = r() * Math.PI * 2, d = 30 + r() * 24;
     const x = 50 + Math.cos(a) * d, y = 50 + Math.sin(a) * d;

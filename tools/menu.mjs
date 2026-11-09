@@ -9,6 +9,11 @@ import { SITE_URL } from '../js/config.js';
 
 function table(R, slot) {
   const S = R.slots[slot];
+  if (S.options.some(o => o.group)) {
+    const title = S.grouped ? 'Bead' : S.title;
+    return `**\`${slot}\`** — ${S.prompt}\n\n| # | ${title} | Meaning | Kind |\n|---|---|---|---|\n` +
+      S.options.map(o => `| ${o.n} | ${o.name} | ${o.meaning} | ${o.month ? o.month + ' birthstone' : o.group.toLowerCase()} |`).join('\n') + '\n';
+  }
   return `**\`${slot}\`** — ${S.prompt}\n\n| # | ${S.title} | Meaning |\n|---|---|---|\n` +
     S.options.map(o => `| ${o.n} | ${o.name} | ${o.meaning} |`).join('\n') + '\n';
 }

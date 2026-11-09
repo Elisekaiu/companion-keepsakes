@@ -42,7 +42,18 @@ function materials(env, pal) {
   const silk = new THREE.MeshPhysicalMaterial({ color: pal.silk, roughness: 0.62, sheen: 1, sheenRoughness: 0.32, sheenColor: new THREE.Color(mixHex(pal.silk, '#FFFFFF', 0.55)), envMap: env, envMapIntensity: 0.6 });
   const cord = new THREE.MeshPhysicalMaterial({ color: pal.cord, roughness: 0.5, sheen: 0.8, sheenRoughness: 0.4, sheenColor: new THREE.Color(mixHex(pal.cord, '#FFFFFF', 0.5)), envMap: env, envMapIntensity: 0.4 });
   const thread = new THREE.MeshStandardMaterial({ color: pal.dark ? '#E8CF8E' : '#D2AE62', metalness: 0.6, roughness: 0.35, envMap: env, envMapIntensity: 0.9 });
-  const beadMat = b => b.mat === 'pearl' ? pearl() : b.mat === 'glass' ? glass(b.color) : b.mat === 'moon' ? moon(b.color) : b.mat === 'frost' ? frost(b.color) : stone(b.color);
+  const textured = (map, o = {}) => new THREE.MeshPhysicalMaterial({ map, roughness: 0.28, clearcoat: 0.9, clearcoatRoughness: 0.12, envMap: env, envMapIntensity: 0.9, ...o });
+  const special = {
+    opal: b => new THREE.MeshPhysicalMaterial({ color: b.color, roughness: 0.2, clearcoat: 1, iridescence: 1, iridescenceIOR: 1.8, iridescenceThicknessRange: [250, 900], sheen: 0.8, sheenColor: new THREE.Color('#FFD6F0'), envMap: env, envMapIntensity: 1.1 }),
+    labra: b => new THREE.MeshPhysicalMaterial({ color: b.color, roughness: 0.22, clearcoat: 1, iridescence: 1, iridescenceIOR: 2.0, iridescenceThicknessRange: [350, 520], envMap: env, envMapIntensity: 1.3 }),
+    amber: b => new THREE.MeshPhysicalMaterial({ color: b.color, roughness: 0.12, transparent: true, opacity: 0.88, clearcoat: 1, emissive: new THREE.Color('#9A4A08'), emissiveIntensity: 0.35, envMap: env, envMapIntensity: 1.1 }),
+    onyx: b => new THREE.MeshPhysicalMaterial({ color: b.color, roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.02, envMap: env, envMapIntensity: 1.6 }),
+    shell: b => new THREE.MeshPhysicalMaterial({ color: b.color, roughness: 0.3, iridescence: 1, iridescenceIOR: 1.5, iridescenceThicknessRange: [200, 700], sheen: 0.6, sheenColor: new THREE.Color('#D8F0FF'), envMap: env, envMapIntensity: 1 }),
+    banded: b => textured(bandTex(b.bands), b.shape === 'facet' ? { transparent: true, opacity: 0.9, flatShading: true, roughness: 0.08, envMapIntensity: 1.2 } : { sheen: 0.6, sheenColor: new THREE.Color(b.bands[2]) }),
+    glitter: b => textured(glitterTex(b.color), { roughness: 0.32 }),
+    veined: b => textured(veinTex(b.color), { roughness: 0.42, clearcoat: 0.5 })
+  };
+  const beadMat = b => special[b.mat] ? special[b.mat](b) : b.mat === 'pearl' ? pearl() : b.mat === 'glass' ? glass(b.color) : b.mat === 'moon' ? moon(b.color) : b.mat === 'frost' ? frost(b.color) : stone(b.color);
   return { metal, glass, pearl, stone, frost, silk, cord, thread, beadMat };
 }
 
@@ -91,10 +102,54 @@ function beadGeometry(b) {
     const g = new THREE.LatheGeometry(pts, 10);
     return g.toNonIndexed();
   }
+  if (b.shape === 'bicone') return new THREE.LatheGeometry([V(0.001, -0.09, 0), V(0.1, 0, 0), V(0.001, 0.09, 0)].map(v => new THREE.Vector2(v.x, v.y)), 12).toNonIndexed();
+  if (b.shape === 'herkimer') { // a double-terminated hexagonal crystal
+    const g = new THREE.LatheGeometry([V(0.001, -0.12, 0), V(0.07, -0.06, 0), V(0.07, 0.06, 0), V(0.001, 0.12, 0)].map(v => new THREE.Vector2(v.x, v.y)), 6).toNonIndexed();
+    return g;
+  }
+  if (b.shape === 'disc') { const g = new THREE.CylinderGeometry(0.1, 0.1, 0.05, 40, 1); g.rotateX(Math.PI / 2); return g; }
+  if (b.shape === 'baroque') { // a pearl that grew unevenly
+    const g = new THREE.SphereGeometry(0.095, 40, 30), p = g.attributes.position, v = new THREE.Vector3();
+    for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const k = 1 + 0.12 * Math.sin(v.x * 40 + 1) * Math.sin(v.y * 33) + 0.08 * Math.sin(v.z * 51 + v.y * 20); v.multiplyScalar(k); p.setXYZ(i, v.x, v.y * 1.15, v.z); }
+    g.computeVertexNormals(); return g;
+  }
   if (b.shape === 'pearl') { const g = new THREE.SphereGeometry(0.092, 32, 24); g.scale(1, 0.95, 1); return g; }
   return new THREE.SphereGeometry(0.098, 32, 24);
 }
-const beadHeight = b => b.shape === 'facet' ? 0.148 : b.shape === 'pearl' ? 0.175 : 0.196;
+const beadHeight = b => ({ facet: 0.148, pearl: 0.175, bicone: 0.18, herkimer: 0.24, disc: 0.2, baroque: 0.22 })[b.shape] || 0.196;
+
+/* ---------------- small procedural stone textures ---------------- */
+function canvasTex(draw) {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+  draw(c.getContext('2d'), c.width, c.height);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  return t;
+}
+function bandTex(cols) { // agate-like bands (tiger's eye, malachite, fluorite)
+  return canvasTex((g, w, h) => {
+    for (let y = 0; y < h; y++) {
+      const k = (Math.sin(y * 0.22) + Math.sin(y * 0.071 + 1.3) * 0.8 + 2) / 4;
+      g.fillStyle = cols[Math.floor(k * cols.length * 0.999)]; g.fillRect(0, y, w, 1);
+    }
+    g.globalAlpha = 0.25; g.fillStyle = '#ffffff';
+    for (let x = 0; x < w; x += 3) g.fillRect(x, 0, 1, h);
+  });
+}
+function glitterTex(color) { // aventurine, sunstone, lapis: tiny bright flecks
+  return canvasTex((g, w, h) => {
+    g.fillStyle = color; g.fillRect(0, 0, w, h);
+    let s = 7; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 420; i++) { g.fillStyle = r() < 0.5 ? 'rgba(255,240,200,.9)' : 'rgba(255,255,255,.6)'; g.fillRect(r() * w, r() * h, 1 + r() * 1.5, 1 + r() * 1.5); }
+  });
+}
+function veinTex(color) { // turquoise matrix
+  return canvasTex((g, w, h) => {
+    g.fillStyle = color; g.fillRect(0, 0, w, h);
+    let s = 3; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    g.strokeStyle = 'rgba(70,52,40,.55)'; g.lineWidth = 1.2;
+    for (let i = 0; i < 14; i++) { g.beginPath(); let x = r() * w, y = r() * h; g.moveTo(x, y); for (let k = 0; k < 6; k++) { x += (r() - 0.5) * 50; y += (r() - 0.5) * 30; g.lineTo(x, y); } g.stroke(); }
+  });
+}
 
 /* ---------------- charms (hang from y = 0, downwards) ---------------- */
 function buildCharm(id, opt, M, tickers) {
@@ -217,7 +272,11 @@ export function build(spec, seed, { renderer } = {}) {
   const TOP = 1.42;
   const swing = new THREE.Group(); swing.position.y = TOP; world.add(swing);
   const body = new THREE.Group(); body.position.y = -TOP; swing.add(body);
-  tickers.push(t => { swing.rotation.z = Math.sin(t * 0.9) * 0.03; swing.rotation.x = Math.sin(t * 0.7 + 1) * 0.015; });
+  // Motion: every hanging part is a damped spring. Idle, a faint breeze; touched or dragged, it swings and settles.
+  const spring = (k, c) => ({ a: 0, v: 0, k, c });
+  const S = { main: spring(9, 0.8), tilt: spring(10, 1.2), pouch: spring(12, 1.0), charm: spring(14, 0.9), spin: spring(3, 0.7) };
+  const step = (sp, dt, target = 0) => { const n = Math.ceil(dt / 0.008), h = dt / n; for (let i = 0; i < n; i++) { sp.v += (-sp.k * (sp.a - target) - sp.c * sp.v) * h; sp.a += sp.v * h; } sp.a = Math.max(-0.7, Math.min(0.7, sp.a)); };
+  const spins = [];
 
   /* clasp and findings: the metal half */
   const findings = new THREE.Group(); body.add(findings); reg('metal', findings);
@@ -238,7 +297,8 @@ export function build(spec, seed, { renderer } = {}) {
     const h = beadHeight(b);
     const bead = new THREE.Mesh(beadGeometry(b), M.beadMat(b));
     bead.position.y = y - h / 2; bead.rotation.y = rand() * Math.PI;
-    body.add(bead); reg('bead' + b.pos, bead);
+    bead.userData.pick = 'bead' + b.pos;
+    body.add(bead); reg('bead' + b.pos, bead); spins.push({ mesh: bead, v: 0 });
     beadDirs.push(bead.position.clone());
     y -= h + 0.004;
   });
@@ -262,8 +322,7 @@ export function build(spec, seed, { renderer } = {}) {
   pouch.position.set(-0.02, POUCH_TOP, 0);
   const pouchSwing = new THREE.Group(); pouchSwing.position.set(0, RING_Y, 0); body.add(pouchSwing);
   pouch.position.y = POUCH_TOP - RING_Y; pouchSwing.add(pouch);
-  tickers.push(t => { pouchSwing.rotation.z = Math.sin(t * 1.1 + 0.6) * 0.035; });
-  const pouchMesh = new THREE.Mesh(pouchGeo, M.silk); pouch.add(pouchMesh); reg('silk', pouchMesh);
+  const pouchMesh = new THREE.Mesh(pouchGeo, M.silk); pouchMesh.userData.pick = 'silk'; pouch.add(pouchMesh); reg('silk', pouchMesh);
   // stitches: a dashed line just inside the edge, on the front
   const inset = s.getPoints(10).map(p => V(p.x * 0.82, p.y * 0.9 - H * 0.04, D / 2 + 0.041));
   inset.push(inset[0].clone());
@@ -271,10 +330,10 @@ export function build(spec, seed, { renderer } = {}) {
   const stitches = new THREE.Line(stitchGeo, new THREE.LineDashedMaterial({ color: pal.dark ? '#E8CF8E' : '#C9A257', dashSize: 0.014, gapSize: 0.01 }));
   stitches.computeLineDistances(); pouch.add(stitches); reg('silk', stitches);
   const mg = motifGeometry(P.motif.id);
-  if (mg) { const motif = new THREE.Mesh(mg, M.thread); motif.position.set(0, -H * 0.56, D / 2 + 0.042); pouch.add(motif); reg('motif', motif); }
+  if (mg) { const motif = new THREE.Mesh(mg, M.thread); motif.userData.pick = 'motif'; motif.position.set(0, -H * 0.56, D / 2 + 0.042); pouch.add(motif); reg('motif', motif); }
   else reg('motif', new THREE.Group());
   // cord: a loop from the ring down to a decorative knot at the top of the pouch
-  const cordG = new THREE.Group(); pouch.add(cordG); reg('cord', cordG);
+  const cordG = new THREE.Group(); cordG.userData.pick = 'cord'; pouch.add(cordG); reg('cord', cordG);
   const loopTop = RING_Y - POUCH_TOP + 0.02;
   const cordCurve = new THREE.CatmullRomCurve3([V(-0.03, 0.02, 0.01), V(-0.035, loopTop * 0.55, 0.005), V(0.02, loopTop, 0), V(0.075, loopTop * 0.55, 0.005), V(0.06, 0.02, 0.01)]);
   cordG.add(new THREE.Mesh(new THREE.TubeGeometry(cordCurve, 48, 0.008, 8), M.cord));
@@ -285,9 +344,19 @@ export function build(spec, seed, { renderer } = {}) {
   // hangs from its own ring on the right of the bottom ring, in front of the pouch's shoulder
   const charmSwing = new THREE.Group(); charmSwing.position.set(0.055, RING_Y - 0.03, 0.07); body.add(charmSwing);
   const link = ring(0.03, 0.007, M.metal, Math.PI / 2); link.position.set(0.0, -0.01, 0); charmSwing.add(link); reg('metal', link);
-  const charm = buildCharm(P.charm.id, P.charm, M, tickers); charm.scale.setScalar(1.45); charm.position.set(0, -0.03, 0); charmSwing.add(charm); reg('charm', charm);
+  const charm = buildCharm(P.charm.id, P.charm, M, tickers); charm.scale.setScalar(1.45); charm.position.set(0, -0.03, 0); charmSwing.add(charm); reg('charm', charm); charm.userData.pick = 'charm';
   charmSwing.rotation.z = 0.42;
-  tickers.push(t => { charmSwing.rotation.z = 0.42 + Math.sin(t * 1.4 + 1.2) * 0.05; charm.rotation.y = Math.sin(t * 0.8) * 0.45; });
+  findings.userData.pick = 'metal';
+  tickers.push((t, dt) => {
+    const breeze = Math.sin(t * 0.7) * 0.022 + Math.sin(t * 1.93 + 1) * 0.008;
+    step(S.main, dt, breeze); step(S.tilt, dt, Math.sin(t * 0.6 + 2) * 0.01);
+    step(S.pouch, dt, -S.main.a * 0.45); step(S.charm, dt, -S.main.a * 0.6); step(S.spin, dt);
+    swing.rotation.z = S.main.a; swing.rotation.x = S.tilt.a;
+    pouchSwing.rotation.z = S.pouch.a;
+    charmSwing.rotation.z = 0.42 + S.charm.a;
+    charm.rotation.y = S.spin.a * 2.2 + Math.sin(t * 0.8) * 0.3;
+    for (const b of spins) { b.v *= Math.exp(-1.1 * dt); b.mesh.rotation.y += b.v * dt; }
+  });
 
   // A sparkle sprite on beads both of you chose (an echo).
   for (const b of spec.strand.filter(b => spec.echoBeads.includes(b.id))) {
@@ -318,7 +387,8 @@ export function build(spec, seed, { renderer } = {}) {
   }
 
   let time = 0;
-  const frame = { dist: 6.4, objectDist: 4.4, camY: 0.4, lookY: 0.12, fitAspect: false };
+  const frame = { dist: 6.4, objectDist: 4.4, camY: 0.4, lookY: 0.12, fitAspect: false, turn: 'y', ornament: 'sparkles' };
+  const kick = (sp, x) => { sp.v += x; };
   return {
     world, skyLayer, parts, frame,
     spots: { front: V(0, 0, 1) },
@@ -342,6 +412,16 @@ export function build(spec, seed, { renderer } = {}) {
       });
       return true;
     },
+    /** A touch on a part: a bead spins on its pin, the pouch or charm swings, the whole strand sways. */
+    touch(pick, strength = 1, dir = 0) {
+      const d = (dir || (Math.random() < 0.5 ? -1 : 1)) * Math.min(2, strength);
+      if (pick?.startsWith('bead')) { const b = spins[+pick.slice(4) - 1]; if (b) b.v += 9 * d; kick(S.main, 0.45 * d); }
+      else if (pick === 'silk' || pick === 'motif' || pick === 'cord') { kick(S.pouch, 2.0 * d); kick(S.main, 0.2 * d); }
+      else if (pick === 'charm') { kick(S.charm, 2.6 * d); kick(S.spin, 3.5 * d); }
+      else kick(S.main, 0.8 * d);
+    },
+    /** Dragging moves the clasp; everything below lags behind and swings. */
+    drag(dx) { kick(S.main, -dx * 5); kick(S.pouch, -dx * 8); kick(S.charm, -dx * 9); },
     revealAll() { for (const objs of Object.values(parts)) objs.forEach(o => { o.visible = true; }); for (const list of Object.values(ghosts)) list.forEach(({ g }) => { g.visible = false; }); },
     dispose() { [world, skyLayer].forEach(g => g.traverse(o => o.geometry?.dispose?.())); }
   };

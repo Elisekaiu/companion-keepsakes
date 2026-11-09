@@ -37,7 +37,7 @@ function h(tag, attrs = {}, ...kids) {
 }
 function put(node, ...kids) { node.append(...kids.flat(3).filter(k => k != null && k !== false)); return node; }
 function screen(...kids) { document.querySelectorAll('.sheet').forEach(x => x.remove()); const s = h('section.screen', {}, ...kids); app.replaceChildren(s); window.scrollTo(0, 0); return s; }
-function toast(msg) { const t = h('div.toast', { role: 'status' }, msg); document.body.append(t); setTimeout(() => t.remove(), 2400); }
+function toast(msg) { document.querySelectorAll('.toast').forEach(x => x.remove()); const t = h('div.toast', { role: 'status' }, msg); document.body.append(t); setTimeout(() => t.remove(), 2400); }
 async function copy(text, done = 'Copied') {
   try { await navigator.clipboard.writeText(text); toast(done); }
   catch { const ta = h('textarea', { style: 'position:fixed;opacity:0' }); ta.value = text; document.body.append(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast(done); }
@@ -183,10 +183,10 @@ function choose(round) {
       screen(head,
         h('h1.display', {}, S.prompt),
         step === 'wonder' ? h('p.lede', {}, 'Both of you place one wonder. If you both choose the same one, it stands twice.') : null,
-        h('div.options', { class: 'human' }, S.options.map(o => h('button.opt', {
+        h('div.options', { class: 'human' }, S.options.map((o, k) => [S.grouped && o.group !== S.options[k - 1]?.group ? h('div.opt-group', {}, o.group) : null, h('button.opt', {
           type: 'button', 'aria-pressed': String(draft.picks[step] === o.n),
           on: { click: e => { draft.picks[step] = o.n; save(); e.currentTarget.parentNode.querySelectorAll('.opt').forEach(b => b.setAttribute('aria-pressed', String(b === e.currentTarget))); next.disabled = false; navigator.vibrate?.(5); } }
-        }, swatch(step, o), h('span.num', {}, o.n), h('b', {}, o.name), h('span', {}, o.meaning)))),
+        }, swatch(step, o), h('span.num', {}, o.n), h('b', {}, o.name), h('span', {}, o.meaning), o.month ? h('em.month', {}, o.month) : null)])),
         h('div.dock', {}, h('div.inner', {}, back, next)));
     } else if (step === 'words') {
       const f = (key, label, hint, max, area) => h('div.field', {}, h('label', { for: 'f-' + key }, label),
@@ -453,7 +453,12 @@ async function explore(round, { keepWorld = false, visiting = false } = {}) {
   }
   st.autoSpin = 0.12;
   const hidden = spec.lines.find(l => l.find && l.text);
-  st.onPick = what => { if (hidden && what === hidden.find) toast('“' + hidden.text + '”'); };
+  // Tapping a part says what it is, what it means, and who placed it.
+  st.onPick = what => {
+    if (hidden && what === hidden.find) return toast('“' + hidden.text + '”');
+    const x = spec.ledger.find(l => l.slot === what);
+    if (x) toast(`${x.name} — ${x.meaning} · ${x.by === 'human' ? round.names.human : round.names.ai}`);
+  };
   const doc = () => toKeepsake(round);
   const id = `${round.recipe}-${round.id}-${round.human.fp}`;
   setHash(toLink(round).slice(toLink(round).indexOf('#')));
