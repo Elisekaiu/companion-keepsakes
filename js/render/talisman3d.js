@@ -274,8 +274,12 @@ export function build(spec, seed, { renderer } = {}) {
   const body = new THREE.Group(); body.position.y = -TOP; swing.add(body);
   // Motion: every hanging part is a damped spring. Idle, a faint breeze; touched or dragged, it swings and settles.
   const spring = (k, c) => ({ a: 0, v: 0, k, c });
-  const S = { main: spring(9, 0.8), tilt: spring(10, 1.2), pouch: spring(12, 1.0), charm: spring(14, 0.9), spin: spring(3, 0.7) };
-  const step = (sp, dt, target = 0) => { const n = Math.ceil(dt / 0.008), h = dt / n; for (let i = 0; i < n; i++) { sp.v += (-sp.k * (sp.a - target) - sp.c * sp.v) * h; sp.a += sp.v * h; } sp.a = Math.max(-0.7, Math.min(0.7, sp.a)); };
+  const S = { main: spring(9, 0.8), tilt: spring(10, 1.2), pouch: spring(12, 1.0), charm: spring(14, 0.9), spin: spring(3, 0.7),
+    // twisting on the hook: the clasp follows your finger with a little lag, the pouch and charm trail behind it
+    yaw: spring(26, 7.5), pouchTwist: spring(16, 2.6), charmTwist: spring(12, 1.8) };
+  const hold = { on: false, target: 0, idle: 0 };
+  const YAW_SOFT = 1.25, YAW_MAX = 2.1; // past ~70° the cord resists; it never spins round like a carousel
+  const step = (sp, dt, target = 0, lim = 0.7) => { const n = Math.ceil(dt / 0.008), h = dt / n; for (let i = 0; i < n; i++) { sp.v += (-sp.k * (sp.a - target) - sp.c * sp.v) * h; sp.a += sp.v * h; } sp.a = Math.max(-lim, Math.min(lim, sp.a)); };
   const spins = [];
 
   /* clasp and findings: the metal half */
@@ -331,7 +335,7 @@ export function build(spec, seed, { renderer } = {}) {
   stitches.computeLineDistances(); pouch.add(stitches); reg('silk', stitches);
   const mg = motifGeometry(P.motif.id);
   if (mg) { const motif = new THREE.Mesh(mg, M.thread); motif.userData.pick = 'motif'; motif.position.set(0, -H * 0.56, D / 2 + 0.042); pouch.add(motif); reg('motif', motif); }
-  else reg('motif', new THREE.Group());
+  else reg('motif', pouch.add(new THREE.Group()) && pouch.children[pouch.children.length - 1]); // plain silk: nothing stitched, but the slot still has a place
   // cord: a loop from the ring down to a decorative knot at the top of the pouch
   const cordG = new THREE.Group(); cordG.userData.pick = 'cord'; pouch.add(cordG); reg('cord', cordG);
   const loopTop = RING_Y - POUCH_TOP + 0.02;
@@ -349,12 +353,21 @@ export function build(spec, seed, { renderer } = {}) {
   findings.userData.pick = 'metal';
   tickers.push((t, dt) => {
     const breeze = Math.sin(t * 0.7) * 0.022 + Math.sin(t * 1.93 + 1) * 0.008;
-    step(S.main, dt, breeze); step(S.tilt, dt, Math.sin(t * 0.6 + 2) * 0.01);
+    // let go: the cord slowly unwinds back towards the front; left alone, it turns just a little in the air
+    if (!hold.on) { hold.idle += dt; hold.target *= Math.exp(-0.9 * dt); }
+    const idleTurn = hold.idle > 2.5 ? Math.sin((hold.idle - 2.5) * 0.32) * 0.32 * Math.min(1, (hold.idle - 2.5) / 3) : 0;
+    const yawVel0 = S.yaw.v;
+    step(S.yaw, dt, hold.target + idleTurn, YAW_MAX);
+    const yawAcc = (S.yaw.v - yawVel0) / Math.max(dt, 1e-3);
+    step(S.main, dt, breeze, 0.5); step(S.tilt, dt, Math.sin(t * 0.6 + 2) * 0.01 - Math.min(0.05, Math.abs(S.yaw.v) * 0.01));
     step(S.pouch, dt, -S.main.a * 0.45); step(S.charm, dt, -S.main.a * 0.6); step(S.spin, dt);
-    swing.rotation.z = S.main.a; swing.rotation.x = S.tilt.a;
-    pouchSwing.rotation.z = S.pouch.a;
+    // lower parts lag behind a turn and swing a little past it when it stops
+    step(S.pouchTwist, dt, -S.yaw.v * 0.16 - yawAcc * 0.004, 0.9);
+    step(S.charmTwist, dt, -S.yaw.v * 0.24 - yawAcc * 0.006, 1.2);
+    swing.rotation.set(S.tilt.a, S.yaw.a, S.main.a, 'YXZ');
+    pouchSwing.rotation.set(0, S.pouchTwist.a, S.pouch.a, 'YXZ');
     charmSwing.rotation.z = 0.42 + S.charm.a;
-    charm.rotation.y = S.spin.a * 2.2 + Math.sin(t * 0.8) * 0.3;
+    charm.rotation.y = S.spin.a * 2.2 + S.charmTwist.a + Math.sin(t * 0.8) * 0.3;
     for (const b of spins) { b.v *= Math.exp(-1.1 * dt); b.mesh.rotation.y += b.v * dt; }
   });
 
@@ -374,7 +387,9 @@ export function build(spec, seed, { renderer } = {}) {
     const list = [];
     world.updateWorldMatrix(true, true);
     for (const root of parts[slot] || []) {
-      const parent = root.parent, inv = new THREE.Matrix4().copy(parent.matrixWorld).invert();
+      const parent = root.parent;
+      if (!parent) continue;
+      const inv = new THREE.Matrix4().copy(parent.matrixWorld).invert();
       root.traverse(o => {
         if (!o.isMesh) return;
         const g = new THREE.Mesh(o.geometry, ghostMat);
@@ -387,7 +402,7 @@ export function build(spec, seed, { renderer } = {}) {
   }
 
   let time = 0;
-  const frame = { dist: 6.4, objectDist: 4.4, camY: 0.4, lookY: 0.12, fitAspect: false, turn: 'y', ornament: 'sparkles' };
+  const frame = { dist: 5.8, objectDist: 4.4, camY: 0.4, lookY: 0.12, fitAspect: false, turn: 'hang', ornament: 'sparkles' };
   const kick = (sp, x) => { sp.v += x; };
   return {
     world, skyLayer, parts, frame,
@@ -420,8 +435,15 @@ export function build(spec, seed, { renderer } = {}) {
       else if (pick === 'charm') { kick(S.charm, 2.6 * d); kick(S.spin, 3.5 * d); }
       else kick(S.main, 0.8 * d);
     },
-    /** Dragging moves the clasp; everything below lags behind and swings. */
-    drag(dx) { kick(S.main, -dx * 5); kick(S.pouch, -dx * 8); kick(S.charm, -dx * 9); },
+    /** Dragging twists the charm on its hook (softly limited) and moves the clasp; everything below lags behind and swings. */
+    drag(dx, dy = 0) {
+      hold.on = true; hold.idle = 0;
+      const over = Math.abs(hold.target) > YAW_SOFT && Math.sign(dx) === Math.sign(hold.target);
+      hold.target = Math.max(-YAW_MAX, Math.min(YAW_MAX, hold.target + dx * (over ? 0.25 : 1)));
+      kick(S.main, -dx * 1.1); kick(S.pouch, -dx * 1.9); kick(S.charm, -dx * 2.6);
+      if (dy) kick(S.tilt, dy * 1.2);
+    },
+    release() { hold.on = false; },
     revealAll() { for (const objs of Object.values(parts)) objs.forEach(o => { o.visible = true; }); for (const list of Object.values(ghosts)) list.forEach(({ g }) => { g.visible = false; }); },
     dispose() { [world, skyLayer].forEach(g => g.traverse(o => o.geometry?.dispose?.())); }
   };

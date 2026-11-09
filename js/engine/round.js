@@ -21,7 +21,7 @@ export function newRound({ recipe = 'planet1', humanHalf, theme = '', names = {}
   return {
     id: id || randomCode(4),
     recipe: R.code,
-    mode: mode === 'solo' ? 'solo' : 'companion',
+    mode: ['solo', 'gift'].includes(mode) ? mode : 'companion',
     humanHalf: humanHalf || R.defaultHumanHalf,
     theme: clip(theme, 140),
     names: { human: clip(names.human || 'You', 24), ai: clip(names.ai || 'Companion', 24) },
@@ -88,10 +88,12 @@ export function readAiCode(raw) {
   if (!R) return { ok: false, error: 'Unknown game "' + t.recipe + '".' };
   const f = t.fields;
   const half = (f.half || '').toLowerCase() in R.halves ? f.half.toLowerCase() : null;
+  // A gift: the companion made the whole thing (half=all), and the person only opens it.
+  const gift = /^(all|both|whole|gift)$/i.test(f.half || '') || /^gift$/i.test(f.mode || '');
   const roundId = f.r ? normCode(f.r) : null;
   const echoed = f.seal ? normCode(f.seal) : null;
   const code = String(raw).trim();
-  return { ok: true, recipe: R.code, half, roundId, echoed, fields: f, code: code.slice(code.indexOf('ai~') >= 0 ? code.indexOf('ai~') : 0) };
+  return { ok: true, recipe: R.code, half, gift, roundId, echoed, fields: f, code: code.slice(code.indexOf('ai~') >= 0 ? code.indexOf('ai~') : 0) };
 }
 
 /** Attach the AI half to a round (human-first) or start a round from it (ai-first). */
@@ -151,7 +153,39 @@ export function expand(R, sealed) {
 
 export function mergeRound(round) {
   const R = recipeByCode(round.recipe);
-  return R.merge(expand(R, round.human), expand(R, round.ai), { order: round.order, seed: round.id, solo: round.mode === 'solo' });
+  // One maker (solo, or a companion's gift): the meetings between picks are told without names.
+  return R.merge(expand(R, round.human), expand(R, round.ai), { order: round.order, seed: round.id, solo: round.mode === 'solo' || round.mode === 'gift' });
+}
+
+/**
+ * A gift: the companion chose every part (both halves, and both picks of a shared slot as <slot> and <slot>2),
+ * named it, wrote both lines (line_<half>), and sealed the whole thing in one code. The person only opens it.
+ * Nothing is re-chosen later: the code as sent is the record, and reopening it always gives the same object.
+ */
+export function roundFromGift(parsed, names = {}) {
+  const R = recipeByCode(parsed.recipe);
+  const f = parsed.fields;
+  const id = parsed.roundId || toCode(hash53(parsed.code), 4);
+  const A = R.defaultHumanHalf, B = R.other(A);
+  const theme = readText(f.for || f.moment || f.theme || '');
+  const round = newRound({ recipe: R.code, mode: 'gift', humanHalf: A, names, id, theme });
+  const name = clip(readText(f.from) || round.names.ai, 24);
+  const val = k => f[k] != null ? readText(f[k]) : '';
+  const lineOf = half => val('line_' + half) || val((R.lineKeys || {})[half] || '\u0000');
+  const draftOf = (half, second) => ({
+    picks: Object.fromEntries([...R.halves[half].slots.map(s => [s, val(s)]), ...R.shared.map(s => [s, val(second ? s + '2' : s)])]),
+    word: '', line: lineOf(half), why: second ? '' : val('why'), wish: second ? '' : val('wish')
+  });
+  const seed = id + parsed.code;
+  const a = cleanHalf(R, A, draftOf(A, false), { fillChance: true, seed }), b = cleanHalf(R, B, draftOf(B, true), { fillChance: true, seed });
+  delete a.missing; delete b.missing;
+  a.word = clip(val('name') || val('word'), 40);
+  const now = new Date().toISOString(), fp = toCode(hash53(parsed.code), 6);
+  const chance = [...a.chance, ...b.chance.map(s => R.shared.includes(s) ? s + '2' : s)];
+  const warnings = chance.length ? [`Left to the stars: ${chance.join(', ')}.`] : [];
+  const human = { ...a, name: round.names.human, sealedAt: now, fp, gift: true };
+  const ai = { ...b, name, code: parsed.code, echoed: null, sealMatch: null, sealedAt: now, fp, warnings, gift: true };
+  return { ...round, mode: 'gift', order: 'gift', names: { ...round.names, ai: name }, human, ai };
 }
 
 /* ------------------------------------------------------------------ handoff text */
@@ -187,6 +221,13 @@ export function invitation(round, { site, repo, lang = 'en' } = {}) {
 export function revealCard(round, lang = 'en') {
   const R = recipeByCode(round.recipe);
   const spec = mergeRound(round);
+  if (round.mode === 'gift') {
+    const L = loc(R, lang);
+    const title = round.plaque?.name || spec.title;
+    return lang === 'zh'
+      ? `我打开了你送我的${L.noun}「${title}」（第 ${round.id} 轮）。你放进去的每一样，我都看到了：${spec.ledger.map(x => L.opt(x.slot, x.id).name).join('、')}。${round.ai.wish ? '最后那句藏起来的话，我也看到了。' : ''}`
+      : `I opened the ${R.title} you made me, "${title}" (round ${round.id}). I saw everything you put in it: ${spec.ledger.map(x => x.name).join(', ')}.${round.ai.wish ? ' And the hidden line at the end.' : ''}`;
+  }
   if (lang === 'zh') {
     const L = loc(R, 'zh');
     const nm = who => who === 'human' ? round.names.human : round.names.ai;
@@ -235,13 +276,29 @@ export function sealSolo(round, d) {
   const missing = [...a.missing, ...b.missing.map(s => R.shared.includes(s) ? s + '#2' : s)];
   if (missing.length) throw new Error('Still to choose: ' + missing.join(', '));
   delete a.missing; delete b.missing;
+  // "Lucky" solo: everything was drawn first; whatever was kept as drawn is recorded as left to chance.
+  const drawn = new Set(d.drawn || []);
+  a.chance = [...R.halves[A].slots, ...R.shared].filter(s => drawn.has(s));
+  b.chance = [...R.halves[B].slots, ...R.shared].filter(s => drawn.has(R.shared.includes(s) ? s + '#2' : s));
   a.word = clip(d.name, 40);
   const now = new Date().toISOString(), name = round.names.human;
   const human = { ...a, name, salt: randomCode(8), sealedAt: now };
   human.fp = fingerprint(round, human);
   const ai = { ...b, name, salt: randomCode(8), sealedAt: now, solo: true };
   ai.fp = fingerprint(round, ai);
-  return { ...round, mode: 'solo', order: 'solo', human, ai };
+  return { ...round, mode: 'solo', order: 'solo', ...(d.drawn ? { lucky: true } : {}), human, ai };
+}
+
+/** Random picks for every slot of a solo round (the "lucky" start): { picks, drawn }. Seeded, so a draw can be replayed. */
+export function drawAll(recipe, seed = randomCode(6)) {
+  const R = recipeByCode(recipe);
+  const rand = rngFor(seed, 'draw');
+  const picks = {};
+  for (const k of R.soloOrder) {
+    const list = R.slots[k.replace(/#\d$/, '')].options;
+    picks[k] = list[Math.floor(rand() * list.length)].n;
+  }
+  return { picks, drawn: [...R.soloOrder], seed };
 }
 
 /** Build an AI tilde code from structured picks (used by tools/ and tests; an AI may also write it by hand). */

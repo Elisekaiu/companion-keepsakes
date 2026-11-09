@@ -10,7 +10,7 @@
     "id": { "type": "string" },
     "recipe": { "type": "object", "required": ["id", "version", "code"], "properties": { "id": { "type": "string" }, "version": { "type": "integer" }, "code": { "type": "string" }, "title": { "type": "string" } } },
     "title": { "type": "string" },
-    "mode": { "enum": ["companion", "solo"] },
+    "mode": { "enum": ["companion", "solo", "gift"] },
     "round": { "type": "string" },
     "seed": { "type": "string" },
     "theme": { "type": "string" },
@@ -29,7 +29,7 @@
       "type": "object", "required": ["protocol", "order", "humanSeal"],
       "properties": {
         "protocol": { "type": "string" },
-        "order": { "enum": ["human-first", "ai-first", "solo"] },
+        "order": { "enum": ["human-first", "ai-first", "solo", "gift"] },
         "humanSeal": { "type": "string" },
         "aiEchoedSeal": { "type": ["string", "null"] },
         "sealMatches": { "type": ["boolean", "null"] },

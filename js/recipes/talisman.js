@@ -32,6 +32,8 @@ export const halves = {
     line: { label: 'Engraved on the back of the charm', hint: 'one sentence: what this talisman promises' }
   }
 };
+// Gift codes (the companion makes everything) may name each half's line by this key instead of line_<half>.
+export const lineKeys = { silk: 'blessing', metal: 'promise' };
 export const shared = [];
 
 const o = (n, id, name, meaning, extra = {}) => ({ n, id, name, meaning, ...extra });
@@ -285,6 +287,7 @@ export function revealSteps(spec) {
 
 /* ------------------------------------------------------------------ 中文 */
 export const zh = {
+  untitled: '一枚还没有名字的护身符',
   title: '护身符', noun: '一个护身符', tagline: '一串可以随身带着的小串珠，丝绸小袋里藏着悄悄话。',
   hand: 'a little talisman',
   card: '一串可以随身带着的小串珠。你们一人一颗地串上去，丝绸小袋里藏着两句悄悄话。',

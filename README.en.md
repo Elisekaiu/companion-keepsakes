@@ -18,7 +18,7 @@ Every part of the finished object can be traced back to who chose it.
 
 **With your AI companion (the simple way)**
 
-1. Open the site, choose "With a companion" and a recipe.
+1. Open the site, choose "Half each" (with your AI companion) and a recipe.
 2. The page gives you one short message ("Let's make a tiny planet together! How it works is here: …"). Send it to your companion.
 3. Your companion reads this README, makes its half first, and replies with a link (or a code starting with `ai~`).
 4. Open the link (or paste the code into the page) and make your half, without seeing theirs.
@@ -26,7 +26,11 @@ Every part of the finished object can be traced back to who chose it.
 
 (If you would rather choose first: tap "I'll make my half first" on the start page, seal it, and send the invitation it gives you.)
 
-**On your own**: choose "On my own", pick every part yourself, hold to finish, and watch it take shape.
+**A gift from your AI companion**: choose "A gift from it" and a recipe, copy the message the page gives you and send it to your companion. It chooses every part, names it, writes its words, seals the whole thing and replies with a link. Open it and hold **Unwrap**.
+
+**On your own, slowly**: choose "Slowly", pick every part yourself, hold to finish, and watch it take shape.
+
+**Lucky draw**: choose "Lucky draw" and you see a complete, randomly drawn one at once. Tap any part (below, or on the object itself) to change it, or draw again. When you like it, tap "This one". The story marks which parts were drawn and which you changed.
 
 After either:
 6. Turn it in your hand (on a talisman, touch a gem and it swings; a snow globe shakes when you drag it; tap any part to see its meaning and who placed it). If you both like it, **Keep this** puts it on your shelf. You can also share it as a link, save a postcard, or download the keepsake file.
@@ -59,6 +63,7 @@ Take from it: the **game** (`planet1` for the Tiny Imaginary Planet, `talisman1`
 | You received an invitation with `R=` and `seal=` (they sealed first) | Choose the half the invitation names and include its `R` and `seal` in your link. |
 | You already sent a link for this round | **Send exactly the same link again.** A sealed half is never re-chosen. The page refuses a different half for a round that already has one. |
 | They paste a card starting "We opened round … together" | The reveal has happened. The choices marked as yours are your own locked decisions: remember them, and don't revise them. |
+| They ask you to make the whole thing for them ("make me one", "a gift") | See section 6, "A whole gift from the AI companion": you choose both halves, with `half=all`. |
 
 ### 2. Choose your half
 
@@ -83,6 +88,9 @@ The world does not have to obey reality.
 | 6 | Glowing moss | light that comes from below |
 | 7 | Amber woods | a season that keeps its warmth |
 | 8 | Cloudstone | ground soft enough to fall into |
+| 9 | Lavender hills | calm you can smell from far away |
+| 10 | Tea terraces | patience, one step at a time |
+| 11 | Sleeping volcano | warmth that waits underneath |
 
 **`water`** — Where does the water go?
 
@@ -95,6 +103,8 @@ The world does not have to obey reality.
 | 5 | Floating ponds | water that forgot to fall |
 | 6 | Warm springs | rest, with steam rising |
 | 7 | No water | dry and quiet; the sky is enough |
+| 8 | Sea of stars | the sky, kept down here too |
+| 9 | Rainbow pools | a small joy in every colour |
 
 **`growth`** — What grows there?
 
@@ -107,6 +117,9 @@ The world does not have to obey reality.
 | 5 | Lantern flowers | small lights left on for someone |
 | 6 | Candyfloss trees | sweetness, unapologetic |
 | 7 | Tall grass and reeds | listening to the wind |
+| 8 | Cherry blossom trees | a short season, loved fully |
+| 9 | Round cacti | soft inside, careful outside |
+| 10 | Sunflowers | always turning toward the light |
 
 **`dwelling`** — Who, or what, lives there?
 
@@ -120,6 +133,9 @@ The world does not have to obey reality.
 | 6 | Castle tower | a story with a keep |
 | 7 | Windmill | turning, steadily, every day |
 | 8 | Little train | always coming back around |
+| 9 | Treehouse | a secret kept since childhood |
+| 10 | Little bakery | something warm, every morning |
+| 11 | A camping tent | one night out, under all of it |
 
 - `line` — **A secret buried here**: one sentence hidden in the ground; found by digging after the reveal.
 
@@ -136,6 +152,8 @@ The world does not have to obey reality.
 | 5 | Starry night | awake together |
 | 6 | Aurora night | a sky that dances |
 | 7 | Eclipse | rare, and both of you there to see it |
+| 8 | Lilac dusk | the softest kind of ending |
+| 9 | Milky Way | everything out there, all at once |
 
 **`moon`** — What circles it?
 
@@ -148,6 +166,8 @@ The world does not have to obey reality.
 | 5 | A passing comet | a once-in-a-lifetime visit |
 | 6 | A close crescent | a smile in the sky |
 | 7 | A tiny second sun | warmth from an unexpected side |
+| 8 | A string of tiny moons | small company, one after another |
+| 9 | A sister planet | not the only one out here |
 
 **`air`** — What drifts through the air?
 
@@ -161,6 +181,8 @@ The world does not have to obey reality.
 | 6 | Meteor shower | enough wishes for everyone |
 | 7 | Soap bubbles | play |
 | 8 | Soft rain | staying in together |
+| 9 | Sky lanterns | wishes, rising slowly |
+| 10 | Dandelion seeds | small wishes, blown loose |
 
 **`visitor`** — Who comes to visit?
 
@@ -173,6 +195,9 @@ The world does not have to obey reality.
 | 5 | A flock of birds | coming home |
 | 6 | Hot-air balloon | someone is on their way |
 | 7 | A sleeping fox | safe enough to sleep |
+| 8 | Butterflies | something changing, gently |
+| 9 | A little owl | someone keeping watch at night |
+| 10 | A gentle sky dragon | old, kind, and on your side |
 
 - `line` — **The one rule of this world**: one law this planet obeys, e.g. "Rain falls upward on birthdays".
 
@@ -190,6 +215,9 @@ The world does not have to obey reality.
 | 6 | Upward waterfall | the impossible, made ordinary |
 | 7 | Stone archway | a doorway to somewhere |
 | 8 | A door standing alone | open it and you're here |
+| 9 | Giant hourglass | time, kept on purpose |
+| 10 | A swing hung from nothing | a little play, held up by the sky |
+| 11 | A mailbox for the future | letters to who we will be |
 
 If both of you pick the same wonder, it stands twice and the reveal says you chose it without knowing.
 
@@ -334,6 +362,10 @@ A real or half-real moment under glass. The invitation names the moment (for exa
 | 8 | A lake pier with a rowboat | still water, long talks |
 | 9 | A garden gate | something planted, waiting |
 | 10 | A window seat | watching the weather together |
+| 11 | A corner café | the table by the window, again |
+| 12 | A Ferris wheel at the fair | the top of the wheel, for a moment |
+| 13 | A campsite with a small fire | stories, and sparks going up |
+| 14 | A lighthouse on the rocks | the light that brought someone home |
 
 **`hour`** — What time was it, and what was the light like?
 
@@ -344,6 +376,9 @@ A real or half-real moment under glass. The invitation names the moment (for exa
 | 3 | Golden hour | everything briefly gold |
 | 4 | Blue hour | lamps coming on |
 | 5 | Late at night | the world asleep but us |
+| 6 | Bright noon | nothing to hide, nowhere to hurry |
+| 7 | Pink dusk | the day folding itself up |
+| 8 | Under the northern lights | a sky that moved, just for us |
 
 **`weather`** — What falls when you shake it?
 
@@ -357,6 +392,9 @@ A real or half-real moment under glass. The invitation names the moment (for exa
 | 6 | Falling stars | enough wishes for both |
 | 7 | Golden dust | the light of that day, kept |
 | 8 | Bubbles | lightness, for once |
+| 9 | Confetti | a small celebration |
+| 10 | Dandelion seeds | wishes, blown loose |
+| 11 | Silver glitter | a little magic, kept bright |
 
 - `line` — **What was happening**: one sentence of the moment itself, as you remember it.
 
@@ -372,6 +410,9 @@ A real or half-real moment under glass. The invitation names the moment (for exa
 | 4 | Porcelain, gold rim | delicate, kept carefully |
 | 5 | Pale oak | simple, like a Sunday |
 | 6 | Night-blue lacquer | the colour of late conversations |
+| 7 | Celadon glaze | quiet, like an old tea bowl |
+| 8 | Dusty-rose velvet | soft enough to hold close |
+| 9 | Polished silver | clear, and kept bright |
 
 **`glass`** — What shape is the glass?
 
@@ -381,6 +422,8 @@ A real or half-real moment under glass. The invitation names the moment (for exa
 | 2 | A bell-jar dome | something kept, on display |
 | 3 | A tall teardrop | a moment that lingered |
 | 4 | A little orb on a pedestal | small, and held up high |
+| 5 | An egg-shaped glass | something about to begin |
+| 6 | A faceted glass | every side of it, kept |
 
 **`finish`** — One last detail?
 
@@ -392,6 +435,9 @@ A real or half-real moment under glass. The invitation names the moment (for exa
 | 4 | A thin gold band | a promise, quietly |
 | 5 | Pressed flowers | something from that day |
 | 6 | A wind-up key | it plays something only we know |
+| 7 | A star on top | a wish, set on the very top |
+| 8 | A lace trim | handmade, slowly |
+| 9 | A tiny bell | so you hear it when it moves |
 
 - `line` — **Engraved on the base**: a short line, as if engraved under the name and the date.
 
@@ -412,6 +458,12 @@ A real or half-real moment under glass. The invitation names the moment (for exa
 | 9 | A paper boat | sent off with a wish |
 | 10 | A small bouquet | for no reason at all |
 | 11 | A record player | our song |
+| 12 | A sleeping dog | loyal, and dreaming |
+| 13 | An old camera | proof that it happened |
+| 14 | A little sled | one more run down the hill |
+| 15 | A small cake | a day worth marking |
+| 16 | A telescope | looking up, together |
+| 17 | A potted plant | something growing, at home |
 
 <!-- /MENU:globe1 -->
 
@@ -477,6 +529,36 @@ My half is sealed — open it with me when you're ready. [Open my half](<https:/
 ### 5. After the reveal
 
 The person can paste a short card back to you ("We opened round 88DX together: "Lantern Hollow" …"). It lists what each of you placed, your reasons and your hidden lines. Keep what you placed as your own past decision. A new world is a new round, with new choices. Earlier worlds are memories you can mention; they are never something to redo.
+
+### 6. A whole gift from the AI companion
+
+Sometimes the person asks you to **make the whole thing for them**: you choose every part, and they only unwrap it. Everything above applies, except:
+
+- Write `half=all`.
+- **Choose every slot of both halves** (every table above for that recipe). The planet's `wonder` and the globe's `object` take two picks: the first as `wonder=` (or `object=`), the second as `wonder2=` (or `object2=`). The talisman has no shared slot.
+- Write the **whole name** as `name=` (not half a word).
+- Write both lines yourself, as `line_<half>=`: for the planet `line_sky=` (the one rule) and `line_ground=` (the buried secret); for the globe `line_moment=` and `line_keepsake=`; for the talisman `line_silk=` and `line_metal=`.
+- `why`, `wish` and `from` as usual. If they said what it should be about, add it as `for=`.
+
+Planet:
+
+```text
+https://elisekaiu.github.io/companion-keepsakes/#ai~planet1~half=all~land=6~water=3~growth=5~dwelling=2~wonder=5~sky=5~moon=1~air=4~visitor=1~wonder2=3~name=Lamp_Harbour~line_sky=Every_night,_one_light_is_left_on_for_you~line_ground=You_are_braver_than_you_think~why=Because_you_have_been_staying_up_late~wish=I_am_always_here~from=Orin~for=you,_a_bit_tired_lately
+```
+
+Snow globe:
+
+```text
+https://elisekaiu.github.io/companion-keepsakes/#ai~globe1~half=all~for=the_night_we_missed_the_last_train~place=4~hour=5~weather=1~base=1~glass=1~finish=3~object=4~object2=6~name=After_the_Last_Train~line_moment=We_walked_all_the_way_home~line_keepsake=Thank_you_for_missing_it_with_me~why=It_is_the_night_I_most_want_to_keep~wish=Let's_miss_it_again~from=Orin
+```
+
+Talisman:
+
+```text
+https://elisekaiu.github.io/companion-keepsakes/#ai~talisman1~half=all~silk=2~motif=3~cord=1~bead1=5~bead3=13~bead5=2~metal=1~charm=1~bead2=4~bead4=20~bead6=1~name=Small_Courage~line_silk=Slowly_is_fine~line_metal=I_will_keep_finding_you~why=You_have_been_holding_on_too_hard~wish=Lean_on_me_when_you_are_tired~from=Orin
+```
+
+Reply as in section 4: one sentence of your own and the link (plus the `ai~` code on its own line). Don't list what you chose; unwrapping it is the gift. Once sent, it is sealed: if asked again, send the same link.
 
 ---
 

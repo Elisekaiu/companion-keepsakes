@@ -28,8 +28,9 @@ This is the archival form. "Download keepsake file" saves it, and embedders rece
 | `title`, `round`, `seed`, `theme` | Name, round id (also the render seed), optional public theme |
 | `createdAt`, `openedAt`, `keptAt` | ISO times |
 | `participants` | `{human:{name, half}, ai:{name, half}}`. Names are whatever the people chose; there are no fixed roles |
+| `mode` | `companion` (half each), `solo` (one person; a lucky draw records the parts kept as drawn in `leftToChance`) or `gift` (the AI made both halves; both contributions come from its one code) |
 | `contributions.human` / `.ai` | Every pick (`n`, `id`, `name`, `meaning`), `leftToChance`, `word`, `line`, `why`, `wish`, `sealedAt`, `seal`; for the AI also its verbatim `code` and `echoedSeal` |
-| `provenance` | `protocol`, `order` (`human-first` / `ai-first`), `humanSeal`, `aiEchoedSeal`, `sealMatches`, note |
+| `provenance` | `protocol`, `order` (`human-first` / `ai-first` / `solo` / `gift`), `humanSeal`, `aiEchoedSeal`, `sealMatches`, note |
 | `display` | `accent`, `background`, `dark`, and optionally `thumbnail` (data URL) set by whoever stores it |
 | `render` | `{renderer: "planet@1", spec}`: the full merged state, for archives and non-JS readers |
 | `link` | The `#k=` fragment that reopens it |
