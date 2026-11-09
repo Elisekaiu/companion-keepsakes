@@ -165,7 +165,7 @@ export function buildPlanet(spec, seed, { renderer } = {}) {
     enrich(wm, { rim: pal.dark ? '#9FB0FF' : '#FFFFFF', rimK: 0.45, rimPow: 3 });
     add('water', new THREE.Mesh(wgeo, wm));
     // moving light on the surface (not on ice)
-    if (water !== 'frozen') add('water', glints(water === 'starsea' ? '#E9ECFF' : pal.dark ? '#DDE4FF' : '#FFFFFF', water === 'starsea' ? (spec.flags.starMirror ? 1.5 : 1.1) : pal.dark ? 0.9 : 0.6, tickers));
+    if (water !== 'frozen') add('water', glints(water === 'starsea' ? '#E9ECFF' : pal.dark ? '#DDE4FF' : '#FFFFFF', water === 'starsea' ? (spec.flags.starMirror ? 1.5 : 1.1) : pal.dark ? 0.9 : 0.38, tickers));
     if (water === 'starsea') {
       const low = fib(900).filter(d => raw(d) < T - 0.01); shuffle(low, rand);
       const sp = new Float32Array(low.length * 3); low.forEach((d, i) => { const q = d.clone().multiplyScalar(0.992); sp.set([q.x, q.y, q.z], i * 3); });

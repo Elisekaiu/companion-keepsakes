@@ -12,7 +12,7 @@ Three recipes:
 - **Memory Snow Globe.** You name a real moment first (the only thing you share before choosing). One of you fills in the moment (where, the hour, what falls inside the glass), the other the keepsake (the base, the glass, a finishing touch), and each places one small thing inside. Shake it and it happens again.
 - **Two-Person Talisman.** A small bag charm. One of you takes the silk (the pouch, its stitched motif, its cord), the other the metal (the finish and the hanging charm). The six beads alternate between you on the strand. Both hidden lines are folded inside the pouch.
 
-Every part of the finished object can be traced back to who chose it.
+Every part of the finished object can be traced back to who chose it. The hidden lines come out last, each written inside a small pop-up greeting card that unfolds, writes itself in ink and tilts under your finger (rose for the person, lilac for the companion).
 
 ## For people
 
@@ -595,4 +595,4 @@ Open `index.html?host=<your origin>` in an iframe. When the person keeps somethi
 
 ## Credits and licences
 
-Code: MIT. Three.js (MIT) is vendored in `vendor/`. Fonts are loaded from Google Fonts: Cormorant Garamond, DM Sans and Caveat, all under the SIL Open Font License. All 3D models are generated from code; this project contains no third-party art. Inspired by [CyberFlowerShop](https://github.com/frycarrot/CyberFlowerShop)'s idea of an AI building a link that a browser renders as a collectible. No code or assets were taken from it. See [LICENSES.md](LICENSES.md).
+Code: MIT. Three.js (MIT) is vendored in `vendor/`. Fonts are loaded from Google Fonts: Cormorant Garamond, DM Sans, Caveat, Noto Serif SC and Pinyon Script, all under the SIL Open Font License. The handwriting on the greeting cards (and only there) is [Xiaolai SC / Kose Font](https://github.com/lxgw/kose-font) by LXGW, derived from the Japanese handwriting font SetoFont (SIL Open Font License), loaded on demand from jsDelivr (`@chinese-fonts/xiaolai`), only for the characters used. Wax seals, cards and their artwork are drawn by code. All 3D models are generated from code; this project contains no third-party art. Inspired by [CyberFlowerShop](https://github.com/frycarrot/CyberFlowerShop)'s idea of an AI building a link that a browser renders as a collectible. No code or assets were taken from it. See [LICENSES.md](LICENSES.md).

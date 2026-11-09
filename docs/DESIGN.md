@@ -83,6 +83,12 @@ Depth comes from light rather than detail: soft PCF shadows from one key light (
 
 The talisman does not turn like a turntable: a drag twists it on its hook within a soft limit, the pouch and charm trail the turn and swing past it, and when released it unwinds back towards the front. The stage reserves the space taken by the caption card and the toolbar, and frames the object in what is left.
 
+## The sealed lines: pop-up greeting cards
+
+The hidden lines are the last thing a reveal opens, so they get the most physical object: a small pop-up card, built with CSS 3D (no WebGL, so it stays light and crisp). Closed, it lies on the table, tied with a ribbon and held by a wax seal; a tap breaks the seal, the card opens from its fold, and paper layers stand up from the fold with a little overshoot (an arched panel with a vine border, two die-cut bouquets in front), throwing a few gold glints. The line then writes itself character by character, each one landing in gold and drying to ink, in Xiaolai SC (Kose Font), an open-source Chinese handwriting face grown from the Japanese SetoFont, so it reads like a note written in coloured pencil; a faint grain is masked into the ink. The face is used on the cards only. The card follows your finger a few degrees. The person's card is rose, the companion's lilac; a gift's card is rose with a bow on its seal; a solo card is addressed to oneself.
+
+Wax seals everywhere (the cards, and the seals pressed when a half is sealed) share one drawing: a poured, uneven edge with some thickness, a raised rim, a pressed centre with an embossed motif (lit on its upper-left edges, shadowed lower-right, engraved details), a soft gloss. Illustrated rather than photographic, to match the rest of the workshop.
+
 ## What was cut, and why
 
 - **No LLM in the loop.** Asking a model to "combine both keywords into a world" would undo the provenance. The AI's part is choosing, which it does in the chat it already has.

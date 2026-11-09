@@ -12,6 +12,8 @@ import { loc } from '../recipes/loc.js';
 import { store } from './store.js';
 import { t, setLang, lang } from './i18n.js';
 import { PROTOCOL_URL, SITE_URL, REPO_URL } from '../config.js';
+import { openGreetingCards, preloadCardFonts } from './card.js';
+import { sealSVG } from './seal.js';
 
 const app = document.getElementById('app');
 const stageHost = document.getElementById('stage');
@@ -107,11 +109,11 @@ function holdButton(label, { ms = 1100, side = '', onDone }) {
 }
 
 /* ------------------------------------------------------------------ wax seal */
+// A pressed wax seal carrying the fingerprint of what was sealed (rose wax for the person, blue for the companion).
+const WAX = { human: '#C4697F', ai: '#6F82BE' };
 function wax(fp, who, side, { stamp = false, size = 120 } = {}) {
-  const pts = [];
-  for (let i = 0; i < 36; i++) { const a = i / 36 * Math.PI * 2, r = 46 + (i % 2 ? 3 : 0) + Math.sin(i * 1.7) * 1.4; pts.push((50 + Math.cos(a) * r).toFixed(1) + ',' + (50 + Math.sin(a) * r).toFixed(1)); }
-  const svg = `<svg viewBox="0 0 100 100"><defs><radialGradient id="wg${fp}${side}" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><polygon points="${pts.join(' ')}" fill="var(--wax)"/><circle cx="50" cy="50" r="33" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.2"/><circle cx="50" cy="50" r="29" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="1"/><polygon points="${pts.join(' ')}" fill="url(#wg${fp}${side})"/></svg>`;
-  return h('div.wax', { class: side + (stamp ? ' stamp' : ''), style: `--s:${size}px` }, h('span', { html: svg }).firstChild, h('span.fp', {}, fp, h('small', {}, who)));
+  const svg = sealSVG({ color: WAX[side] || WAX.human, text: fp, sub: who, seed: fp + side });
+  return h('div.wax', { class: side + (stamp ? ' stamp' : ''), style: `--s:${size}px`, role: 'img', 'aria-label': `${fp} · ${who}` }, h('span', { html: svg }).firstChild);
 }
 
 /* ------------------------------------------------------------------ router */
@@ -623,6 +625,7 @@ async function reveal(round) {
   const solo = isSolo(round), gift = isGift(round), one = oneMaker(round);
   round = { ...round, openedAt: round.openedAt || new Date().toISOString() };
   const spec = merged(round);
+  if (spec.wish.human || spec.wish.ai) preloadCardFonts(); // the card's handwriting font, fetched while the reveal plays
   app.replaceChildren();
   const st = await getStage();
   const p = await buildWorld(st, R, spec, round);
@@ -704,9 +707,14 @@ async function reveal(round) {
       put(card, h('div.by', {}, h('i'), solo ? t('whySolo') : gift ? t('whyGift', { ai: round.names.ai }) : t('whyTogether')), h('div.pair', { class: one ? 'one' : '' },
         ['human', 'ai'].filter(k => spec.why[k]).map(k => h('div', { class: sideOf(k) }, one ? null : h('div.by', {}, h('i'), nameOf(k)), h('span.meaning', { style: 'color:var(--ink)' }, spec.why[k])))));
     } else if (s.kind === 'wishes') {
+      // the sealed lines come out last, each written inside a small pop-up greeting card
       const n = ['human', 'ai'].filter(k => spec.wish[k]);
-      const env = k => { const e = h('button.envelope', { type: 'button', class: sideOf(k), on: { click: () => { e.classList.add('open'); navigator.vibrate?.(10); } } }, h('span.dot'), h('div.text', {}, spec.wish[k]), h('small', {}, solo ? '✦' : (lang() === 'zh' ? `来自${nameOf(k)}` : `from ${nameOf(k)}`))); return e; };
-      put(card, h('div.by', {}, h('i'), l.wishTitle(n.length)), h('div.envelopes', { class: n.length === 1 ? 'one' : '' }, n.map(env)));
+      const quotes = h('div.card-quotes');
+      const showQuotes = () => quotes.replaceChildren(...n.map(k => h('p', {}, h('small', {}, solo ? t('hiddenLine') : t('cardCover', { name: nameOf(k) })), spec.wish[k])));
+      const invite = h('button.card-invite', { type: 'button', on: { click: () => openCards(round, spec, n, () => { invite.remove(); showQuotes(); }) } },
+        h('span.mini', { 'aria-hidden': 'true', html: sealSVG({ color: '#CF7C8B', motif: 'rose', seed: round.id }) }), h('span', {}, h('b', {}, t(n.length > 1 ? 'cardOpen2' : 'cardOpen')), h('small', {}, t('cardOpenSub'))));
+      put(card, h('div.by', {}, h('i'), l.wishTitle(n.length)), invite, quotes);
+      setTimeout(() => { if (invite.isConnected && !document.querySelector('.gc-overlay')) invite.click(); }, 900);
     }
     put(card, h('div.next', {}, dots(), i === all.length - 1 ? nextBtn(t('done')) : nextBtn()));
     cap.replaceChildren(card);
@@ -871,8 +879,28 @@ function storySheet(round, spec) {
       t('sealAi', { name: round.names.ai, fp: round.ai.fp, t: fmtTime(ta) }),
       round.order === 'ai-first' ? t('sealAiFirst', { name: round.names.human }) : round.ai.sealMatch ? t('sealAnswered', { fp: round.human.fp }) : (lang() === 'zh' ? '。' : '. ')
     ], ' ', t('notRegenerated')),
-    !solo && round.ai.code ? h('details', {}, h('summary', { class: 'prov' }, t('codeAsSent', { ai: round.names.ai })), h('pre.invite', {}, round.ai.code)) : null
+    !solo && round.ai.code ? h('details', {}, h('summary', { class: 'prov' }, t('codeAsSent', { ai: round.names.ai })), h('pre.invite', {}, round.ai.code)) : null,
+    spec.wish.human || spec.wish.ai ? h('div.row', { style: 'margin-top:18px' }, h('button.card-invite', { type: 'button', on: { click: () => openCards(round, spec, ['human', 'ai'].filter(k => spec.wish[k])) } },
+      h('span.mini', { 'aria-hidden': 'true', html: sealSVG({ color: '#CF7C8B', motif: 'rose', seed: round.id }) }), h('span', {}, h('b', {}, t('cardAgain')), h('small', {}, t('cardOpenSub'))))) : null
   );
+}
+
+/** Open the sealed lines as greeting cards: who wrote each, to whom, and in which colour (rose for the person, lilac for the companion). */
+function openCards(round, spec, who, onClose) {
+  const solo = isSolo(round), gift = isGift(round);
+  const date = fmtDate(round.human?.sealedAt || round.openedAt);
+  const items = who.map(k => {
+    const from = gift || k === 'ai' ? round.names.ai : round.names.human;
+    const to = solo ? '' : gift ? round.names.human : k === 'human' ? round.names.ai : round.names.human;
+    return {
+      text: spec.wish[k], side: solo || gift ? 'human' : k,
+      to: to ? t('cardTo', { name: to }) : '',
+      sign: solo ? t('cardSignSolo', { date }) : t('cardSign', { name: from }),
+      motif: solo ? 'tulips' : gift ? 'bow' : k === 'ai' ? 'moon' : 'rose',
+      coverLine: solo ? t('cardCoverSolo') : t('cardCover', { name: from })
+    };
+  });
+  openGreetingCards(items, { seed: round.id, lang: lang(), heading: t('cardHead'), tapHint: t('cardTap'), nextLabel: t('cardNext'), doneLabel: t('cardDone'), onClose });
 }
 
 function sheet(...kids) {

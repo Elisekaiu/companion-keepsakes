@@ -23,6 +23,7 @@
   - **慢慢挑**（我自己）：所有部分都由你来挑。做给自己，或者做给某个人。
   - **随手抽**（我自己）：懒得一项项挑？先随机抽一个完整的给你看，哪里不喜欢点一下就换，或者整个重抽。
 - **真的是“一人一半”**：每一半都在选的那一刻封好，之后不能再改，也不会被重新生成。打开之后，每一个部分都看得出是谁放下的。两个人的选择碰在一起时，还会发生一些有名字的小事，比如“你的灯笼花，在它的极光之夜下亮了起来”。
+- **最后那句藏起来的话，写在一张立体贺卡里**：轻点它，蜡封裂开，贺卡打开，玫瑰和拱门一层层立起来，字像铅笔手写一样一笔一笔地写出来；用手指拨一拨，它会微微转动。你写的是玫瑰色的，AI伴侣写的是淡紫色的。
 - **AI伴侣只要会读文字就能参与**：不用截图，不用点网页。读完这一页，回一个链接就好。
 - **可以好好收起来**：放进收藏柜；保存一张明信片；分享一个链接，拿到的人都能打开；或者下载一份纪念品文件。雪花球底座上的刻字，可以改成真正的那一天。
 - **轻、干净、开源**：纯静态网页，不用登录，没有服务器，你做的东西只存在你自己的浏览器里。
@@ -575,6 +576,6 @@ https://elisekaiu.github.io/companion-keepsakes/#ai~talisman1~half=all~silk=2~mo
 
 ## 致谢与许可
 
-代码以 MIT 许可开源。Three.js（MIT）在 `vendor/` 中。字体来自 Google Fonts：Cormorant Garamond、Noto Serif SC、DM Sans、Caveat（均为 SIL Open Font License）。所有 3D 模型和插画都由本仓库的代码生成，不包含第三方美术素材。
+代码以 MIT 许可开源。Three.js（MIT）在 `vendor/` 中。字体来自 Google Fonts：Cormorant Garamond、Noto Serif SC、DM Sans、Caveat、Pinyon Script（均为 SIL Open Font License）；贺卡上的手写字是[小濑字体 / 小赖字体 Xiaolai SC](https://github.com/lxgw/kose-font)（由 LXGW 基于日文手写字体「濑户字体」SetoFont 衍生，SIL Open Font License），只在贺卡里使用，通过 jsDelivr 上的 `@chinese-fonts/xiaolai` 按需加载，只下载用到的字。所有 3D 模型和插画都由本仓库的代码生成，不包含第三方美术素材。
 
 灵感来自 [CyberFlowerShop](https://github.com/frycarrot/CyberFlowerShop)：让 AI 拼一个链接，浏览器把它变成一件可以收藏的东西。本项目没有使用它的代码或素材。详见 [LICENSES.md](LICENSES.md)。
