@@ -33,7 +33,13 @@ export function createStage(host, { transparent = true } = {}) {
   }
   // Each renderer may frame itself: { dist, objectDist, camY, lookY, fitAspect }.
   const fr = () => ({ dist: 6.2, objectDist: 4.6, camY: 0.42, lookY: 0, fitAspect: true, ...(current?.frame || {}) });
-  const fitDist = d => fr().fitAspect ? d / Math.min(1, camera.aspect * 1.25) : d / Math.min(1, camera.aspect * 2.2);
+  const fitDist = d => {
+    const f = fr();
+    let out = f.fitAspect ? d / Math.min(1, camera.aspect * 1.25) : d / Math.min(1, camera.aspect * 2.2);
+    // wide objects (a globe) must fit across a narrow phone screen
+    if (f.halfWidth) out = Math.max(out, f.halfWidth / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect) * 1.05);
+    return out;
+  };
   function placeCamera() { const f = fr(); camera.position.set(0, f.camY * zoom, dist * zoom); camera.lookAt(0, f.lookY, 0); camera.updateProjectionMatrix(); }
   const ro = new ResizeObserver(size); ro.observe(host);
 
@@ -106,9 +112,8 @@ export function createStage(host, { transparent = true } = {}) {
   }
   function tap(e) {
     const what = pickAt(e);
-    if (!what) return;
-    current?.touch?.(what, 1.3);
-    onPick?.(what);
+    current?.touch?.(what, 1.3); // even an empty spot: e.g. a tap on the glass shakes the globe
+    if (what) onPick?.(what);
   }
 
   /* -------- loop -------- */

@@ -29,3 +29,15 @@ METAL half (the hard part: the metal, the charm that hangs beside the pouch, and
   bead2: 9 Garnet · 6 Amethyst · 5 Aquamarine · 29 Herkimer diamond · 15 Emerald · 1 Freshwater pearl · 4 Moonstone · 13 Ruby · 17 Peridot · 14 Sapphire · 16 Opal · 7 Citrine · 18 Turquoise · 27 Tanzanite · 28 Baroque pearl · 31 Mother-of-pearl · 20 Amber · 3 Rose quartz · 30 Morganite · 11 Frosted glass · 19 Labradorite · 24 Sunstone · 2 Clear crystal · 25 Fluorite · 10 Smoky quartz · 8 Pale jade · 12 Lapis · 21 Tiger's eye · 23 Malachite · 26 Green aventurine · 22 Black onyx
   bead4: same numbers as above
   bead6: same numbers as above
+
+[Companion Keepsakes · Memory Snow Globe · globe1]
+Link: https://elisekaiu.github.io/companion-keepsakes/#ai~globe1~R=<round>~seal=<their seal>~half=<moment|keepsake>~<slot>=<number>~...~word=<one_word>~line=<text>~why=<text>~wish=<text>~from=<your_name>
+MOMENT half (where it was, the hour and its light, and the weather inside the glass); line = What was happening
+  place: 1 A cabin in the woods · 2 A lamplit street · 3 A house by the sea · 4 A train platform · 5 A bench under a tree · 6 A rooftop with string lights · 7 A little bookshop · 8 A lake pier with a rowboat · 9 A garden gate · 10 A window seat
+  hour: 1 Early morning · 2 A slow afternoon · 3 Golden hour · 4 Blue hour · 5 Late at night
+  weather: 1 First snow · 2 Soft rain · 3 Cherry petals · 4 Autumn leaves · 5 Fireflies · 6 Falling stars · 7 Golden dust · 8 Bubbles
+KEEPSAKE half (the base it stands on, the shape of the glass, and a finishing touch); line = Engraved on the base
+  base: 1 Walnut wood · 2 White marble · 3 Brass · 4 Porcelain, gold rim · 5 Pale oak · 6 Night-blue lacquer
+  glass: 1 A classic globe · 2 A bell-jar dome · 3 A tall teardrop · 4 A little orb on a pedestal
+  finish: 1 Nothing more · 2 A ribbon bow · 3 A ring of pearls · 4 A thin gold band · 5 Pressed flowers · 6 A wind-up key
+BOTH: object: 1 An open umbrella · 2 Two cups of tea · 3 A sealed letter · 4 A bicycle · 5 A sleeping cat · 6 A paper lantern · 7 A small snowman · 8 A stack of books · 9 A paper boat · 10 A small bouquet · 11 A record player

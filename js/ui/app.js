@@ -118,7 +118,8 @@ function home(error) {
         h('span.art', { html: planetArt() }), h('span', {}, h('h3', {}, 'Tiny Imaginary Planet'), h('p', {}, 'A small world that obeys only the two of you. You take the ground or the sky.'))),
       h('button.recipe', { type: 'button', on: { click: () => { location.hash = 'new=talisman1'; } } },
         h('span.art', { html: charmArt() }), h('span', {}, h('h3', {}, 'Two-Person Talisman'), h('p', {}, 'A small charm to carry. One bead each, in turn, and a silk pouch for two wishes.'))),
-      h('div.recipe', { 'aria-disabled': 'true' }, h('span.art', { html: globeArt() }), h('span', {}, h('h3', {}, 'Memory Snow Globe'), h('p', {}, 'A real moment, kept under glass.')), h('span.tag', {}, 'in the workshop'))
+      h('button.recipe', { type: 'button', on: { click: () => { location.hash = 'new=globe1'; } } },
+        h('span.art', { html: globeArt() }), h('span', {}, h('h3', {}, 'Memory Snow Globe'), h('p', {}, 'A real moment, kept under glass. Name the moment, then each of you fills half of it. Shake it to make it happen again.')))
     ),
     h('div.stack', {},
       h('div.row', {}, paste, h('button.btn.small', { type: 'button', on: { click: () => takeCode(paste.value) } }, 'Open')),
@@ -144,13 +145,14 @@ function chooseHalf(code = 'planet1') {
   const R = recipeByCode(code) || recipeByCode('planet1');
   const n = names();
   const what = R.code === 'talisman1' ? 'this talisman' : 'this world';
+  const tp = R.themePrompt || { label: `What is ${what} for? (optional)`, placeholder: R.code === 'talisman1' ? 'e.g. for the long trip in March' : 'e.g. for the nights we stay up talking' };
   screen(
     h('div.eyebrow', {}, R.title),
     h('h1.display', {}, 'Which half is ', h('em', {}, 'yours'), '?'),
     h('p.lede', {}, `${n.ai} will make the other half without seeing yours.`),
     h('div.options', { style: 'grid-template-columns:1fr' }, Object.keys(R.halves).map(half => h('button.opt', { type: 'button', class: 'human', on: { click: () => start(half) } },
-      h('b', { style: 'font-size:26px' }, R.halves[half].title), h('span', {}, R.halves[half].blurb + (R.shared.includes('wonder') ? ', plus one wonder' : ''))))),
-    h('div.field', {}, h('label', { for: 'theme' }, `What is ${what} for? (optional)`), h('input.input', { id: 'theme', maxlength: 140, placeholder: R.code === 'talisman1' ? 'e.g. for the long trip in March' : 'e.g. for the nights we stay up talking' }), h('small', {}, `${n.ai} will see this line — it is the only thing you share before the reveal.`)),
+      h('b', { style: 'font-size:26px' }, R.halves[half].title), h('span', {}, R.halves[half].blurb + (R.sharedBlurb ? ', ' + R.sharedBlurb : ''))))),
+    h('div.field', {}, h('label', { for: 'theme' }, tp.label), h('input.input', { id: 'theme', maxlength: 140, placeholder: tp.placeholder }), h('small', {}, `${n.ai} will see this line — it is the only thing you share before the reveal.`)),
     h('div.dock', {}, h('div.inner', {}, h('button.btn.ghost', { type: 'button', on: { click: () => home() } }, 'Back')))
   );
   function start(half) {
@@ -324,9 +326,9 @@ async function getStage() {
   return stage;
 }
 /** Build a recipe's 3D object with its own renderer module (js/render/<recipe.renderer>.js). */
-async function buildWorld(st, R, spec, seed) {
+async function buildWorld(st, R, spec, seed, date) {
   const mod = renderers[R.renderer] ||= await import('../render/' + R.renderer + '.js');
-  return mod.build(spec, seed, { renderer: st.renderer });
+  return mod.build(spec, seed, { renderer: st.renderer, date });
 }
 
 /* ------------------------------------------------------------------ reveal */
@@ -335,7 +337,7 @@ async function reveal(round) {
   const spec = mergeRound(round);
   app.replaceChildren();
   const st = await getStage();
-  const p = await buildWorld(st, R, spec, round.id);
+  const p = await buildWorld(st, R, spec, round.id, round.openedAt || new Date().toISOString());
   st.setWorld(p);
   st.autoSpin = 0.1;
   st.backdrop(['#F3EEE8', '#E2D9CF'], false, round.id, '#8C8499');
@@ -445,7 +447,7 @@ async function explore(round, { keepWorld = false, visiting = false } = {}) {
   const spec = mergeRound(round);
   const st = await getStage();
   if (!keepWorld) {
-    const p = await buildWorld(st, R, spec, round.id);
+    const p = await buildWorld(st, R, spec, round.id, round.openedAt || round.ai?.sealedAt);
     p.revealAll();
     st.setWorld(p);
     st.backdrop(spec.palette.bg, spec.palette.dark, round.id, spec.palette.ink);
@@ -456,7 +458,7 @@ async function explore(round, { keepWorld = false, visiting = false } = {}) {
   // Tapping a part says what it is, what it means, and who placed it.
   st.onPick = what => {
     if (hidden && what === hidden.find) return toast('“' + hidden.text + '”');
-    const x = spec.ledger.find(l => l.slot === what);
+    const x = spec.ledger.find(l => (l.pick || l.slot) === what);
     if (x) toast(`${x.name} — ${x.meaning} · ${x.by === 'human' ? round.names.human : round.names.ai}`);
   };
   const doc = () => toKeepsake(round);

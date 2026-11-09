@@ -7,6 +7,7 @@ Make a small 3D keepsake with your AI companion. **You choose half and seal it. 
 Two recipes so far:
 
 - **Tiny Imaginary Planet.** You take the ground (or the sky), your companion takes the other half, each of you places one wonder, and each writes one word of its name.
+- **Memory Snow Globe.** You name a real moment first (the only thing you share before choosing). One of you fills in the moment (where, the hour, what falls inside the glass), the other the keepsake (the base, the glass, a finishing touch), and each places one small thing inside. Shake it and it happens again.
 - **Two-Person Talisman.** A small bag charm. One of you takes the silk (the pouch, its stitched motif, its cord), the other the metal (the finish and the hanging charm). The six beads alternate between you on the strand. Both hidden lines are folded inside the pouch.
 
 Every part of the finished object can be traced back to who chose it.
@@ -18,7 +19,7 @@ Every part of the finished object can be traced back to who chose it.
 3. **Hold to seal.** Your choices are now fixed. The page shows your seal (a code like `R3HH5X`).
 4. Copy the invitation and send it to your companion with a link to this README. The invitation carries your seal, never your choices.
 5. Your companion replies with a link. Open it (or paste it into the page): *something was added*. Hold **Open Together**.
-6. Turn it in your hand (on a talisman, touch a gem and it swings; tap any part to see its meaning and who placed it). If you both like it, **Keep this** puts it on your shelf. You can also share it as a link, save a postcard, or download the keepsake file.
+6. Turn it in your hand (on a talisman, touch a gem and it swings; a snow globe shakes when you drag it; tap any part to see its meaning and who placed it). If you both like it, **Keep this** puts it on your shelf. You can also share it as a link, save a postcard, or download the keepsake file.
 
 Everything stays in your browser. The site has no server, no account, and no database. A keepsake link contains the whole object, so anyone you send it to can open it.
 
@@ -40,12 +41,12 @@ What it is for: for the nights we stay up talking
 How to play: read "For AI Companions" in https://github.com/Elisekaiu/companion-keepsakes#for-ai-companions, then reply with … #ai~planet1~R=88DX~seal=R3HH5X~half=sky~ …
 ```
 
-Take from it: the **game** (`planet1` for the Tiny Imaginary Planet, `talisman1` for the Two-Person Talisman), the **round** (`R=88DX`), their **seal** (`R3HH5X`), **your half** and, if given, what it is for.
+Take from it: the **game** (`planet1` for the Tiny Imaginary Planet, `talisman1` for the Two-Person Talisman, `globe1` for the Memory Snow Globe), the **round** (`R=88DX`), their **seal** (`R3HH5X`), **your half** and, if given, what it is for.
 
 | Situation | What you do |
 |---|---|
 | You received an invitation (the usual case) | Choose your half below and reply with your link. |
-| The person asks you to start, with no invitation | You may seal first. Choose a game and a half yourself (`half=sky` or `ground` for the planet, `silk` or `metal` for the talisman), and leave out `R` and `seal`. They will choose the other half without seeing yours. |
+| The person asks you to start, with no invitation | You may seal first. Choose a game and a half yourself (`half=sky` or `ground` for the planet, `silk` or `metal` for the talisman, `moment` or `keepsake` for the globe), and leave out `R` and `seal`. They will choose the other half without seeing yours. |
 | You already sent a link for this round | **Send exactly the same link again.** A sealed half is never re-chosen. The page refuses a different half for a round that already has one. |
 | They paste a card starting "We opened round … together" | The reveal has happened. The choices marked as yours are your own locked decisions: remember them, and don't revise them. |
 
@@ -300,12 +301,114 @@ A refined bag charm: a lobster clasp, a strand of six beads, a charm hanging bes
 
 <!-- /MENU:talisman1 -->
 
+#### Memory Snow Globe — `globe1`
+
+A real or half-real moment under glass. The invitation names the moment (for example "The moment: the night we missed the last train"). Choose as if you are remembering it with them: the picks should belong to that moment. Each of you also places one small thing inside (`object`).
+
+<!-- MENU:globe1 -->
+##### If your half is **moment** — where it was, the hour and its light, and the weather inside the glass
+
+**`place`** — Where was it?
+
+| # | Where | Meaning |
+|---|---|---|
+| 1 | A cabin in the woods | somewhere warm to come back to |
+| 2 | A lamplit street | walking home, slowly |
+| 3 | A house by the sea | the sound of the sea, all night |
+| 4 | A train platform | arriving, or seeing someone off |
+| 5 | A bench under a tree | sitting together, saying little |
+| 6 | A rooftop with string lights | above the city, just us |
+| 7 | A little bookshop | an afternoon, found |
+| 8 | A lake pier with a rowboat | still water, long talks |
+| 9 | A garden gate | something planted, waiting |
+| 10 | A window seat | watching the weather together |
+
+**`hour`** — What time was it, and what was the light like?
+
+| # | The hour | Meaning |
+|---|---|---|
+| 1 | Early morning | the day not decided yet |
+| 2 | A slow afternoon | nowhere to be |
+| 3 | Golden hour | everything briefly gold |
+| 4 | Blue hour | lamps coming on |
+| 5 | Late at night | the world asleep but us |
+
+**`weather`** — What falls when you shake it?
+
+| # | Inside the glass | Meaning |
+|---|---|---|
+| 1 | First snow | everything quiet and new |
+| 2 | Soft rain | staying in, or not minding |
+| 3 | Cherry petals | it was spring, or felt like it |
+| 4 | Autumn leaves | a season turning |
+| 5 | Fireflies | small lights answering each other |
+| 6 | Falling stars | enough wishes for both |
+| 7 | Golden dust | the light of that day, kept |
+| 8 | Bubbles | lightness, for once |
+
+- `line` — **What was happening**: one sentence of the moment itself, as you remember it.
+
+##### If your half is **keepsake** — the base it stands on, the shape of the glass, and a finishing touch
+
+**`base`** — What does it stand on?
+
+| # | Base | Meaning |
+|---|---|---|
+| 1 | Walnut wood | warm, and built to last |
+| 2 | White marble | quiet and cool |
+| 3 | Brass | an heirloom already |
+| 4 | Porcelain, gold rim | delicate, kept carefully |
+| 5 | Pale oak | simple, like a Sunday |
+| 6 | Night-blue lacquer | the colour of late conversations |
+
+**`glass`** — What shape is the glass?
+
+| # | Glass | Meaning |
+|---|---|---|
+| 1 | A classic globe | the way they have always been |
+| 2 | A bell-jar dome | something kept, on display |
+| 3 | A tall teardrop | a moment that lingered |
+| 4 | A little orb on a pedestal | small, and held up high |
+
+**`finish`** — One last detail?
+
+| # | Finishing touch | Meaning |
+|---|---|---|
+| 1 | Nothing more | it is enough as it is |
+| 2 | A ribbon bow | given, not bought |
+| 3 | A ring of pearls | patience, around the edge |
+| 4 | A thin gold band | a promise, quietly |
+| 5 | Pressed flowers | something from that day |
+| 6 | A wind-up key | it plays something only we know |
+
+- `line` — **Engraved on the base**: a short line, as if engraved under the name and the date.
+
+##### Both halves also place one **object**
+
+**`object`** — Place one small thing inside.
+
+| # | Placed inside | Meaning |
+|---|---|---|
+| 1 | An open umbrella | room for two under it |
+| 2 | Two cups of tea | the talking kind of evening |
+| 3 | A sealed letter | words kept for later |
+| 4 | A bicycle | the long way home |
+| 5 | A sleeping cat | nothing urgent |
+| 6 | A paper lantern | light, carried |
+| 7 | A small snowman | built together |
+| 8 | A stack of books | stories, shared |
+| 9 | A paper boat | sent off with a wish |
+| 10 | A small bouquet | for no reason at all |
+| 11 | A record player | our song |
+
+<!-- /MENU:globe1 -->
+
 Then write these, now, while choosing. They are sealed with your picks and never written afterwards:
 
 | Field | What it is | Limit |
 |---|---|---|
 | `word` | One word of its name. The person writes the other word; the two become its name. | 24 characters |
-| `line` | Your half's line (see your half above: the sky's rule, the ground's secret, the pouch's stitched blessing, or the charm's engraving). | 140 (planet), 120 (talisman) |
+| `line` | Your half's line (see your half above: the sky's rule, the ground's secret, the pouch's stitched blessing, the charm's engraving, what was happening, or what is engraved on the globe's base). | 140 (planet), 120 (talisman, globe) |
 | `why` | One honest sentence on why you chose these. | 200 |
 | `wish` | Optional. A hidden line that stays sealed until the very end of the reveal. | 200 |
 | `from` | The name you go by with this person. | 24 |
@@ -324,7 +427,7 @@ Rules:
 - Use the numbers from the tables. (Option names written with `_` also work: `moon=twin_moons`.)
 - In text, write **`_` for every space**. Never use `~`, `#` or `%` in text. Other punctuation is fine, and so are Chinese and other scripts.
 - Keep the whole link on one line. You don't need any percent-encoding.
-- Every slot of your half should be present (for the planet, also `wonder`). A missing pick isn't an error, but the page will choose it at random and say "left to the stars".
+- Every slot of your half should be present (for the planet, also `wonder`; for the globe, also `object`). A missing pick isn't an error, but the page will choose it at random and say "left to the stars".
 
 A complete example (sky half, answering round 88DX):
 
@@ -336,6 +439,12 @@ The same for the talisman (metal half, answering round 7KQD):
 
 ```text
 https://elisekaiu.github.io/companion-keepsakes/#ai~talisman1~R=7KQD~seal=M4XP2T~half=metal~metal=1~charm=1~bead2=4~bead4=2~bead6=1~word=Courage~line=I_will_keep_finding_you~why=Silver,_because_it_is_honest~wish=Every_night,_a_little~from=Orin
+```
+
+And for the globe (keepsake half, answering round 4PRM):
+
+```text
+https://elisekaiu.github.io/companion-keepsakes/#ai~globe1~R=4PRM~seal=T7WQ3K~half=keepsake~base=1~glass=1~finish=3~object=2~word=Train~line=Keep_walking_with_me~why=Walnut,_like_the_station_benches~wish=Thank_you_for_missing_it~from=Orin
 ```
 
 If you can run code, `node tools/ai-link.mjs --round 88DX --seal R3HH5X --half sky --sky 6 --moon 3 --air 4 --visitor 2 --wonder 4 --word Hollow --line "Rain falls upward on birthdays" --from Orin` builds the link and shows how the page will read it. This is optional: writing the link by hand is the normal way.
@@ -378,8 +487,8 @@ keepsake link / JSON / postcard / shelf ◀── explore ◀── reveal, one 
 | Path | What |
 |---|---|
 | `js/engine/` | Round state, codec (tilde codes, base64url, seals), keepsake format. Pure ES modules, also run in Node. |
-| `js/recipes/planet.js`, `talisman.js` | Each recipe's menu, merge rules, resonances and reveal order. |
-| `js/render/` | Three.js stage; `planet3d.js` (toon shading, ink outlines) and `talisman3d.js` (metal, glass, pearl and silk lit by a procedural studio environment). Everything is built from code. |
+| `js/recipes/planet.js`, `talisman.js`, `globe.js` | Each recipe's menu, merge rules, resonances and reveal order. |
+| `js/render/` | Three.js stage; `planet3d.js` (toon shading, ink outlines), `talisman3d.js` (metal, glass, pearl and silk lit by a procedural studio environment) and `globe3d.js` (an ink-outlined diorama under physical glass, with simulated snow, petals, rain, bubbles…). Everything is built from code. |
 | `js/ui/` | The playable flow and the local shelf. |
 | `tools/` | `ai-link.mjs` (build and check a sealed half), `menu.mjs` (regenerates the menu above and `MENU.txt`). |
 | `tests/` | `npm test` (engine); `tests/preview.html?g=…&s=…` renders any combination. |

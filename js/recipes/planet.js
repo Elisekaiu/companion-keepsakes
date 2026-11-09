@@ -10,6 +10,7 @@ export const code = 'planet1';
 export const title = 'Tiny Imaginary Planet';
 export const tagline = 'A small world that does not need to obey anything but the two of you.';
 export const noun = 'a tiny planet';
+export const sharedBlurb = 'plus one wonder';
 export const waitingLine = 'half of this world is still dark';
 export const renderer = 'planet3d';      // js/render/<renderer>.js
 export const backdropSlot = 'sky';       // the pick that sets the scene's backdrop during the reveal

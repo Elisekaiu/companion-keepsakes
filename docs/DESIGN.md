@@ -75,8 +75,16 @@ Three.js r170 (vendored, one file, MIT), with everything procedural: toon shadin
 - **No real cryptographic commitment.** It would add ceremony without any felt benefit. A fingerprint is enough for "your half was fixed first".
 - **No free-form 3D editing.** Choosing from a curated menu keeps every world beautiful and keeps the AI path purely textual.
 
+## Memory Snow Globe (built, `globe1`)
+
+- **Coherence first.** Two blind halves can contradict each other about a real moment, so the globe asks the person to name the moment up front ("the night we missed the last train"). It is the only thing shared before the reveal, and it goes in the invitation.
+- Halves: **The moment** (where, the hour and its light, what falls inside the glass) and **The keepsake** (the base, the glass shape, a finishing touch). Each side also places one small thing inside; two of the same become a pair.
+- The base is physical (walnut, marble, brass, porcelain with a gold rim, oak, night-blue lacquer) with an engraved brass plaque showing the name and the round's date, so a kept globe always reopens the same. The inside is an ink-outlined diorama, the same illustrated language as the planet. The glass is kept thin and clear so the scene stays readable.
+- **Motion is the point.** Particles are simulated: snow, petals, leaves and golden dust fall and settle on the ground; rain and falling stars keep falling; bubbles rise; fireflies wander. Dragging turns the globe and shakes it as hard as you drag; any tap gives a small shake. The weather step of the reveal shakes it for you.
+- Resonances name the meetings: snow on the cabin roof, the umbrella on a rainy night, a wind-up key beside a record player.
+
 ## Roadmap
 
-1. ~~Talisman~~ done.
-2. Memory Snow Globe (halves: *the moment*, which is place, time and weather / *what is inside*, which is objects, particles and engraving), with a public "moment" line shared up front, as the planet's theme line is.
+1. ~~Talisman~~ done. ~~Snow globe~~ done.
+2. Device shake (DeviceMotion) for the globe on phones, behind a permission tap.
 3. Per-pick "why" (optional) once the single-reason flow has been tested with real companions.

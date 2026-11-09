@@ -22,7 +22,7 @@ const stage = createStage(document.getElementById('s'));
 stage.autoSpin = q.has('spin') ? 0.12 : 0;
 stage.backdrop(spec.palette.bg, spec.palette.dark, q.get('seed') || 'ABCD', spec.palette.ink);
 const mod = await import('../js/render/' + R.renderer + '.js');
-const p = mod.build(spec, q.get('seed') || 'ABCD', { renderer: stage.renderer });
+const p = mod.build(spec, q.get('seed') || 'ABCD', { renderer: stage.renderer, date: '2026-11-09' });
 p.revealAll?.();
 stage.setWorld(p);
 if (q.has('ghost')) p.prepareReveal();
