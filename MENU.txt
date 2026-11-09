@@ -1,15 +1,31 @@
-[Companion Keepsakes · Tiny Imaginary Planet · planet1]
-Link: https://elisekaiu.github.io/companion-keepsakes/#ai~planet1~R=<round>~seal=<their seal>~half=<sky|ground>~<slot>=<number>~...~wonder=<number>~word=<one_word>~line=<text>~why=<text>~wish=<text>~from=<your_name>
 In text use _ for spaces; never use ~ # %. One line. Numbers below.
 
-SKY half (what surrounds it: light, moons, what drifts in the air, who visits); line = The one rule of this world
-  sky: 1 Pink dawn · 2 Clear noon · 3 Long sunset · 4 Blue hour · 5 Starry night · 6 Aurora night · 7 Eclipse
-  moon: 1 One small moon · 2 Twin moons · 3 Rings · 4 Rings and a moon · 5 A passing comet · 6 A close crescent · 7 A tiny second sun
-  air: 1 Drifting clouds · 2 Snowfall · 3 Falling petals · 4 Fireflies · 5 A rainbow · 6 Meteor shower · 7 Soap bubbles · 8 Soft rain
-  visitor: 1 Floating whale · 2 Paper cranes · 3 Lantern jellyfish · 4 Sky koi · 5 A flock of birds · 6 Hot-air balloon · 7 A sleeping fox
+[Companion Keepsakes · Tiny Imaginary Planet · planet1]
+Link: https://elisekaiu.github.io/companion-keepsakes/#ai~planet1~R=<round>~seal=<their seal>~half=<ground|sky>~<slot>=<number>~...~word=<one_word>~line=<text>~why=<text>~wish=<text>~from=<your_name>
 GROUND half (what the world stands on: land, water, what grows, who lives there); line = A secret buried here
   land: 1 Soft meadow · 2 Flower field · 3 Honey dunes · 4 First snow · 5 Crystal plain · 6 Glowing moss · 7 Amber woods · 8 Cloudstone
   water: 1 One round sea · 2 Small lakes · 3 River of light · 4 Frozen lake · 5 Floating ponds · 6 Warm springs · 7 No water
   growth: 1 Round trees · 2 Little pines · 3 Giant mushrooms · 4 Crystal trees · 5 Lantern flowers · 6 Candyfloss trees · 7 Tall grass and reeds
   dwelling: 1 Cottage · 2 Lighthouse · 3 Observatory · 4 Glass greenhouse · 5 Small shrine · 6 Castle tower · 7 Windmill · 8 Little train
+SKY half (what surrounds it: light, moons, what drifts in the air, who visits); line = The one rule of this world
+  sky: 1 Pink dawn · 2 Clear noon · 3 Long sunset · 4 Blue hour · 5 Starry night · 6 Aurora night · 7 Eclipse
+  moon: 1 One small moon · 2 Twin moons · 3 Rings · 4 Rings and a moon · 5 A passing comet · 6 A close crescent · 7 A tiny second sun
+  air: 1 Drifting clouds · 2 Snowfall · 3 Falling petals · 4 Fireflies · 5 A rainbow · 6 Meteor shower · 7 Soap bubbles · 8 Soft rain
+  visitor: 1 Floating whale · 2 Paper cranes · 3 Lantern jellyfish · 4 Sky koi · 5 A flock of birds · 6 Hot-air balloon · 7 A sleeping fox
 BOTH: wonder: 1 Floating island · 2 Crystal spire · 3 Glowing road · 4 Bridge into the sky · 5 Tree of lights · 6 Upward waterfall · 7 Stone archway · 8 A door standing alone
+
+[Companion Keepsakes · Two-Person Talisman · talisman1]
+Link: https://elisekaiu.github.io/companion-keepsakes/#ai~talisman1~R=<round>~seal=<their seal>~half=<silk|metal>~<slot>=<number>~...~word=<one_word>~line=<text>~why=<text>~wish=<text>~from=<your_name>
+SILK half (the soft part: the silk pouch, the motif stitched on it, its cord, and beads 1, 3 and 5); line = Stitched on the pouch
+  silk: 1 Ivory silk · 2 Blush pink · 3 Lilac · 4 Deep indigo · 5 Sage · 6 Vermilion · 7 Pale sky
+  motif: 1 Plain silk · 2 Crescent · 3 Plum blossom · 4 Wave · 5 Crane · 6 Star
+  cord: 1 Red cord · 2 Gold cord · 3 White cord · 4 Navy cord · 5 Pink cord · 6 Moss cord
+  bead1: 1 Freshwater pearl · 2 Clear crystal · 3 Rose quartz · 4 Moonstone · 5 Aquamarine · 6 Amethyst · 7 Citrine · 8 Pale jade · 9 Garnet · 10 Smoky quartz · 11 Frosted glass · 12 Lapis
+  bead3: same numbers as above
+  bead5: same numbers as above
+METAL half (the hard part: the metal, the charm that hangs beside the pouch, and beads 2, 4 and 6); line = Engraved on the back of the charm
+  metal: 1 Bright silver · 2 Soft gold · 3 Rose gold · 4 Antique brass
+  charm: 1 Crescent moon · 2 Star · 3 Heart · 4 Glass butterfly · 5 Little key · 6 Small bell · 7 White flower · 8 Green leaf · 9 Cherries
+  bead2: 1 Freshwater pearl · 2 Clear crystal · 3 Rose quartz · 4 Moonstone · 5 Aquamarine · 6 Amethyst · 7 Citrine · 8 Pale jade · 9 Garnet · 10 Smoky quartz · 11 Frosted glass · 12 Lapis
+  bead4: same numbers as above
+  bead6: same numbers as above

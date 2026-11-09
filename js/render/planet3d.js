@@ -21,6 +21,8 @@ const CANOPY = {
   autumn: ['#E58E5A', '#F0B35F', '#D46E58'], cloud: ['#B9E3D3', '#F6C9DA', '#D9D0F5']
 };
 
+export function build(spec, seed) { return buildPlanet(spec, seed); }
+
 export function buildPlanet(spec, seed) {
   const rand = rngFor(seed, 'planet');
   const N = noise3(rand);
@@ -177,7 +179,8 @@ export function buildPlanet(spec, seed) {
   });
 
   /* ---------------- secret (ground half's line) ---------------- */
-  if (spec.lines.secret.text) {
+  const secretLine = spec.lines.find(l => l.key === 'secret');
+  if (secretLine?.text) {
     const mark = group(
       mesh(new THREE.BoxGeometry(0.075, 0.012, 0.016), toon('#C7524E'), { rot: [0, 0.78, 0] }),
       mesh(new THREE.BoxGeometry(0.075, 0.012, 0.016), toon('#C7524E'), { rot: [0, -0.78, 0] }),
@@ -224,10 +227,25 @@ export function buildPlanet(spec, seed) {
 
   /* ---------------- api ---------------- */
   let time = 0;
+  const setLandRevealed = on => { terrain.material = on ? landMat : greyMat; };
   return {
-    world, skyLayer, parts, spots: SPOTS, terrain,
+    world, skyLayer, parts, spots: { ...SPOTS, front: new THREE.Vector3(0, 0.12, 1) }, terrain,
     update(dt) { time += dt; for (const f of tickers) f(time, dt); },
-    setLandRevealed(on) { terrain.material = on ? landMat : greyMat; },
+    setLandRevealed,
+    /** Before the reveal: a grey, unlit world and nothing else. */
+    prepareReveal() {
+      setLandRevealed(false);
+      for (const [slot, objs] of Object.entries(parts)) if (slot !== 'land') objs.forEach(o => { o.visible = false; });
+      parts.land.slice(1).forEach(o => { o.visible = false; });
+    },
+    /** A slot with its own way of appearing. Returns true if handled. */
+    reveal(slot, tween) {
+      if (slot !== 'land') return false;
+      setLandRevealed(true); parts.land.forEach(o => { o.visible = true; });
+      tween(0.6, e => terrain.scale.setScalar(1 + Math.sin(e * Math.PI) * 0.04));
+      return true;
+    },
+    revealAll() { setLandRevealed(true); for (const objs of Object.values(parts)) objs.forEach(o => { o.visible = true; }); },
     dispose() {
       [world, skyLayer].forEach(g => g.traverse(o => { o.geometry?.dispose?.(); }));
     }

@@ -58,8 +58,10 @@ export function toKeepsake(round, extra = {}) {
     name: h.name, half: h.half,
     picks: Object.fromEntries(Object.entries(h.picks).map(([slot, n]) => {
       const opt = R.option(slot, n);
-      return [slot, { n, id: opt.id, name: opt.name, meaning: opt.meaning }];
+      return [slot, { n, id: opt.id, name: opt.name, meaning: opt.meaning, title: R.slots[slot].title }];
     })),
+    halfTitle: R.halves[h.half]?.title || h.half,
+    lineLabel: R.halves[h.half]?.line?.label || '',
     leftToChance: h.chance || [],
     word: h.word, line: h.line, why: h.why, wish: h.wish,
     sealedAt: h.sealedAt, seal: h.fp,

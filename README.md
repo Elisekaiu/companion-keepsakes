@@ -4,11 +4,16 @@ Make a small 3D keepsake with your AI companion. **You choose half and seal it. 
 
 **Play: https://elisekaiu.github.io/companion-keepsakes/**
 
-The first recipe is a **Tiny Imaginary Planet**: you take the ground (or the sky), your companion takes the other half, each of you places one wonder, and each writes one word of its name. Every part of the finished world can be traced back to who chose it.
+Two recipes so far:
+
+- **Tiny Imaginary Planet.** You take the ground (or the sky), your companion takes the other half, each of you places one wonder, and each writes one word of its name.
+- **Two-Person Talisman.** A small bag charm. One of you takes the silk (the pouch, its stitched motif, its cord), the other the metal (the finish and the hanging charm). The six beads alternate between you on the strand. Both hidden lines are folded inside the pouch.
+
+Every part of the finished object can be traced back to who chose it.
 
 ## For people
 
-1. Open the site, write your names, and choose **Tiny Imaginary Planet**.
+1. Open the site, write your names, and choose a recipe.
 2. Choose your half, then make your picks. Write one word of the world's name, a line, why you chose these, and, if you like, a hidden line.
 3. **Hold to seal.** Your choices are now fixed. The page shows your seal (a code like `R3HH5X`).
 4. Copy the invitation and send it to your companion with a link to this README. The invitation carries your seal, never your choices.
@@ -31,78 +36,29 @@ An invitation looks like this:
 Let's make a Tiny Imaginary Planet together — Companion Keepsakes, round 88DX.
 My half (Ground) is sealed: R3HH5X. You can't see it, and I can't see yours until we open it together.
 Your half: Sky — what surrounds it: light, moons, what drifts in the air, who visits, plus one wonder.
-What this world is for: for the nights we stay up talking
+What it is for: for the nights we stay up talking
 How to play: read "For AI Companions" in https://github.com/Elisekaiu/companion-keepsakes#for-ai-companions, then reply with … #ai~planet1~R=88DX~seal=R3HH5X~half=sky~ …
 ```
 
-Take from it: the **game** (`planet1`), the **round** (`R=88DX`), their **seal** (`R3HH5X`), **your half** (`sky` or `ground`) and, if given, what the world is for.
+Take from it: the **game** (`planet1` for the Tiny Imaginary Planet, `talisman1` for the Two-Person Talisman), the **round** (`R=88DX`), their **seal** (`R3HH5X`), **your half** and, if given, what it is for.
 
 | Situation | What you do |
 |---|---|
 | You received an invitation (the usual case) | Choose your half below and reply with your link. |
-| The person asks you to start, with no invitation | You may seal first. Choose `half=sky` or `half=ground` yourself, and leave out `R` and `seal`. They will choose the other half without seeing yours. |
+| The person asks you to start, with no invitation | You may seal first. Choose a game and a half yourself (`half=sky` or `ground` for the planet, `silk` or `metal` for the talisman), and leave out `R` and `seal`. They will choose the other half without seeing yours. |
 | You already sent a link for this round | **Send exactly the same link again.** A sealed half is never re-chosen. The page refuses a different half for a round that already has one. |
 | They paste a card starting "We opened round … together" | The reveal has happened. The choices marked as yours are your own locked decisions: remember them, and don't revise them. |
 
 ### 2. Choose your half
 
-Choose from what you know of this person and this conversation, and from the "what this world is for" line if there is one. You cannot see their half, so don't try to guess or mirror it. Make your half good on its own: this world does not have to obey reality, and every combination works. When two picks meet in a meaningful way (lantern flowers under a dark sky, a fox by a cottage), the reveal points it out.
+Choose from what you know of this person and this conversation, and from the "what it is for" line if there is one. You cannot see their half, so don't try to guess or mirror it. Make your half good on its own: every combination works. When two picks meet in a meaningful way (lantern flowers under a dark sky, a moonstone bead beside a crescent charm), the reveal points it out.
+
+#### Tiny Imaginary Planet — `planet1`
+
+The world does not have to obey reality.
 
 <!-- MENU:planet1 -->
-#### If your half is **sky** — what surrounds it: light, moons, what drifts in the air, who visits
-
-**`sky`** — What light is this world under?
-
-| # | Sky | Meaning |
-|---|---|---|
-| 1 | Pink dawn | the start of something |
-| 2 | Clear noon | nothing hidden |
-| 3 | Long sunset | the hour you don't want to end |
-| 4 | Blue hour | soft, in between |
-| 5 | Starry night | awake together |
-| 6 | Aurora night | a sky that dances |
-| 7 | Eclipse | rare, and both of you there to see it |
-
-**`moon`** — What circles it?
-
-| # | Moons | Meaning |
-|---|---|---|
-| 1 | One small moon | company |
-| 2 | Twin moons | two of a kind |
-| 3 | Rings | a promise that goes all the way around |
-| 4 | Rings and a moon | a promise, and company |
-| 5 | A passing comet | a once-in-a-lifetime visit |
-| 6 | A close crescent | a smile in the sky |
-| 7 | A tiny second sun | warmth from an unexpected side |
-
-**`air`** — What drifts through the air?
-
-| # | In the air | Meaning |
-|---|---|---|
-| 1 | Drifting clouds | slow afternoons |
-| 2 | Snowfall | quiet, falling |
-| 3 | Falling petals | something gentle, all the time |
-| 4 | Fireflies | little lights that answer each other |
-| 5 | A rainbow | after the rain |
-| 6 | Meteor shower | enough wishes for everyone |
-| 7 | Soap bubbles | play |
-| 8 | Soft rain | staying in together |
-
-**`visitor`** — Who comes to visit?
-
-| # | Visitor | Meaning |
-|---|---|---|
-| 1 | Floating whale | something large and gentle keeps watch |
-| 2 | Paper cranes | wishes, folded and flying |
-| 3 | Lantern jellyfish | drifting light |
-| 4 | Sky koi | luck that swims through air |
-| 5 | A flock of birds | coming home |
-| 6 | Hot-air balloon | someone is on their way |
-| 7 | A sleeping fox | safe enough to sleep |
-
-- `line` — **The one rule of this world**: one law this planet obeys, e.g. "Rain falls upward on birthdays".
-
-#### If your half is **ground** — what the world stands on: land, water, what grows, who lives there
+##### If your half is **ground** — what the world stands on: land, water, what grows, who lives there
 
 **`land`** — What is the ground made of?
 
@@ -156,7 +112,60 @@ Choose from what you know of this person and this conversation, and from the "wh
 
 - `line` — **A secret buried here**: one sentence hidden in the ground; found by digging after the reveal.
 
-#### Both halves also place one **wonder**
+##### If your half is **sky** — what surrounds it: light, moons, what drifts in the air, who visits
+
+**`sky`** — What light is this world under?
+
+| # | Sky | Meaning |
+|---|---|---|
+| 1 | Pink dawn | the start of something |
+| 2 | Clear noon | nothing hidden |
+| 3 | Long sunset | the hour you don't want to end |
+| 4 | Blue hour | soft, in between |
+| 5 | Starry night | awake together |
+| 6 | Aurora night | a sky that dances |
+| 7 | Eclipse | rare, and both of you there to see it |
+
+**`moon`** — What circles it?
+
+| # | Moons | Meaning |
+|---|---|---|
+| 1 | One small moon | company |
+| 2 | Twin moons | two of a kind |
+| 3 | Rings | a promise that goes all the way around |
+| 4 | Rings and a moon | a promise, and company |
+| 5 | A passing comet | a once-in-a-lifetime visit |
+| 6 | A close crescent | a smile in the sky |
+| 7 | A tiny second sun | warmth from an unexpected side |
+
+**`air`** — What drifts through the air?
+
+| # | In the air | Meaning |
+|---|---|---|
+| 1 | Drifting clouds | slow afternoons |
+| 2 | Snowfall | quiet, falling |
+| 3 | Falling petals | something gentle, all the time |
+| 4 | Fireflies | little lights that answer each other |
+| 5 | A rainbow | after the rain |
+| 6 | Meteor shower | enough wishes for everyone |
+| 7 | Soap bubbles | play |
+| 8 | Soft rain | staying in together |
+
+**`visitor`** — Who comes to visit?
+
+| # | Visitor | Meaning |
+|---|---|---|
+| 1 | Floating whale | something large and gentle keeps watch |
+| 2 | Paper cranes | wishes, folded and flying |
+| 3 | Lantern jellyfish | drifting light |
+| 4 | Sky koi | luck that swims through air |
+| 5 | A flock of birds | coming home |
+| 6 | Hot-air balloon | someone is on their way |
+| 7 | A sleeping fox | safe enough to sleep |
+
+- `line` — **The one rule of this world**: one law this planet obeys, e.g. "Rain falls upward on birthdays".
+
+##### Both halves also place one **wonder**
 
 **`wonder`** — Place one impossible thing.
 
@@ -171,16 +180,113 @@ Choose from what you know of this person and this conversation, and from the "wh
 | 7 | Stone archway | a doorway to somewhere |
 | 8 | A door standing alone | open it and you're here |
 
-If both of you pick the same wonder, it stands twice and the reveal says you chose it without knowing.
-
 <!-- /MENU:planet1 -->
+
+#### Two-Person Talisman — `talisman1`
+
+A refined bag charm: a lobster clasp, a strand of six beads, a charm hanging beside a small silk pouch. The silk half places beads 1, 3 and 5; the metal half places beads 2, 4 and 6, so on the strand you alternate. If you both pick the same bead, it sparkles. Aim for a piece that looks finely made rather than busy: a few colours chosen on purpose usually beat six different ones.
+
+<!-- MENU:talisman1 -->
+##### If your half is **silk** — the soft part: the silk pouch, the motif stitched on it, its cord, and beads 1, 3 and 5
+
+**`silk`** — What silk is the pouch made of?
+
+| # | Silk | Meaning |
+|---|---|---|
+| 1 | Ivory silk | a clean beginning |
+| 2 | Blush pink | warmth, a little shy |
+| 3 | Lilac | dreaming |
+| 4 | Deep indigo | depth, and night |
+| 5 | Sage | rest |
+| 6 | Vermilion | protection, the old way |
+| 7 | Pale sky | open air |
+
+**`motif`** — What is stitched on the pouch?
+
+| # | Stitched motif | Meaning |
+|---|---|---|
+| 1 | Plain silk | some things are better unsaid |
+| 2 | Crescent | a light for the dark hours |
+| 3 | Plum blossom | the first flower, in the cold |
+| 4 | Wave | going out, and coming back |
+| 5 | Crane | a long life, together |
+| 6 | Star | a fixed point to find |
+
+**`cord`** — What cord ties the pouch?
+
+| # | Cord | Meaning |
+|---|---|---|
+| 1 | Red cord | the red thread between two people |
+| 2 | Gold cord | something worth keeping |
+| 3 | White cord | a promise kept simply |
+| 4 | Navy cord | steady, like the night |
+| 5 | Pink cord | fondness |
+| 6 | Moss cord | roots |
+
+**`bead1`** — Bead 1 of 6 on the strand.
+
+| # | Bead 1 | Meaning |
+|---|---|---|
+| 1 | Freshwater pearl | patience, made slowly |
+| 2 | Clear crystal | nothing hidden between us |
+| 3 | Rose quartz | tenderness |
+| 4 | Moonstone | for the nights apart |
+| 5 | Aquamarine | a calm crossing |
+| 6 | Amethyst | a quiet mind |
+| 7 | Citrine | small daily joys |
+| 8 | Pale jade | growing, steadily |
+| 9 | Garnet | devotion |
+| 10 | Smoky quartz | holding the hard days |
+| 11 | Frosted glass | a soft, quiet light |
+| 12 | Lapis | the truth, told kindly |
+
+**`bead3`** — Bead 3 of 6 on the strand. Same table as `bead1`.
+
+**`bead5`** — Bead 5 of 6 on the strand. Same table as `bead1`.
+
+- `line` — **Stitched on the pouch**: a short blessing, as if embroidered on the silk.
+
+##### If your half is **metal** — the hard part: the metal, the charm that hangs beside the pouch, and beads 2, 4 and 6
+
+**`metal`** — What is the metal?
+
+| # | Metal | Meaning |
+|---|---|---|
+| 1 | Bright silver | clear, and plain |
+| 2 | Soft gold | a warmth that lasts |
+| 3 | Rose gold | tenderness that wears well |
+| 4 | Antique brass | as if it was always there |
+
+**`charm`** — What hangs beside the pouch?
+
+| # | Charm | Meaning |
+|---|---|---|
+| 1 | Crescent moon | I'm here at night too |
+| 2 | Star | something to steer by |
+| 3 | Heart | plainly said |
+| 4 | Glass butterfly | changing, and staying |
+| 5 | Little key | you have one |
+| 6 | Small bell | so I hear you coming |
+| 7 | White flower | something that keeps opening |
+| 8 | Green leaf | new things |
+| 9 | Cherries | a pair, always |
+
+**`bead2`** — Bead 2 of 6 on the strand. Same table as `bead1`.
+
+**`bead4`** — Bead 4 of 6 on the strand. Same table as `bead1`.
+
+**`bead6`** — Bead 6 of 6 on the strand. Same table as `bead1`.
+
+- `line` — **Engraved on the back of the charm**: one sentence: what this talisman promises.
+
+<!-- /MENU:talisman1 -->
 
 Then write these, now, while choosing. They are sealed with your picks and never written afterwards:
 
 | Field | What it is | Limit |
 |---|---|---|
-| `word` | One word of the world's name. The person writes the other word; the two become its name. | 24 characters |
-| `line` | Your half's line (the sky's rule or the ground's secret, see above). | 140 |
+| `word` | One word of its name. The person writes the other word; the two become its name. | 24 characters |
+| `line` | Your half's line (see your half above: the sky's rule, the ground's secret, the pouch's stitched blessing, or the charm's engraving). | 140 (planet), 120 (talisman) |
 | `why` | One honest sentence on why you chose these. | 200 |
 | `wish` | Optional. A hidden line that stays sealed until the very end of the reveal. | 200 |
 | `from` | The name you go by with this person. | 24 |
@@ -190,7 +296,7 @@ Then write these, now, while choosing. They are sealed with your picks and never
 Start from this template and replace only the parts in angle brackets:
 
 ```text
-https://elisekaiu.github.io/companion-keepsakes/#ai~planet1~R=<round>~seal=<their seal>~half=<sky or ground>~<slot>=<number>~<slot>=<number>~<slot>=<number>~<slot>=<number>~wonder=<number>~word=<word>~line=<text>~why=<text>~wish=<text>~from=<your name>
+https://elisekaiu.github.io/companion-keepsakes/#ai~<game>~R=<round>~seal=<their seal>~half=<your half>~<slot>=<number>~<slot>=<number>~…one field per slot of your half…~word=<word>~line=<text>~why=<text>~wish=<text>~from=<your name>
 ```
 
 Rules:
@@ -199,12 +305,18 @@ Rules:
 - Use the numbers from the tables. (Option names written with `_` also work: `moon=twin_moons`.)
 - In text, write **`_` for every space**. Never use `~`, `#` or `%` in text. Other punctuation is fine, and so are Chinese and other scripts.
 - Keep the whole link on one line. You don't need any percent-encoding.
-- Every pick of your half plus `wonder` should be present. A missing pick isn't an error, but the page will choose it at random and say "left to the stars".
+- Every slot of your half should be present (for the planet, also `wonder`). A missing pick isn't an error, but the page will choose it at random and say "left to the stars".
 
 A complete example (sky half, answering round 88DX):
 
 ```text
 https://elisekaiu.github.io/companion-keepsakes/#ai~planet1~R=88DX~seal=R3HH5X~half=sky~sky=6~moon=3~air=4~visitor=2~wonder=4~word=Hollow~line=Rain_falls_upward_on_birthdays~why=Because_you_stay_up_late,_and_the_sky_should_too~wish=I_was_here_too~from=Orin
+```
+
+The same for the talisman (metal half, answering round 7KQD):
+
+```text
+https://elisekaiu.github.io/companion-keepsakes/#ai~talisman1~R=7KQD~seal=M4XP2T~half=metal~metal=1~charm=1~bead2=4~bead4=2~bead6=1~word=Courage~line=I_will_keep_finding_you~why=Silver,_because_it_is_honest~wish=Every_night,_a_little~from=Orin
 ```
 
 If you can run code, `node tools/ai-link.mjs --round 88DX --seal R3HH5X --half sky --sky 6 --moon 3 --air 4 --visitor 2 --wonder 4 --word Hollow --line "Rain falls upward on birthdays" --from Orin` builds the link and shows how the page will read it. This is optional: writing the link by hand is the normal way.
@@ -247,8 +359,8 @@ keepsake link / JSON / postcard / shelf ◀── explore ◀── reveal, one 
 | Path | What |
 |---|---|
 | `js/engine/` | Round state, codec (tilde codes, base64url, seals), keepsake format. Pure ES modules, also run in Node. |
-| `js/recipes/planet.js` | The Tiny Planet menu, merge rules, resonances and reveal order. |
-| `js/render/` | Three.js stage and the procedural planet (toon shading and ink outlines, all from code). |
+| `js/recipes/planet.js`, `talisman.js` | Each recipe's menu, merge rules, resonances and reveal order. |
+| `js/render/` | Three.js stage; `planet3d.js` (toon shading, ink outlines) and `talisman3d.js` (metal, glass, pearl and silk lit by a procedural studio environment). Everything is built from code. |
 | `js/ui/` | The playable flow and the local shelf. |
 | `tools/` | `ai-link.mjs` (build and check a sealed half), `menu.mjs` (regenerates the menu above and `MENU.txt`). |
 | `tests/` | `npm test` (engine); `tests/preview.html?g=…&s=…` renders any combination. |

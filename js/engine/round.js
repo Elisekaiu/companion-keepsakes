@@ -159,8 +159,8 @@ export function invitation(round, { site, repo } = {}) {
   const lines = [
     `Let's make a ${R.title} together — Companion Keepsakes, round ${round.id}.`,
     `My half (${R.halves[round.humanHalf].title}) is sealed: ${round.human ? round.human.fp : '(not sealed yet)'}. You can't see it, and I can't see yours until we open it together.`,
-    `Your half: ${R.halves[aiHalf].title} — ${R.halves[aiHalf].blurb}, plus one wonder.`,
-    round.theme ? `What this world is for: ${round.theme}` : null,
+    `Your half: ${R.halves[aiHalf].title} — ${R.halves[aiHalf].blurb}${R.shared.length ? ', plus one ' + R.shared.join(' and one ') : ''}.`,
+    round.theme ? `What it is for: ${round.theme}` : null,
     `How to play: read "For AI Companions" in ${repo || 'the project README'}, then reply with one sentence and a link that starts with ${site || '<site>'}#ai~${round.recipe}~R=${round.id}~seal=${round.human ? round.human.fp : ''}~half=${aiHalf}~ …`,
     `Once you send it, your half is sealed too — please don't change it later.`
   ];
@@ -171,14 +171,13 @@ export function invitation(round, { site, repo } = {}) {
 export function revealCard(round) {
   const R = recipeByCode(round.recipe);
   const spec = mergeRound(round);
-  const pickLine = (who) => Object.entries(spec.picks).filter(([, p]) => p.by === who).map(([s, p]) => `${R.slots[s].title}: ${p.name}`).join('; ');
-  const w = spec.wonders;
+  const placed = who => spec.ledger.filter(x => x.by === who).map(x => `${x.title}: ${x.name}`).join('; ');
+  const name = who => who === 'human' ? round.names.human : round.names.ai;
   return [
     `We opened round ${round.id} together: "${spec.title}" (${R.title}).`,
-    `${round.names.human} placed — ${pickLine('human')}; wonder: ${w[0].name}.`,
-    `${round.names.ai} placed (sealed, keep these as they are) — ${pickLine('ai')}; wonder: ${w[1].name}.`,
-    spec.lines.secret.text ? `${spec.lines.secret.label}: ${spec.lines.secret.text}` : null,
-    spec.lines.rule.text ? `${spec.lines.rule.label}: ${spec.lines.rule.text}` : null,
+    `${round.names.human} placed — ${placed('human')}.`,
+    `${round.names.ai} placed (sealed, keep these as they are) — ${placed('ai')}.`,
+    ...spec.lines.filter(l => l.text).map(l => `${l.label} (${name(l.by)}): ${l.text}`),
     spec.resonances.length ? `What happened between them: ${spec.resonances.map(r => r.text).join(' ')}` : null,
     round.human.why ? `${round.names.human}'s reason: ${round.human.why}` : null,
     round.ai.why ? `${round.names.ai}'s reason: ${round.ai.why}` : null,

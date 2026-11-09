@@ -27,10 +27,13 @@ export function createStage(host, { transparent = true } = {}) {
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     // Fit the world plus its moons on narrow screens.
-    dist = 6.2 / Math.min(1, camera.aspect * 1.25);
+    dist = fitDist(fr().dist);
     placeCamera();
   }
-  function placeCamera() { camera.position.set(0, 0.42 * zoom, dist * zoom); camera.lookAt(0, 0, 0); camera.updateProjectionMatrix(); }
+  // Each renderer may frame itself: { dist, objectDist, camY, lookY, fitAspect }.
+  const fr = () => ({ dist: 6.2, objectDist: 4.6, camY: 0.42, lookY: 0, fitAspect: true, ...(current?.frame || {}) });
+  const fitDist = d => fr().fitAspect ? d / Math.min(1, camera.aspect * 1.25) : d / Math.min(1, camera.aspect * 2.2);
+  function placeCamera() { const f = fr(); camera.position.set(0, f.camY * zoom, dist * zoom); camera.lookAt(0, f.lookY, 0); camera.updateProjectionMatrix(); }
   const ro = new ResizeObserver(size); ro.observe(host);
 
   /* -------- input: drag to turn, pinch / wheel to zoom, tap to pick -------- */
@@ -123,7 +126,8 @@ export function createStage(host, { transparent = true } = {}) {
       current = api;
       if (!api) return;
       pivot.add(api.world); scene.add(api.skyLayer);
-      if (!keepRotation) { pivot.quaternion.identity(); turn(0, 0.18); }
+      zoom = 1; size();
+      if (!keepRotation) { pivot.quaternion.identity(); turn(0, api.frame ? 0 : 0.18); }
     },
     backdrop(bg, dark, seed = 'x', ink = '#6B6386') {
       host.style.setProperty('--sky-a', bg[0]);
@@ -148,7 +152,7 @@ export function createStage(host, { transparent = true } = {}) {
       const ow = renderer.domElement.width, oh = renderer.domElement.height, oa = camera.aspect, pr = renderer.getPixelRatio();
       renderer.setPixelRatio(1);
       renderer.setSize(w, h, false);
-      camera.aspect = w / h; dist = (object ? 4.6 : 6.2) / Math.min(1, camera.aspect * 1.25); placeCamera();
+      camera.aspect = w / h; dist = fitDist(object ? fr().objectDist : fr().dist); placeCamera();
       // As an object on a shelf: the world and what orbits it, without the sky behind.
       const hidden = object && current ? current.skyLayer.children.slice(1).filter(o => o.visible) : [];
       hidden.forEach(o => { o.visible = false; });

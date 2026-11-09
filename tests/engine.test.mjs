@@ -40,7 +40,7 @@ test('hand-written AI link is accepted, merged, locked', () => {
   assert.equal(spec.picks.sky.by, 'ai');
   assert.equal(spec.echo, true, 'both chose the bridge');
   assert.ok(spec.flags.glowGrowth && spec.flags.glowLand && spec.flags.glowRiver && spec.flags.beam);
-  assert.equal(spec.lines.rule.text, 'Rain falls upward on birthdays');
+  assert.equal(spec.lines.find(l => l.key === 'rule').text, 'Rain falls upward on birthdays');
   // A second, different half for the same round is refused; the identical one is a no-op.
   assert.equal(acceptAi(r2, p), r2);
   const other = readAiCode(hand.replace('sky=6', 'sky=2'));

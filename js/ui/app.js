@@ -83,7 +83,8 @@ async function route() {
   if (raw.startsWith('m=')) return importMine(raw.slice(2));
   if (raw.startsWith('r=')) { const r = store.round(raw.slice(2)); return r ? resume(r) : home('That round is not in this browser.'); }
   if (raw === 'shelf') return shelf();
-  if (raw === 'new') return chooseHalf();
+  if (raw === 'new') return home();
+  if (raw.startsWith('new=')) return chooseHalf(raw.slice(4));
   return home();
 }
 window.addEventListener('hashchange', route);
@@ -113,10 +114,11 @@ function home(error) {
     error ? h('p.warn', {}, error) : null,
     h('div.names', {}, nameIn('human', 'You', 'Your name'), nameIn('ai', 'Your companion', 'Their name')),
     h('div.recipes', {},
-      h('button.recipe', { type: 'button', on: { click: () => { location.hash = 'new'; } } },
+      h('button.recipe', { type: 'button', on: { click: () => { location.hash = 'new=planet1'; } } },
         h('span.art', { html: planetArt() }), h('span', {}, h('h3', {}, 'Tiny Imaginary Planet'), h('p', {}, 'A small world that obeys only the two of you. You take the ground or the sky.'))),
-      h('div.recipe', { 'aria-disabled': 'true' }, h('span.art', { html: globeArt() }), h('span', {}, h('h3', {}, 'Memory Snow Globe'), h('p', {}, 'A real moment, kept under glass.')), h('span.tag', {}, 'in the workshop')),
-      h('div.recipe', { 'aria-disabled': 'true' }, h('span.art', { html: charmArt() }), h('span', {}, h('h3', {}, 'Two-Person Talisman'), h('p', {}, 'A beaded strand, one bead each in turn, with a pouch for two wishes.')), h('span.tag', {}, 'in the workshop'))
+      h('button.recipe', { type: 'button', on: { click: () => { location.hash = 'new=talisman1'; } } },
+        h('span.art', { html: charmArt() }), h('span', {}, h('h3', {}, 'Two-Person Talisman'), h('p', {}, 'A small charm to carry. One bead each, in turn, and a silk pouch for two wishes.'))),
+      h('div.recipe', { 'aria-disabled': 'true' }, h('span.art', { html: globeArt() }), h('span', {}, h('h3', {}, 'Memory Snow Globe'), h('p', {}, 'A real moment, kept under glass.')), h('span.tag', {}, 'in the workshop'))
     ),
     h('div.stack', {},
       h('div.row', {}, paste, h('button.btn.small', { type: 'button', on: { click: () => takeCode(paste.value) } }, 'Open')),
@@ -138,20 +140,21 @@ function takeCode(text) {
 }
 
 /* ------------------------------------------------------------------ choosing */
-function chooseHalf(existing) {
-  const R = recipeByCode('planet1');
+function chooseHalf(code = 'planet1') {
+  const R = recipeByCode(code) || recipeByCode('planet1');
   const n = names();
+  const what = R.code === 'talisman1' ? 'this talisman' : 'this world';
   screen(
-    h('div.eyebrow', {}, 'Tiny Imaginary Planet'),
+    h('div.eyebrow', {}, R.title),
     h('h1.display', {}, 'Which half is ', h('em', {}, 'yours'), '?'),
-    h('p.lede', {}, `${n.ai} will build the other half without seeing yours.`),
-    h('div.options', { style: 'grid-template-columns:1fr' }, ['ground', 'sky'].map(half => h('button.opt', { type: 'button', class: 'human', on: { click: () => start(half) } },
-      h('b', { style: 'font-size:26px' }, R.halves[half].title), h('span', {}, R.halves[half].blurb + ', plus one wonder')))),
-    h('div.field', {}, h('label', { for: 'theme' }, 'What is this world for? (optional)'), h('input.input', { id: 'theme', maxlength: 140, placeholder: 'e.g. for the nights we stay up talking' }), h('small', {}, `${n.ai} will see this line — it is the only thing you share before the reveal.`)),
+    h('p.lede', {}, `${n.ai} will make the other half without seeing yours.`),
+    h('div.options', { style: 'grid-template-columns:1fr' }, Object.keys(R.halves).map(half => h('button.opt', { type: 'button', class: 'human', on: { click: () => start(half) } },
+      h('b', { style: 'font-size:26px' }, R.halves[half].title), h('span', {}, R.halves[half].blurb + (R.shared.includes('wonder') ? ', plus one wonder' : ''))))),
+    h('div.field', {}, h('label', { for: 'theme' }, `What is ${what} for? (optional)`), h('input.input', { id: 'theme', maxlength: 140, placeholder: R.code === 'talisman1' ? 'e.g. for the long trip in March' : 'e.g. for the nights we stay up talking' }), h('small', {}, `${n.ai} will see this line — it is the only thing you share before the reveal.`)),
     h('div.dock', {}, h('div.inner', {}, h('button.btn.ghost', { type: 'button', on: { click: () => home() } }, 'Back')))
   );
   function start(half) {
-    const r = newRound({ recipe: 'planet1', humanHalf: half, theme: document.getElementById('theme').value, names: names() });
+    const r = newRound({ recipe: R.code, humanHalf: half, theme: document.getElementById('theme').value, names: names() });
     store.saveRound(r);
     choose(r);
   }
@@ -173,7 +176,7 @@ function choose(round) {
     const head = h('div', {},
       h('div.eyebrow', {}, `Your half · ${R.halves[half].title} · Round ${round.id}`), bar,
       round.ai ? h('p.note', {}, `${round.ai.name} has already sealed the ${R.halves[round.ai.half].title.toLowerCase()}. Their choices stay hidden until you open it together.`) : null);
-    const back = h('button.btn.ghost', { type: 'button', on: { click: () => { if (i === 0) { round.ai ? home() : chooseHalf(); return; } i--; save(); render(); } } }, 'Back');
+    const back = h('button.btn.ghost', { type: 'button', on: { click: () => { if (i === 0) { round.ai ? home() : chooseHalf(round.recipe); return; } i--; save(); render(); } } }, 'Back');
     if (slots.includes(step)) {
       const S = R.slots[step];
       const next = h('button.btn.primary', { type: 'button', disabled: !draft.picks[step], on: { click: () => { i++; save(); render(); } } }, 'Next');
@@ -232,13 +235,13 @@ function waiting(round, { justSealed = false } = {}) {
   const inv = invitation(round, { site: site(), repo: PROTOCOL_URL });
   const paste = h('textarea.input', { placeholder: `Paste ${round.names.ai}’s reply or link here`, 'aria-label': 'Companion reply' });
   screen(
-    h('div.eyebrow', {}, `Round ${round.id} · Tiny Imaginary Planet`),
+    h('div.eyebrow', {}, `Round ${round.id} · ${recipeByCode(round.recipe).title}`),
     h('div.seals', {}, h('figure', {}, wax(round.human.fp, round.names.human, 'human', { stamp: justSealed }), h('figcaption', { class: 'human who' }, 'sealed'))),
     h('h1.display', { style: 'text-align:center' }, 'Your half is ', h('em', {}, 'sealed'), '.'),
     h('p.lede', { style: 'text-align:center;margin-inline:auto' }, `Now it is ${round.names.ai}’s turn. Send them this invitation. It carries your seal, not your choices.`),
     h('pre.invite', {}, inv),
     h('div.row', { style: 'justify-content:center;margin:12px 0 4px' }, h('button.btn.primary', { type: 'button', on: { click: () => copy(inv, 'Invitation copied') } }, 'Copy invitation')),
-    h('div.waiting', {}, h('div.orb', { 'aria-hidden': 'true' }), h('div.hand', {}, 'half of this world is still dark'), h('p.note', {}, `When ${round.names.ai} replies with a link, open it here, or paste it below.`)),
+    h('div.waiting', {}, h('div.orb', { 'aria-hidden': 'true' }), h('div.hand', {}, recipeByCode(round.recipe).waitingLine || 'half of it is still unmade'), h('p.note', {}, `When ${round.names.ai} replies with a link, open it here, or paste it below.`)),
     h('div.stack', {}, paste, h('button.btn', { type: 'button', on: { click: () => { const t = softDecode(paste.value), m = t.match(/ai~[^\s)>\]"']+/); m ? handleAi(m[0]) : toast('No companion code in that text.'); } } }, 'Add their half')),
     h('p.note', { style: 'margin-top:22px' }, 'Opening the link on another device? ', h('button.linkish', { type: 'button', on: { click: () => copy(here() + '#m=' + toB64url(round), 'Round link copied — open it there first') } }, 'Copy this round’s link'), '.'),
     h('div.dock', {}, h('div.inner', {}, h('button.btn.ghost', { type: 'button', on: { click: () => home() } }, 'Home')))
@@ -283,9 +286,9 @@ function handleAi(raw) {
   setHash('#r=' + fresh.id);
   const R = recipeByCode(fresh.recipe);
   screen(
-    h('div.eyebrow', {}, `Round ${fresh.id} · Tiny Imaginary Planet`),
+    h('div.eyebrow', {}, `Round ${fresh.id} · ${R.title}`),
     h('div.seals', {}, h('figure', {}, wax(fresh.ai.fp, fresh.names.ai, 'ai', { stamp: true }), h('figcaption', { class: 'ai who' }, 'sealed'))),
-    h('h1.display', { style: 'text-align:center' }, `${fresh.names.ai} has started a world.`),
+    h('h1.display', { style: 'text-align:center' }, `${fresh.names.ai} has started ${R.noun}.`),
     h('p.lede', { style: 'text-align:center;margin-inline:auto' }, `They sealed the ${R.halves[fresh.ai.half].title.toLowerCase()} before you chose anything. Choose the ${R.halves[fresh.humanHalf].title.toLowerCase()} without seeing theirs.`),
     h('div.row', { style: 'justify-content:center' }, h('button.btn.primary', { type: 'button', on: { click: () => choose(fresh) } }, 'Choose my half'))
   );
@@ -312,16 +315,18 @@ function arrived(round, { justSealed = false, justArrived = false } = {}) {
 }
 
 /* ------------------------------------------------------------------ the stage (lazy: three.js loads only when needed) */
-let stage = null, planetMod = null;
+let stage = null;
+const renderers = {};
 async function getStage() {
-  if (!stage) {
-    const [{ createStage }, pm] = await Promise.all([import('../render/stage.js'), import('../render/planet3d.js')]);
-    planetMod = pm;
-    stage = createStage(stageHost);
-  }
+  if (!stage) { const { createStage } = await import('../render/stage.js'); stage = createStage(stageHost); }
   stageHost.classList.remove('hidden');
   stage.resume();
   return stage;
+}
+/** Build a recipe's 3D object with its own renderer module (js/render/<recipe.renderer>.js). */
+async function buildWorld(st, R, spec, seed) {
+  const mod = renderers[R.renderer] ||= await import('../render/' + R.renderer + '.js');
+  return mod.build(spec, seed, { renderer: st.renderer });
 }
 
 /* ------------------------------------------------------------------ reveal */
@@ -330,15 +335,12 @@ async function reveal(round) {
   const spec = mergeRound(round);
   app.replaceChildren();
   const st = await getStage();
-  const p = planetMod.buildPlanet(spec, round.id);
+  const p = await buildWorld(st, R, spec, round.id);
   st.setWorld(p);
   st.autoSpin = 0.1;
   st.backdrop(['#F3EEE8', '#E2D9CF'], false, round.id, '#8C8499');
   stageHost.querySelector('.stage-ornament').style.opacity = '0';
-  // Everything but the grey world starts hidden.
-  p.setLandRevealed(false);
-  for (const [slot, objs] of Object.entries(p.parts)) if (slot !== 'land') objs.forEach(o => { o.visible = false; });
-  p.parts.land.slice(1).forEach(o => { o.visible = false; });
+  p.prepareReveal();
 
   const top = h('div.over.top-bar', {}, h('div.title-plate', {}, h('div.eyebrow', {}, `Opening round ${round.id}`)),
     h('button.iconbtn', { type: 'button', 'aria-label': 'Skip to the end', on: { click: () => finish() } }, '»'));
@@ -355,51 +357,54 @@ async function reveal(round) {
   const nameOf = by => by === 'human' ? round.names.human : round.names.ai;
   const dots = () => h('div.dots', {}, all.map((_, k) => h('i', { class: k <= i ? 'on' : '' })));
   const nextBtn = (label = 'Next') => h('button.btn.small.primary', { type: 'button', on: { click: () => advance() } }, label);
+  const outBack = k2 => { const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(k2 - 1, 3) + c1 * Math.pow(k2 - 1, 2); };
 
+  // A renderer may reveal a slot its own way; otherwise its parts grow into place.
   function show(slot, delay = 0) {
-    const objs = p.parts[slot] || [];
-    objs.forEach((o, k) => {
-      const target = o.scale.clone();
-      const fromZero = o.position.length() > 0.5;
-      o.scale.copy(target).multiplyScalar(fromZero ? 0.001 : 0.6);
+    if (p.reveal?.(slot, (d, fn, e, dl = 0) => st.tween(d, fn, e, dl + delay))) return;
+    (p.parts[slot] || []).forEach((o, k) => {
+      const target = o.scale.clone(), from = o.position.length() > 0.5 ? 0.001 : 0.6;
+      o.scale.copy(target).multiplyScalar(from);
       o.visible = true;
-      st.tween(0.9, e => o.scale.copy(target).multiplyScalar((fromZero ? 0.001 : 0.6) + (1 - (fromZero ? 0.001 : 0.6)) * e), (k2 => { const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(k2 - 1, 3) + c1 * Math.pow(k2 - 1, 2); }), delay + k * 0.08);
+      st.tween(0.9, e => o.scale.copy(target).multiplyScalar(from + (1 - from) * e), outBack, delay + k * 0.08);
     });
   }
+  const focus = name => { if (name && p.spots?.[name]) return st.focus(p.spots[name], 1.1); };
   function setDark(on) { [top, cap].forEach(n => n.classList.toggle('on-dark', on)); }
 
   async function play(s) {
     const card = h('div.card');
     if (s.kind === 'pick') {
-      const side = sideOf(s.by);
-      if (s.slot === 'sky') { st.backdrop(spec.palette.bg, spec.palette.dark, round.id, spec.palette.ink); stageHost.querySelector('.stage-ornament').style.opacity = '1'; setDark(spec.palette.dark); show('sky'); }
-      else if (s.slot === 'land') { p.setLandRevealed(true); p.parts.land.slice(1).forEach(o => { o.visible = true; }); st.tween(0.6, e => p.terrain.scale.setScalar(1 + Math.sin(e * Math.PI) * 0.04)); }
-      else show(s.slot);
-      if (s.slot === 'dwelling' && s.pick.id !== 'train') st.focus(p.spots.dwelling, 1.1);
+      if (s.slot === R.backdropSlot) { st.backdrop(spec.palette.bg, spec.palette.dark, round.id, spec.palette.ink); stageHost.querySelector('.stage-ornament').style.opacity = '1'; setDark(spec.palette.dark); }
+      show(s.slot);
+      focus(s.focus);
       const chance = (spec.chance[s.by] || []).includes(s.slot);
-      card.classList.add(side);
-      put(card, h('div.by', {}, h('i'), `${nameOf(s.by)} placed`), h('h2', {}, s.pick.name), h('div.meaning', {}, s.pick.meaning), chance ? h('div.note', {}, 'left to the stars') : null);
-    } else if (s.kind === 'wonder') {
-      show('wonderH'); show('wonderA', 0.35);
-      st.focus(new planetMod.THREE.Vector3(0, 0.12, 1), 1.0);
-      put(card, h('div.by', {}, h('i'), 'Wonders'),
+      card.classList.add(sideOf(s.by));
+      put(card, h('div.by', {}, h('i'), `${nameOf(s.by)} placed · ${s.title}`), h('h2', {}, s.pick.name), h('div.meaning', {}, s.pick.meaning), chance ? h('div.note', {}, 'left to the stars') : null);
+    } else if (s.kind === 'pair') {
+      (s.show || []).forEach((slot, k) => show(slot, k * 0.35));
+      focus(s.focus);
+      put(card, h('div.by', {}, h('i'), s.title),
         h('div.pair', {}, s.picks.map(w => h('div', { class: sideOf(w.by) }, h('div.by', {}, h('i'), nameOf(w.by)), h('b', {}, w.name), h('span.meaning', { style: 'font-size:15px' }, w.meaning)))),
-        s.echo ? h('p.hand', { style: 'margin:10px 0 0;color:var(--gold)' }, 'You both chose the same wonder, without knowing.') : null);
+        s.echo ? h('p.hand', { style: 'margin:10px 0 0;color:var(--gold)' }, s.echoText || 'You both chose the same, without knowing.') : null);
     } else if (s.kind === 'resonance') {
       put(card, h('div.by', {}, h('i', { style: 'background:var(--gold)' }), 'Something new happened'), h('div.meaning', { style: 'margin-top:8px;font-size:19px;color:var(--ink)' }, s.text));
     } else if (s.kind === 'name') {
       put(card, h('div.by', {}, h('i'), 'Its name'), h('h2', {}, s.words.length ? s.words.map((w, k) => [k ? ' ' : '', h('span', { class: sideOf(w.by), style: 'border-bottom:2px solid var(--side)' }, w.text)]) : s.title),
         h('div.note', {}, s.words.map(w => `${nameOf(w.by)}: “${w.text}”`).join(' · ')));
     } else if (s.kind === 'lines') {
-      const L = s.lines;
-      if (L.rule.text) put(card, h('div', { class: sideOf(L.rule.by) }, h('div.by', {}, h('i'), `${L.rule.label} · ${nameOf(L.rule.by)}`), h('p.quote', {}, L.rule.text)));
-      if (L.secret.text) {
-        const box = h('div', { class: sideOf(L.secret.by), style: 'margin-top:10px' }, h('div.by', {}, h('i'), `${L.secret.label} · ${nameOf(L.secret.by)}`));
-        const find = h('button.btn.small', { type: 'button', on: { click: async () => { show('secret'); await st.focus(p.spots.secret, 1.4); find.replaceWith(h('p.quote', {}, L.secret.text)); } } }, 'Turn the world and dig it up');
-        box.append(find); put(card, box);
-        st.onPick = what => { if (what === 'secret' && find.isConnected) find.click(); };
-      }
-      if (!L.rule.text && !L.secret.text) return advance();
+      const shown = s.lines.filter(l => l.text);
+      if (!shown.length) return advance();
+      shown.forEach((l, k) => {
+        const box = h('div', { class: sideOf(l.by), style: k ? 'margin-top:10px' : '' }, h('div.by', {}, h('i'), `${l.label} · ${nameOf(l.by)}`));
+        if (l.find) {
+          // This line is hidden in the object: uncover it first.
+          const find = h('button.btn.small', { type: 'button', on: { click: async () => { show(l.find); await focus(l.find); find.replaceWith(h('p.quote', {}, l.text)); } } }, l.findLabel || 'Find it');
+          box.append(find);
+          st.onPick = what => { if (what === l.find && find.isConnected) find.click(); };
+        } else box.append(h('p.quote', {}, l.text));
+        put(card, box);
+      });
     } else if (s.kind === 'why') {
       put(card, h('div.by', {}, h('i'), 'Why, in their own words'), h('div.pair', {},
         ['human', 'ai'].filter(k => spec.why[k]).map(k => h('div', { class: k }, h('div.by', {}, h('i'), nameOf(k)), h('span.meaning', { style: 'color:var(--ink)' }, spec.why[k])))));
@@ -409,7 +414,8 @@ async function reveal(round) {
         return e;
       };
       const n = ['human', 'ai'].filter(k => spec.wish[k]);
-      put(card, h('div.by', {}, h('i'), n.length === 2 ? 'Two sealed lines remain' : 'One sealed line remains'), h('div.envelopes', {}, n.map(env)));
+      p.reveal?.('wishes', (d, fn, e, dl) => st.tween(d, fn, e, dl));
+      put(card, h('div.by', {}, h('i'), R.wishTitle ? R.wishTitle(n.length) : 'Sealed lines'), h('div.envelopes', {}, n.map(env)));
     }
     put(card, h('div.next', {}, dots(), i === all.length - 1 ? nextBtn('Done') : nextBtn()));
     cap.replaceChildren(card);
@@ -423,9 +429,7 @@ async function reveal(round) {
   }
   function finish() {
     if (ended) return; ended = true;
-    // Whatever was not shown yet appears at once.
-    for (const objs of Object.values(p.parts)) objs.forEach(o => { o.visible = true; });
-    p.setLandRevealed(true);
+    p.revealAll(); // whatever was not shown yet appears at once
     st.backdrop(spec.palette.bg, spec.palette.dark, round.id, spec.palette.ink);
     stageHost.querySelector('.stage-ornament').style.opacity = '1';
     const r = { ...round, openedAt: round.openedAt || new Date().toISOString() };
@@ -441,14 +445,15 @@ async function explore(round, { keepWorld = false, visiting = false } = {}) {
   const spec = mergeRound(round);
   const st = await getStage();
   if (!keepWorld) {
-    const p = planetMod.buildPlanet(spec, round.id);
-    p.setLandRevealed(true);
+    const p = await buildWorld(st, R, spec, round.id);
+    p.revealAll();
     st.setWorld(p);
     st.backdrop(spec.palette.bg, spec.palette.dark, round.id, spec.palette.ink);
     stageHost.querySelector('.stage-ornament').style.opacity = '1';
   }
   st.autoSpin = 0.12;
-  st.onPick = what => { if (what === 'secret' && spec.lines.secret.text) toast('“' + spec.lines.secret.text + '”'); };
+  const hidden = spec.lines.find(l => l.find && l.text);
+  st.onPick = what => { if (hidden && what === hidden.find) toast('“' + hidden.text + '”'); };
   const doc = () => toKeepsake(round);
   const id = `${round.recipe}-${round.id}-${round.human.fp}`;
   setHash(toLink(round).slice(toLink(round).indexOf('#')));
@@ -475,7 +480,7 @@ async function explore(round, { keepWorld = false, visiting = false } = {}) {
 
   async function share() {
     const url = toLink(round, site());
-    const text = `${spec.title} — a tiny planet ${round.names.human} and ${round.names.ai} made together.`;
+    const text = `${spec.title} — ${R.noun} ${round.names.human} and ${round.names.ai} made together.`;
     if (navigator.share) { try { await navigator.share({ title: spec.title, text, url }); return; } catch { } }
     copy(url, 'Link copied — anyone with it can open this world');
   }
@@ -515,11 +520,9 @@ function storySheet(round, spec) {
   const R = recipeByCode(round.recipe);
   const col = (who) => {
     const half = who === 'human' ? round.human : round.ai;
-    const items = Object.entries(spec.picks).filter(([, p]) => p.by === who).map(([slot, p]) => h('div.story-item', {}, h('dt', {}, R.slots[slot].title), h('dd', {}, h('b', {}, p.name), h('span', {}, p.meaning))));
-    const w = spec.wonders[who === 'human' ? 0 : 1];
-    items.push(h('div.story-item', {}, h('dt', {}, 'Wonder'), h('dd', {}, h('b', {}, w.name), h('span', {}, w.meaning))));
+    const items = spec.ledger.filter(x => x.by === who).map(x => h('div.story-item', {}, h('dt', {}, x.title), h('dd', {}, h('b', {}, x.name), h('span', {}, x.meaning))));
     if (half.word) items.push(h('div.story-item', {}, h('dt', {}, 'Name word'), h('dd', {}, h('b', {}, half.word))));
-    const line = who === spec.lines.rule.by ? spec.lines.rule : spec.lines.secret;
+    const line = spec.lines.find(l => l.by === who) || {};
     return h('div', { class: who }, h('h3', {}, `${who === 'human' ? round.names.human : round.names.ai} added · ${R.halves[half.half].title}`),
       h('div.story-col', {}, items),
       line.text ? h('div', {}, h('div.eyebrow', { style: 'margin-top:12px' }, line.label), h('p.quote', {}, line.text)) : null,
@@ -587,8 +590,9 @@ async function postcard(st, round, spec) {
   g.font = '500 78px "Cormorant Garamond", Georgia, serif'; g.fillText(spec.title, W / 2, 1250);
   g.font = '500 24px "DM Sans", sans-serif'; g.fillStyle = ink2;
   g.fillText(`${round.names.human.toUpperCase()}  &  ${round.names.ai.toUpperCase()}   ·   ${fmtDate(round.openedAt || new Date()).toUpperCase()}`, W / 2, 1306);
-  if (spec.lines.rule.text) { g.font = 'italic 400 38px "Cormorant Garamond", Georgia, serif'; g.fillStyle = ink; wrap(g, '“' + spec.lines.rule.text + '”', W / 2, 1390, 940, 46); }
-  g.font = '500 30px Caveat, cursive'; g.fillStyle = ink2; g.fillText('a tiny planet we made together', W / 2, 1510);
+  const shown = spec.lines.find(l => l.text && !l.find);
+  if (shown) { g.font = 'italic 400 38px "Cormorant Garamond", Georgia, serif'; g.fillStyle = ink; wrap(g, '“' + shown.text + '”', W / 2, 1390, 940, 46); }
+  g.font = '500 30px Caveat, cursive'; g.fillStyle = ink2; g.fillText(`${recipeByCode(round.recipe).noun} we made together`, W / 2, 1510);
   c.toBlob(b => { const a = h('a', { href: URL.createObjectURL(b), download: `${spec.title}.png` }); document.body.append(a); a.click(); a.remove(); }, 'image/png');
 }
 function loadImg(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
@@ -611,7 +615,7 @@ function shelf() {
     items.length ? h('div.shelf', {}, rows.map(row => h('div.shelf-row', {}, row.map(it => h('button.curio', { type: 'button', on: { click: () => { const r = fromLink(it.link); if (r) explore({ ...r, keptAt: it.keptAt }); } } },
       it.thumb ? h('img', { src: it.thumb, alt: it.title }) : h('span.art', { html: planetArt(), style: 'width:100%;aspect-ratio:1;display:grid;place-items:center' }),
       h('span.label', {}, it.title), h('span.when', {}, fmtDate(it.keptAt))))))) : h('p.empty', {}, 'Nothing kept yet. The first one will sit right here.'),
-    h('div.dock', {}, h('div.inner', {}, h('button.btn.ghost', { type: 'button', on: { click: () => home() } }, 'Home'), h('button.btn', { type: 'button', on: { click: () => { location.hash = 'new'; } } }, 'Make another')))
+    h('div.dock', {}, h('div.inner', {}, h('button.btn.ghost', { type: 'button', on: { click: () => home() } }, 'Home'), h('button.btn', { type: 'button', on: { click: () => home() } }, 'Make another')))
   );
 }
 

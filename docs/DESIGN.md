@@ -56,7 +56,13 @@ Order: **Planet → Talisman → Snow Globe.** The globe is the most romantic of
 | Kitsch risk | Fake kanji, souvenir look | Too many charms, plastic palette | Controlled: ≤ 6 beads, curated palette, one feature charm, no lettering |
 | Open-source extensibility | Hard (textures) | Easy (add a bead) | Easy |
 
-**Decision:** a refined beaded strand on a silver clasp, with beads alternating between the two of you. The feature charm at the end is the AI's pick. A small plain silk pouch (the omamori idea, without lettering) hangs at the bottom and holds both hidden lines; "untying" it is the final reveal beat. This is a structural object, not a mood board.
+**Decision (built, `talisman1`):** a refined bag charm: lobster clasp, a strand of six beads, and at the bottom a small silk pouch (the omamori idea, without lettering) with a charm hanging beside it.
+
+- Halves: **Silk** (pouch silk, stitched motif, cord, beads 1·3·5) and **Metal** (finish, charm, beads 2·4·6). The person chooses which to take, so the beads always alternate between you on the strand.
+- 12 beads (pearl, crystal, rose quartz, moonstone, aquamarine, amethyst, citrine, jade, garnet, smoky quartz, frosted glass, lapis), each a meaning slot. A bead you both chose sparkles (echo).
+- Lines: the silk side writes what is stitched on the pouch, the metal side what is engraved on the charm. Both hidden lines are folded inside the pouch; "Untie the pouch" is the last reveal beat.
+- Resonances name meetings between the halves: the same moon stitched and cast, a moonstone beside a crescent, the red thread holding the other's charm, a key beside the pouch "as if it opens it".
+- Rendering is physical rather than toon: metal, faceted glass, iridescent pearl and sheen silk, lit by a procedural studio environment map (no image files). Before the reveal every part waits as a faint ghost outline and fills in as it is revealed.
 
 ## 3D technique
 
@@ -71,6 +77,6 @@ Three.js r170 (vendored, one file, MIT), with everything procedural: toon shadin
 
 ## Roadmap
 
-1. Talisman recipe on the same engine (halves: *clasp & strand* / *charm & pouch*, alternating beads).
+1. ~~Talisman~~ done.
 2. Memory Snow Globe (halves: *the moment*, which is place, time and weather / *what is inside*, which is objects, particles and engraving), with a public "moment" line shared up front, as the planet's theme line is.
 3. Per-pick "why" (optional) once the single-reason flow has been tested with real companions.

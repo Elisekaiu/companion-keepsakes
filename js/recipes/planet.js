@@ -9,6 +9,11 @@ export const version = 1;
 export const code = 'planet1';
 export const title = 'Tiny Imaginary Planet';
 export const tagline = 'A small world that does not need to obey anything but the two of you.';
+export const noun = 'a tiny planet';
+export const waitingLine = 'half of this world is still dark';
+export const renderer = 'planet3d';      // js/render/<renderer>.js
+export const backdropSlot = 'sky';       // the pick that sets the scene's backdrop during the reveal
+export const wishTitle = n => n === 2 ? 'Two sealed lines remain' : 'One sealed line remains';
 
 export const halves = {
   ground: {
@@ -254,10 +259,16 @@ export function merge(h, a, ctx = {}) {
     },
     flags,
     resonances,
-    lines: {
-      secret: { label: halves.ground.line.label, text: G.line || '', by: by.ground },
-      rule: { label: halves.sky.line.label, text: S.line || '', by: by.sky }
-    },
+    // Lines in reveal order. `find` names a part that must be uncovered before the line can be read.
+    lines: [
+      { key: 'rule', label: halves.sky.line.label, text: S.line || '', by: by.sky },
+      { key: 'secret', label: halves.ground.line.label, text: G.line || '', by: by.ground, find: 'secret', findLabel: 'Turn the world and dig it up' }
+    ],
+    // Everything each side placed, in display order (story, reveal card, keepsake readers).
+    ledger: [
+      ...['ground', 'sky'].flatMap(half => [...halves[half].slots.map(slot => ({ slot, title: slots[slot].title, name: p[slot].name, meaning: p[slot].meaning, by: by[half] })),
+        { slot: 'wonder', title: 'Wonder', name: side[half].picks.wonder.name, meaning: side[half].picks.wonder.meaning, by: by[half] }])
+    ],
     why: { human: h.why || '', ai: a.why || '' },
     wish: { human: h.wish || '', ai: a.wish || '' },
     chance: { human: h.chance || [], ai: a.chance || [] }
@@ -271,8 +282,10 @@ export function halfOfSlot(slot) {
 /** The reveal, in order: alternate sides, so the world is visibly built by both. */
 export function revealSteps(spec) {
   const order = ['sky', 'land', 'moon', 'water', 'air', 'growth', 'visitor', 'dwelling'];
-  const steps = order.map(slot => ({ kind: 'pick', slot, title: slots[slot].title, pick: spec.picks[slot], by: spec.picks[slot].by }));
-  steps.push({ kind: 'wonder', slot: 'wonder', title: 'Wonders', picks: spec.wonders, echo: spec.echo });
+  const steps = order.map(slot => ({ kind: 'pick', slot, title: slots[slot].title, pick: spec.picks[slot], by: spec.picks[slot].by,
+    focus: slot === 'dwelling' && spec.picks.dwelling.id !== 'train' ? 'dwelling' : null }));
+  steps.push({ kind: 'pair', title: 'Wonders', picks: spec.wonders, echo: spec.echo, show: ['wonderH', 'wonderA'], focus: 'front',
+    echoText: 'You both chose the same wonder, without knowing.' });
   for (const r of spec.resonances.filter(r => r.id !== 'echo')) steps.push({ kind: 'resonance', text: r.text });
   steps.push({ kind: 'name', words: spec.words, title: spec.title });
   steps.push({ kind: 'lines', lines: spec.lines });

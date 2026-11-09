@@ -1,24 +1,30 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Planet preview</title><link rel="stylesheet" href="../css/app.css">
+<title>Preview</title><link rel="stylesheet" href="../css/app.css">
 <style>html,body{margin:0;height:100%;background:#F6F1EA}#s{position:fixed;inset:0}</style></head>
 <body><div id="s"></div>
 <script type="module">
-// Renders any combination: preview.html?g=land,water,growth,dwelling,wonder&s=sky,moon,air,visitor,wonder
+// Renders any combination of any recipe:
+//   preview.html?r=planet1&g=<first half picks>&s=<second half picks>   (picks as numbers, in the half's slot order;
+//   planet: ground = land,water,growth,dwelling,wonder · sky = sky,moon,air,visitor,wonder
+//   talisman: silk = silk,motif,cord,bead1,bead3,bead5 · metal = metal,charm,bead2,bead4,bead6)
 import { createStage } from '../js/render/stage.js';
-import { buildPlanet } from '../js/render/planet3d.js';
-import { merge, slots } from '../js/recipes/planet.js';
+import { recipeByCode } from '../js/recipes/index.js';
 const q = new URLSearchParams(location.search);
-const g = (q.get('g') || '2,1,1,1,1').split(',').map(Number), s = (q.get('s') || '2,1,1,1,2').split(',').map(Number);
-const opt = (slot, n) => slots[slot].options.find(o => o.n === n);
-const h = { half: 'ground', name: 'Mira', word: 'Lantern', line: 'a secret', picks: { land: opt('land', g[0]), water: opt('water', g[1]), growth: opt('growth', g[2]), dwelling: opt('dwelling', g[3]), wonder: opt('wonder', g[4]) } };
-const a = { half: 'sky', name: 'Orin', word: 'Hollow', line: 'a rule', picks: { sky: opt('sky', s[0]), moon: opt('moon', s[1]), air: opt('air', s[2]), visitor: opt('visitor', s[3]), wonder: opt('wonder', s[4]) } };
-const spec = merge(h, a, {});
+const R = recipeByCode(q.get('r') || 'planet1');
+const [H1, H2] = Object.keys(R.halves);
+const half = (name, list, who) => {
+  const slots = R.slotsOf(name), n = list.split(',').map(Number);
+  return { half: name, name: who, word: who === 'Mira' ? 'Quiet' : 'Courage', line: 'a line', picks: Object.fromEntries(slots.map((s, i) => [s, R.option(s, n[i] || 1)])) };
+};
+const spec = R.merge(half(H1, q.get('g') || '', 'Mira'), half(H2, q.get('s') || '', 'Orin'), {});
 const stage = createStage(document.getElementById('s'));
 stage.autoSpin = q.has('spin') ? 0.12 : 0;
 stage.backdrop(spec.palette.bg, spec.palette.dark, q.get('seed') || 'ABCD', spec.palette.ink);
-const p = buildPlanet(spec, q.get('seed') || 'ABCD');
-p.setLandRevealed(true);
+const mod = await import('../js/render/' + R.renderer + '.js');
+const p = mod.build(spec, q.get('seed') || 'ABCD', { renderer: stage.renderer });
+p.revealAll?.();
 stage.setWorld(p);
+if (q.has('ghost')) p.prepareReveal();
 window.__ready = true;
 </script></body></html>
