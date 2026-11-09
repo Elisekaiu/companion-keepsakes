@@ -41,7 +41,7 @@ This is the archival form. "Download keepsake file" saves it, and embedders rece
 
 ## Integrating a private shelf
 
-Open `<site>/index.html?host=<your-origin>` in an iframe. When the person keeps the object, you receive:
+Open `<site>/index.html?host=<your-origin>` in an iframe (optionally `&you=<name>&companion=<name>` to prefill the two names, and `#new` to start a round or `#k=…` to show a finished one). When the person keeps the object, you receive:
 
 ```js
 window.addEventListener('message', e => {

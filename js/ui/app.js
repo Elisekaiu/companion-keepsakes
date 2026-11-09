@@ -14,6 +14,9 @@ const params = new URLSearchParams(location.search);
 const EMBED = params.get('embed');               // "view" (read-only, e.g. inside a cabinet) or "play"
 const HOST = safeOrigin(params.get('host'));     // a parent page that wants the keepsake when it is kept
 const here = () => location.origin + location.pathname;
+// Hosts may prefill the two names (e.g. ?you=Mira&companion=Orin); the person can still change them.
+{ const you = (params.get('you') || '').slice(0, 24), comp = (params.get('companion') || '').slice(0, 24); const n = store.names();
+  if (you && !n.human) store.setNames({ human: you }); if (comp && !n.ai) store.setNames({ ai: comp }); }
 const site = () => (location.protocol.startsWith('http') && !/localhost|127\.0\.0\.1/.test(location.host)) ? here() : SITE_URL;
 
 /* ------------------------------------------------------------------ tiny DOM helpers */
@@ -456,7 +459,8 @@ async function explore(round, { keepWorld = false, visiting = false } = {}) {
       h('h1', {}, spec.words.length ? spec.words.map((w, k) => [k ? ' ' : '', h('span.w', { class: sideOf(w.by) }, w.text)]) : spec.title),
       h('p', {}, `${round.names.human} & ${round.names.ai} · ${fmtDate(round.openedAt || round.ai.sealedAt)}`)),
     EMBED === 'view' ? null : h('button.iconbtn', { type: 'button', 'aria-label': 'Home', on: { click: () => { stageHost.classList.add('hidden'); stage?.pause(); home(); } } }, '✕'));
-  const kept = () => store.onShelf(id);
+  // With a host listening, "keep" always hands the piece to the host, even if it is already on this browser's shelf.
+  const kept = () => !HOST && store.onShelf(id);
   const keepBtn = h('button.btn', { type: 'button', class: kept() ? '' : 'primary', on: { click: () => keepSheet() } }, kept() ? 'On your shelf' : 'Keep this');
   const bar = h('div.over.toolbar', {}, h('div.inner', {},
     h('button.btn', { type: 'button', on: { click: () => storySheet(round, spec) } }, 'Story'),
@@ -480,7 +484,7 @@ async function explore(round, { keepWorld = false, visiting = false } = {}) {
     const plaque = h('div.plaque', {}, h('b', {}, spec.title), h('span', {}, `${round.names.human} & ${round.names.ai} · ${fmtDate(new Date().toISOString())}`));
     const already = kept();
     const panel = sheet(h('div.eyebrow', {}, 'The cabinet'), h('h2', {}, already ? 'It is already on your shelf.' : 'Keep this one?'),
-      h('p.note', {}, 'It goes on the shelf in this browser, with both halves, both seals and every sealed line. Nothing is uploaded.'),
+      h('p.note', {}, HOST ? 'It goes into your cabinet, with both halves, both seals and every sealed line.' : 'It goes on the shelf in this browser, with both halves, both seals and every sealed line. Nothing is uploaded.'),
       plaque,
       already ? null : h('div.hold-wrap', {}, holdButton('Place on the shelf', { ms: 1000, onDone: () => place() })));
     async function place() {
@@ -492,7 +496,7 @@ async function explore(round, { keepWorld = false, visiting = false } = {}) {
       store.keep({ id, title: spec.title, recipe: round.recipe, keptAt: r.keptAt, link: d.link, thumb, doc: d, names: round.names, dark: spec.palette.dark, bg: spec.palette.bg });
       if (store.round(r.id)) store.saveRound(r);
       if (HOST && window.parent !== window) window.parent.postMessage({ type: 'companion-keepsake', action: 'keep', keepsake: { ...d, display: { ...d.display, thumbnail: thumb } } }, HOST);
-      keepBtn.textContent = 'On your shelf'; keepBtn.classList.remove('primary');
+      if (!HOST) { keepBtn.textContent = 'On your shelf'; keepBtn.classList.remove('primary'); }
       setTimeout(() => { panel.close(); toast('Placed on your shelf'); }, 1300);
     }
   }
