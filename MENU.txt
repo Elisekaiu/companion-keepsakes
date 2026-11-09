@@ -1,0 +1,15 @@
+[Companion Keepsakes · Tiny Imaginary Planet · planet1]
+Link: https://elisekaiu.github.io/companion-keepsakes/#ai~planet1~R=<round>~seal=<their seal>~half=<sky|ground>~<slot>=<number>~...~wonder=<number>~word=<one_word>~line=<text>~why=<text>~wish=<text>~from=<your_name>
+In text use _ for spaces; never use ~ # %. One line. Numbers below.
+
+SKY half (what surrounds it: light, moons, what drifts in the air, who visits); line = The one rule of this world
+  sky: 1 Pink dawn · 2 Clear noon · 3 Long sunset · 4 Blue hour · 5 Starry night · 6 Aurora night · 7 Eclipse
+  moon: 1 One small moon · 2 Twin moons · 3 Rings · 4 Rings and a moon · 5 A passing comet · 6 A close crescent · 7 A tiny second sun
+  air: 1 Drifting clouds · 2 Snowfall · 3 Falling petals · 4 Fireflies · 5 A rainbow · 6 Meteor shower · 7 Soap bubbles · 8 Soft rain
+  visitor: 1 Floating whale · 2 Paper cranes · 3 Lantern jellyfish · 4 Sky koi · 5 A flock of birds · 6 Hot-air balloon · 7 A sleeping fox
+GROUND half (what the world stands on: land, water, what grows, who lives there); line = A secret buried here
+  land: 1 Soft meadow · 2 Flower field · 3 Honey dunes · 4 First snow · 5 Crystal plain · 6 Glowing moss · 7 Amber woods · 8 Cloudstone
+  water: 1 One round sea · 2 Small lakes · 3 River of light · 4 Frozen lake · 5 Floating ponds · 6 Warm springs · 7 No water
+  growth: 1 Round trees · 2 Little pines · 3 Giant mushrooms · 4 Crystal trees · 5 Lantern flowers · 6 Candyfloss trees · 7 Tall grass and reeds
+  dwelling: 1 Cottage · 2 Lighthouse · 3 Observatory · 4 Glass greenhouse · 5 Small shrine · 6 Castle tower · 7 Windmill · 8 Little train
+BOTH: wonder: 1 Floating island · 2 Crystal spire · 3 Glowing road · 4 Bridge into the sky · 5 Tree of lights · 6 Upward waterfall · 7 Stone archway · 8 A door standing alone

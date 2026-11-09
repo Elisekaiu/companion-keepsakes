@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Planet preview</title><link rel="stylesheet" href="../css/app.css">
+<style>html,body{margin:0;height:100%;background:#F6F1EA}#s{position:fixed;inset:0}</style></head>
+<body><div id="s"></div>
+<script type="module">
+// Renders any combination: preview.html?g=land,water,growth,dwelling,wonder&s=sky,moon,air,visitor,wonder
+import { createStage } from '../js/render/stage.js';
+import { buildPlanet } from '../js/render/planet3d.js';
+import { merge, slots } from '../js/recipes/planet.js';
+const q = new URLSearchParams(location.search);
+const g = (q.get('g') || '2,1,1,1,1').split(',').map(Number), s = (q.get('s') || '2,1,1,1,2').split(',').map(Number);
+const opt = (slot, n) => slots[slot].options.find(o => o.n === n);
+const h = { half: 'ground', name: 'Mira', word: 'Lantern', line: 'a secret', picks: { land: opt('land', g[0]), water: opt('water', g[1]), growth: opt('growth', g[2]), dwelling: opt('dwelling', g[3]), wonder: opt('wonder', g[4]) } };
+const a = { half: 'sky', name: 'Orin', word: 'Hollow', line: 'a rule', picks: { sky: opt('sky', s[0]), moon: opt('moon', s[1]), air: opt('air', s[2]), visitor: opt('visitor', s[3]), wonder: opt('wonder', s[4]) } };
+const spec = merge(h, a, {});
+const stage = createStage(document.getElementById('s'));
+stage.autoSpin = q.has('spin') ? 0.12 : 0;
+stage.backdrop(spec.palette.bg, spec.palette.dark, q.get('seed') || 'ABCD', spec.palette.ink);
+const p = buildPlanet(spec, q.get('seed') || 'ABCD');
+p.setLandRevealed(true);
+stage.setWorld(p);
+window.__ready = true;
+</script></body></html>

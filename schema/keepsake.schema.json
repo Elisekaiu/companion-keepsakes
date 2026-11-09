@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://elisekaiu.github.io/companion-keepsakes/schema/keepsake.schema.json",
+  "title": "Companion keepsake",
+  "type": "object",
+  "required": ["format", "v", "id", "recipe", "title", "round", "participants", "contributions", "provenance", "render", "link"],
+  "properties": {
+    "format": { "const": "companion-keepsake" },
+    "v": { "const": 1 },
+    "id": { "type": "string" },
+    "recipe": { "type": "object", "required": ["id", "version", "code"], "properties": { "id": { "type": "string" }, "version": { "type": "integer" }, "code": { "type": "string" }, "title": { "type": "string" } } },
+    "title": { "type": "string" },
+    "round": { "type": "string" },
+    "seed": { "type": "string" },
+    "theme": { "type": "string" },
+    "createdAt": { "type": ["string", "null"] },
+    "openedAt": { "type": ["string", "null"] },
+    "keptAt": { "type": ["string", "null"] },
+    "participants": {
+      "type": "object", "required": ["human", "ai"],
+      "properties": { "human": { "$ref": "#/$defs/participant" }, "ai": { "$ref": "#/$defs/participant" } }
+    },
+    "contributions": {
+      "type": "object", "required": ["human", "ai"],
+      "properties": { "human": { "$ref": "#/$defs/contribution" }, "ai": { "$ref": "#/$defs/contribution" } }
+    },
+    "provenance": {
+      "type": "object", "required": ["protocol", "order", "humanSeal"],
+      "properties": {
+        "protocol": { "type": "string" },
+        "order": { "enum": ["human-first", "ai-first"] },
+        "humanSeal": { "type": "string" },
+        "aiEchoedSeal": { "type": ["string", "null"] },
+        "sealMatches": { "type": ["boolean", "null"] },
+        "note": { "type": "string" }
+      }
+    },
+    "display": { "type": "object", "properties": { "accent": { "type": "string" }, "background": { "type": "array", "items": { "type": "string" } }, "dark": { "type": "boolean" }, "thumbnail": { "type": ["string", "null"] } } },
+    "render": { "type": "object", "required": ["renderer", "spec"], "properties": { "renderer": { "type": "string" }, "spec": { "type": "object" } } },
+    "link": { "type": "string", "pattern": "#k=" }
+  },
+  "$defs": {
+    "participant": { "type": "object", "required": ["name", "half"], "properties": { "name": { "type": "string" }, "half": { "type": "string" } } },
+    "contribution": {
+      "type": "object", "required": ["half", "picks", "sealedAt", "seal"],
+      "properties": {
+        "name": { "type": "string" }, "half": { "type": "string" },
+        "picks": { "type": "object", "additionalProperties": { "type": "object", "required": ["n", "id", "name"], "properties": { "n": { "type": "integer" }, "id": { "type": "string" }, "name": { "type": "string" }, "meaning": { "type": "string" } } } },
+        "leftToChance": { "type": "array", "items": { "type": "string" } },
+        "word": { "type": "string" }, "line": { "type": "string" }, "why": { "type": "string" }, "wish": { "type": "string" },
+        "sealedAt": { "type": "string" }, "seal": { "type": "string" },
+        "code": { "type": ["string", "null"] }, "echoedSeal": { "type": ["string", "null"] }
+      }
+    }
+  }
+}
