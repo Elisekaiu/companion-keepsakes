@@ -51,7 +51,7 @@ test('talisman: AI may seal the silk half first; the human then gets metal', () 
 
 test('talisman: README example link is valid and complete', async () => {
   const { readFileSync } = await import('node:fs');
-  const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+  const readme = readFileSync(new URL('../README.en.md', import.meta.url), 'utf8');
   const ex = readme.match(/https:\/\/\S+#ai~talisman1~R=7KQD[^\s`]+/)[0];
   const r = sealHuman(newRound({ recipe: 'talisman1', id: '7KQD', names: { human: 'Mira', ai: 'Orin' } }), draft);
   const done = acceptAi({ ...r, human: { ...r.human, fp: 'M4XP2T' } }, readAiCode(ex));

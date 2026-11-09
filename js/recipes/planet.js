@@ -4,12 +4,16 @@
 // Every visible element of the finished world comes from exactly one sealed pick, a resonance between
 // two sealed picks (named in the reveal), or the round seed (exact positions only).
 
+import { joinWords, cap, enOf, zhOf } from './util.js';
+
 export const id = 'planet';
 export const version = 1;
 export const code = 'planet1';
 export const title = 'Tiny Imaginary Planet';
 export const tagline = 'A small world that does not need to obey anything but the two of you.';
 export const noun = 'a tiny planet';
+// Solo mode: one person chooses everything, in this order ('#2' = the second of a shared slot).
+export const soloOrder = ['sky', 'land', 'water', 'growth', 'dwelling', 'moon', 'air', 'visitor', 'wonder', 'wonder#2'];
 export const sharedBlurb = 'plus one wonder';
 export const waitingLine = 'half of this world is still dark';
 export const renderer = 'planet3d';      // js/render/<renderer>.js
@@ -182,31 +186,44 @@ const DARK = new Set(['night', 'aurora', 'eclipse']);
 // and a caption the reveal shows. They never replace either side's choice.
 const RESONANCES = [
   { id: 'lantern-night', flag: 'glowGrowth', when: p => p.growth.id === 'lanterns' && DARK.has(p.sky.id),
-    say: (g, s, p) => `${g}'s lantern flowers lit up under ${s}'s ${low(p.sky)}.` },
+    say: (g, s, p) => cap(`${enOf(g)}lantern flowers lit up under ${enOf(s)}${low(p.sky)}.`),
+    zh: (g, s, p) => `${zhOf(g)}灯笼花，在${zhOf(s)}${zn('sky', p.sky)}下亮了起来。` },
   { id: 'moss-night', flag: 'glowLand', when: p => p.land.id === 'moss' && DARK.has(p.sky.id),
-    say: (g, s) => `The moss ${g} laid down began to glow once ${s} brought the dark.` },
+    say: (g, s) => g ? `The moss ${g} laid down began to glow once ${s} brought the dark.` : 'Once the dark came, the moss began to glow.',
+    zh: (g, s) => g ? `${g}铺下的苔藓，在${s}带来夜色之后亮了起来。` : '夜色一来，苔藓就亮了起来。' },
   { id: 'river-night', flag: 'glowRiver', when: p => p.water.id === 'river' && DARK.has(p.sky.id),
-    say: (g, s, p) => `${g}'s river of light is brightest under ${s}'s ${low(p.sky)}.` },
+    say: (g, s, p) => cap(`${enOf(g)}river of light is brightest under ${enOf(s)}${low(p.sky)}.`),
+    zh: (g, s, p) => `${zhOf(g)}光之河，在${zhOf(s)}${zn('sky', p.sky)}下最亮。` },
   { id: 'aurora-ice', flag: 'reflect', when: p => p.sky.id === 'aurora' && (p.water.id === 'frozen' || p.land.id === 'snow'),
-    say: (g, s) => `${s}'s aurora is reflected in the ice ${g} made.` },
+    say: (g, s) => g ? `${s}'s aurora is reflected in the ice ${g} made.` : 'The aurora is reflected in the ice.',
+    zh: (g, s) => g ? `${s}的极光，倒映在${g}做的冰面上。` : '极光倒映在冰面上。' },
   { id: 'fireflies-lanterns', flag: 'glowGrowth', when: p => p.air.id === 'fireflies' && p.growth.id === 'lanterns',
-    say: (g, s) => `${s}'s fireflies and ${g}'s lantern flowers keep answering each other.` },
+    say: (g, s) => cap(`${enOf(s)}fireflies and ${enOf(g)}lantern flowers keep answering each other.`),
+    zh: (g, s) => `${zhOf(s)}萤火虫和${zhOf(g)}灯笼花，一直在互相回应。` },
   { id: 'lighthouse-dark', flag: 'beam', when: p => p.dwelling.id === 'lighthouse' && DARK.has(p.sky.id),
-    say: (g, s) => `In ${s}'s dark, ${g}'s lighthouse turned its beam on.` },
+    say: (g, s) => g ? `In ${s}'s dark, ${g}'s lighthouse turned its beam on.` : 'In the dark, the lighthouse turned its beam on.',
+    zh: (g, s) => g ? `在${s}的夜色里，${g}的灯塔亮起了光束。` : '夜色里，灯塔亮起了光束。' },
   { id: 'observatory-comet', flag: 'aim', when: p => p.dwelling.id === 'observatory' && p.moon.id === 'comet',
-    say: (g, s) => `${g}'s observatory was pointed at ${s}'s comet all along.` },
+    say: (g, s) => cap(`${enOf(g)}observatory was pointed at ${enOf(s)}comet all along.`),
+    zh: (g, s) => `${zhOf(g)}天文台，原来一直对着${zhOf(s)}彗星。` },
   { id: 'cranes-shrine', flag: 'perch', when: p => p.visitor.id === 'cranes' && p.dwelling.id === 'shrine',
-    say: (g, s) => `${s}'s paper cranes come to rest at ${g}'s shrine.` },
+    say: (g, s) => cap(`${enOf(s)}paper cranes come to rest at ${enOf(g)}shrine.`),
+    zh: (g, s) => `${zhOf(s)}纸鹤，停在了${zhOf(g)}许愿亭上。` },
   { id: 'rainbow-water', flag: 'rainbowWater', when: p => p.air.id === 'rainbow' && ['sea', 'lakes', 'springs', 'floating'].includes(p.water.id),
-    say: (g, s) => `${s}'s rainbow ends in ${g}'s water.` },
+    say: (g, s) => cap(`${enOf(s)}rainbow ends in ${enOf(g)}water.`),
+    zh: (g, s) => `${zhOf(s)}彩虹，落进了${zhOf(g)}水里。` },
   { id: 'snow-dunes', flag: 'snowcap', when: p => p.air.id === 'snow' && p.land.id === 'dunes',
-    say: (g, s) => `${s}'s snow settles on ${g}'s warm dunes, and somehow does not melt.` },
+    say: (g, s) => cap(`${enOf(s)}snow settles on ${enOf(g)}warm dunes, and somehow does not melt.`),
+    zh: (g, s) => `${zhOf(s)}雪落在${zhOf(g)}温暖沙丘上，不知为什么没有融化。` },
   { id: 'whale-sea', flag: 'whaleLow', when: p => p.visitor.id === 'whale' && p.water.id === 'sea',
-    say: (g, s) => `${s}'s whale swims low, its shadow crossing ${g}'s sea.` },
+    say: (g, s) => cap(`${enOf(s)}whale swims low, its shadow crossing ${enOf(g)}sea.`),
+    zh: (g, s) => `${zhOf(s)}鲸鱼游得很低，影子掠过${zhOf(g)}海面。` },
   { id: 'fox-home', flag: 'foxHome', when: p => p.visitor.id === 'fox' && ['cottage', 'greenhouse', 'shrine'].includes(p.dwelling.id),
-    say: (g, s, p) => `${s}'s fox curled up by ${g}'s ${low(p.dwelling)}.` }
+    say: (g, s, p) => cap(`${enOf(s)}fox curled up by ${enOf(g)}${low(p.dwelling)}.`),
+    zh: (g, s, p) => `${zhOf(s)}狐狸，蜷在${zhOf(g)}${zn('dwelling', p.dwelling)}旁边睡着了。` }
 ];
 const low = o => o.name.toLowerCase();
+const zn = (slot, o) => zh.slots[slot].options[o.id][0];
 
 function mix(a, b, t) {
   const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
@@ -233,17 +250,22 @@ export function merge(h, a, ctx = {}) {
 
   const resonances = [];
   const flags = {};
+  // In solo mode there is one maker: the meetings are told without names.
+  const gn = ctx.solo ? '' : G.name, sn = ctx.solo ? '' : S.name;
   for (const r of RESONANCES) {
     if (!r.when(p)) continue;
     flags[r.flag] = true;
-    resonances.push({ id: r.id, text: r.say(G.name, S.name, p) });
+    resonances.push({ id: r.id, text: r.say(gn, sn, p), zh: r.zh(gn, sn, p) });
   }
   const echo = h.picks.wonder.id === a.picks.wonder.id;
-  if (echo) resonances.unshift({ id: 'echo', text: `You both placed the same wonder without knowing it: ${h.picks.wonder.name.toLowerCase()}. It stands twice.` });
+  const w0 = h.picks.wonder;
+  if (echo) resonances.unshift(ctx.solo
+    ? { id: 'echo', text: `The same wonder, placed twice: ${low(w0)}. It stands twice.`, zh: `同一件奇物放了两次：${zn('wonder', w0)}。它出现了两次。` }
+    : { id: 'echo', text: `You both placed the same wonder without knowing it: ${low(w0)}. It stands twice.`, zh: `你们不约而同地放下了同一件奇物：${zn('wonder', w0)}。它出现了两次。` });
 
   const first = ctx.order === 'ai-first' ? a : h, second = first === h ? a : h;
   const words = [first, second].map(x => ({ text: x.word || '', by: x === h ? 'human' : 'ai' })).filter(w => w.text);
-  const name = words.map(w => w.text).join(' ') || 'An unnamed world';
+  const name = joinWords(words.map(w => w.text)) || 'An unnamed world';
 
   return {
     recipe: code,
@@ -262,13 +284,13 @@ export function merge(h, a, ctx = {}) {
     resonances,
     // Lines in reveal order. `find` names a part that must be uncovered before the line can be read.
     lines: [
-      { key: 'rule', label: halves.sky.line.label, text: S.line || '', by: by.sky },
-      { key: 'secret', label: halves.ground.line.label, text: G.line || '', by: by.ground, find: 'secret', findLabel: 'Turn the world and dig it up' }
+      { key: 'rule', half: 'sky', label: halves.sky.line.label, text: S.line || '', by: by.sky },
+      { key: 'secret', half: 'ground', label: halves.ground.line.label, text: G.line || '', by: by.ground, find: 'secret', findLabel: 'Turn the world and dig it up' }
     ],
     // Everything each side placed, in display order (story, reveal card, keepsake readers).
     ledger: [
-      ...['ground', 'sky'].flatMap(half => [...halves[half].slots.map(slot => ({ slot, title: slots[slot].title, name: p[slot].name, meaning: p[slot].meaning, by: by[half] })),
-        { slot: 'wonder', title: 'Wonder', name: side[half].picks.wonder.name, meaning: side[half].picks.wonder.meaning, by: by[half] }])
+      ...['ground', 'sky'].flatMap(half => [...halves[half].slots.map(slot => ({ slot, id: p[slot].id, title: slots[slot].title, name: p[slot].name, meaning: p[slot].meaning, by: by[half] })),
+        { slot: 'wonder', id: side[half].picks.wonder.id, pick: half === 'ground' ? 'wonderH' : 'wonderA', title: 'Wonder', name: side[half].picks.wonder.name, meaning: side[half].picks.wonder.meaning, by: by[half] }])
     ],
     why: { human: h.why || '', ai: a.why || '' },
     wish: { human: h.wish || '', ai: a.wish || '' },
@@ -292,3 +314,32 @@ export function revealSteps(spec) {
   steps.push({ kind: 'lines', lines: spec.lines });
   return steps;
 }
+
+/* ------------------------------------------------------------------ 中文 */
+export const zh = {
+  title: '小小星球', noun: '一颗小星球', tagline: '一个不必遵守任何规则的小世界。',
+  hand: 'a tiny planet',
+  card: '一个不必遵守任何规则的小世界。地面、天空、来访的谁，都由你们决定。',
+  cardSolo: '一个不必遵守任何规则的小世界。地面、天空、来访的谁，都由你决定。',
+  halves: {
+    ground: { title: '地面', blurb: '世界站在什么上面：土地、水、生长的东西、住在那里的谁', line: { label: '埋在这里的秘密', hint: '一句藏在地底的话；打开之后，要转过星球才能把它挖出来' } },
+    sky: { title: '天空', blurb: '围着它的一切：光、月亮、空中飘的东西、来拜访的谁', line: { label: '这个世界唯一的规则', hint: '它遵守的一条规则，比如“生日那天，雨会往上落”' } }
+  },
+  sharedBlurb: '再放下一件奇物', waitingLine: '这个世界，还有一半是暗的',
+  themeName: '它是为了', themePrompt: { label: '这个世界是为了什么而做的？（可以不填）', placeholder: '比如：为了那些一起聊到很晚的夜晚' },
+  pairTitle: '奇物', pairLede: '你们各放下一件不可能的东西。如果选了同一件，它会出现两次。', pairLedeSolo: '放下两件不可能的东西。',
+  echoText: '你们不约而同地选了同一件奇物。', findLabel: { secret: '转过星球，把它挖出来' },
+  wishTitle: n => n === 2 ? '还有两句封着的话' : '还有一句封着的话',
+  text: { word: { label: '名字里的一个词', hint: '两个词合在一起，就是它的名字' } },
+  slots: {
+    land: { title: '土地', prompt: '地面是用什么做的？', options: { meadow: ['柔软的草地', '一个可以躺下来什么都不做的地方'], flowers: ['花田', '每一点小小的善意都会在这里开花'], dunes: ['蜂蜜色沙丘', '温暖、耐心、从不着急'], snow: ['初雪', '安静、干净，像新的一页'], crystal: ['水晶平原', '清澈的、被好好收着的东西'], moss: ['发光的苔藓', '从下面亮起来的光'], autumn: ['琥珀色树林', '一个一直留着温度的季节'], cloud: ['云石', '软到可以直接倒下去的地面'] } },
+    water: { title: '水', prompt: '水流去了哪里？', options: { sea: ['一片圆圆的海', '一个可以眺望的地方'], lakes: ['几个小湖', '小小的镜子'], river: ['光之河', '一条会发亮的路'], frozen: ['结冰的湖', '被留住的一刻'], floating: ['漂浮的池塘', '忘记落下的水'], springs: ['温泉', '休息，还冒着热气'], none: ['没有水', '干燥而安静；有天空就够了'] } },
+    growth: { title: '长着什么', prompt: '那里长着什么？', options: { round: ['圆圆的树', '一个漫长午后的树荫'], pines: ['小松树', '一直绿着的东西'], mushrooms: ['巨大的蘑菇', '小东西，长得好大'], crystaltrees: ['水晶树', '看得见的成长'], lanterns: ['灯笼花', '为某个人留着的小灯'], puffs: ['棉花糖树', '甜，不需要理由'], reeds: ['高高的草和芦苇', '听风的声音'] } },
+    dwelling: { title: '住所', prompt: '谁，或者什么，住在那里？', options: { cottage: ['小屋', '一扇亮着灯的窗'], lighthouse: ['灯塔', '让回来的路一直看得见'], observatory: ['天文台', '有人替你看着天空'], greenhouse: ['玻璃温室', '慢慢照顾一样东西'], shrine: ['许愿亭', '一个可以放下愿望的地方'], tower: ['城堡塔楼', '一个有城堡的故事'], windmill: ['风车', '一天一天，稳稳地转'], train: ['小火车', '总会绕回来'] } },
+    sky: { title: '天空', prompt: '这个世界在什么样的光里？', options: { dawn: ['粉色黎明', '某件事的开始'], noon: ['晴朗的正午', '什么都不必藏'], sunset: ['漫长的日落', '不想结束的那一小时'], bluehour: ['蓝调时刻', '柔软的、介于之间的时刻'], night: ['星夜', '一起醒着'], aurora: ['极光之夜', '会跳舞的天空'], eclipse: ['日食', '难得一见，而你们都在'] } },
+    moon: { title: '月亮', prompt: '有什么绕着它转？', options: { one: ['一颗小月亮', '陪伴'], twin: ['双月', '同一种的两个'], rings: ['星环', '绕了一整圈的约定'], ringmoon: ['星环和月亮', '约定，和陪伴'], comet: ['路过的彗星', '一生一次的来访'], crescent: ['很近的弯月', '天空里的一个微笑'], sun2: ['第二个小太阳', '从意想不到的方向来的温暖'] } },
+    air: { title: '空中', prompt: '空气里飘着什么？', options: { clouds: ['慢慢飘的云', '慢吞吞的下午'], snow: ['下雪', '安静地落下'], petals: ['飘落的花瓣', '温柔的事，一直在发生'], fireflies: ['萤火虫', '互相回应的小光'], rainbow: ['彩虹', '雨停之后'], meteors: ['流星雨', '每个人都够许愿'], bubbles: ['肥皂泡', '玩耍'], rain: ['细雨', '一起待在屋里'] } },
+    visitor: { title: '来访者', prompt: '谁会来拜访？', options: { whale: ['漂浮的鲸鱼', '有一个巨大又温柔的东西在守望'], cranes: ['纸鹤', '叠起来、会飞的愿望'], jelly: ['灯笼水母', '漂浮的光'], koi: ['天空锦鲤', '在空气里游的好运'], birds: ['一群鸟', '回家'], balloon: ['热气球', '有人正在来的路上'], fox: ['睡着的狐狸', '安心到可以睡着'] } },
+    wonder: { title: '奇物', prompt: '放下一件不可能的东西。', options: { island: ['漂浮的岛', '只属于我们的、远离一切的地方'], spire: ['水晶尖塔', '清澈而高高的承诺'], road: ['发光的路', '我们走过的路'], bridge: ['通往天空的桥', '伸过去的手'], lighttree: ['光之树', '每一盏灯都是一段回忆'], upfall: ['向上的瀑布', '把不可能变成日常'], arch: ['石拱门', '通往某处的门'], door: ['一扇独自立着的门', '打开它，你就在这里'] } }
+  }
+};

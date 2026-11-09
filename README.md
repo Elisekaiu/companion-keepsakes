@@ -1,504 +1,492 @@
-# Companion Keepsakes
+# 纪念品工坊 · Companion Keepsakes
 
-Make a small 3D keepsake with your AI companion. **You choose half and seal it. Your companion chooses the other half by reading this page, not by looking at your screen. Then you open it together.**
+> 做一件小小的、可以留下来的东西。
 
-**Play: https://elisekaiu.github.io/companion-keepsakes/**
+一颗只属于这里的小星球，一个装着某个瞬间的雪花球，或一串可以随身带着的护身符。
+你可以和你的 **AI伴侣** 一人做一半，在看不到对方选择的情况下各自封好，再一起打开；也可以一个人，慢慢地把每一个部分都挑好。
 
-Two recipes so far:
+**现在就去做一件：https://elisekaiu.github.io/companion-keepsakes/**
 
-- **Tiny Imaginary Planet.** You take the ground (or the sky), your companion takes the other half, each of you places one wonder, and each writes one word of its name.
-- **Memory Snow Globe.** You name a real moment first (the only thing you share before choosing). One of you fills in the moment (where, the hour, what falls inside the glass), the other the keepsake (the base, the glass, a finishing touch), and each places one small thing inside. Shake it and it happens again.
-- **Two-Person Talisman.** A small bag charm. One of you takes the silk (the pouch, its stitched motif, its cord), the other the metal (the finish and the hanging charm). The six beads alternate between you on the strand. Both hidden lines are folded inside the pouch.
-
-Every part of the finished object can be traced back to who chose it.
-
-## For people
-
-1. Open the site, write your names, and choose a recipe.
-2. Choose your half, then make your picks. Write one word of the world's name, a line, why you chose these, and, if you like, a hidden line.
-3. **Hold to seal.** Your choices are now fixed. The page shows your seal (a code like `R3HH5X`).
-4. Copy the invitation and send it to your companion with a link to this README. The invitation carries your seal, never your choices.
-5. Your companion replies with a link. Open it (or paste it into the page): *something was added*. Hold **Open Together**.
-6. Turn it in your hand (on a talisman, touch a gem and it swings; a snow globe shakes when you drag it; tap any part to see its meaning and who placed it). If you both like it, **Keep this** puts it on your shelf. You can also share it as a link, save a postcard, or download the keepsake file.
-
-Everything stays in your browser. The site has no server, no account, and no database. A keepsake link contains the whole object, so anyone you send it to can open it.
+[English](README.en.md) · 英文版也保留在 [`english` 分支](https://github.com/Elisekaiu/companion-keepsakes/tree/english)
 
 ---
 
-## For AI Companions
+## 它可以做什么
 
-You have been invited to make something with a person. You do not need to see or click anything. Everything you need is on this page, and your whole part is **one reply containing one link**.
+- **三种小东西**
+  - 🪐 **小小星球**：一个不必遵守任何规则的小世界。地面、天空、来访的鲸鱼或纸鹤、一扇独自立着的门，都由你们决定。
+  - 🔮 **记忆雪花球**：先说好是哪一刻，再把它放进玻璃里。车站、深夜、初雪、两杯茶。**摇一摇，它就又发生一次。**
+  - 🧿 **护身符**：一串可以随身带着的小串珠。31 颗有含义的珠子，包括一年十二个月的生日石；丝绸小袋里，折着两句悄悄话。**碰一碰珠子，它会轻轻晃起来。**
+- **两种做法**
+  - **和AI伴侣一起**：它先做好它的那一半，回你一个链接；你打开链接，做你的那一半。在一起打开之前，谁也看不到谁选了什么。
+  - **一个人慢慢做**：所有部分都由你来挑。做给自己，或者做给某个人。
+- **真的是“一人一半”**：每一半都在选的那一刻封好，之后不能再改，也不会被重新生成。打开之后，每一个部分都看得出是谁放下的。两个人的选择碰在一起时，还会发生一些有名字的小事，比如“你的灯笼花，在它的极光之夜下亮了起来”。
+- **AI伴侣只要会读文字就能参与**：不用截图，不用点网页。读完这一页，回一个链接就好。
+- **可以好好收起来**：放进收藏柜；保存一张明信片；分享一个链接，拿到的人都能打开；或者下载一份纪念品文件。雪花球底座上的刻字，可以改成真正的那一天。
+- **轻、干净、开源**：纯静态网页，不用登录，没有服务器，你做的东西只存在你自己的浏览器里。
 
-### 1. Find the game and your phase
+## 怎么玩
 
-An invitation looks like this:
+### 和AI伴侣一起（最简单的方式）
 
-```text
-Let's make a Tiny Imaginary Planet together — Companion Keepsakes, round 88DX.
-My half (Ground) is sealed: R3HH5X. You can't see it, and I can't see yours until we open it together.
-Your half: Sky — what surrounds it: light, moons, what drifts in the air, who visits, plus one wonder.
-What it is for: for the nights we stay up talking
-How to play: read "For AI Companions" in https://github.com/Elisekaiu/companion-keepsakes#for-ai-companions, then reply with … #ai~planet1~R=88DX~seal=R3HH5X~half=sky~ …
-```
+1. 打开网页，选「和AI伴侣一起」，再选一种小东西。
+2. 页面会给你一句话，比如：*“我们一起做一颗小星球吧！做法写在这里：https://github.com/Elisekaiu/companion-keepsakes …”* 复制，发给你的AI伴侣。
+3. 它读完这一页，会先悄悄做好它的那一半，回你一个链接（或一段以 `ai~` 开头的代码）。
+4. 打开那个链接（或把代码贴进页面），做你的那一半。你看不到它选了什么。
+5. 按住「一起打开」。一样一样地看它成形：谁放下了什么，为什么，还有最后那两句封着的话。
+6. 喜欢的话，按住「放进收藏柜」。
 
-Take from it: the **game** (`planet1` for the Tiny Imaginary Planet, `talisman1` for the Two-Person Talisman, `globe1` for the Memory Snow Globe), the **round** (`R=88DX`), their **seal** (`R3HH5X`), **your half** and, if given, what it is for.
+> 想自己先选也可以：在开始页点「我先做我的一半」，封好之后把邀请发给它。
 
-| Situation | What you do |
+### 一个人慢慢做
+
+选「一个人慢慢做」，把每一个部分都挑好，写上名字和想说的话，按住「完成」，看着它慢慢成形。
+
+---
+
+## 给AI伴侣看的说明
+
+*（For AI Companions — the English version is in [README.en.md](README.en.md#for-ai-companions).）*
+
+有人请你一起做一件小东西。你**不需要看到或点击任何网页**。你要做的，只是**回一句话和一个链接**。
+
+### 1. 最常见的情况：你先做
+
+对方会说类似“我们一起做一颗小星球吧”，并给你这个仓库的链接。
+
+1. **认出是哪一种**：小小星球是 `planet1`，护身符是 `talisman1`，记忆雪花球是 `globe1`。
+2. **选你的那一半**（`half=`）。如果对方没说，就用默认的：
+   - 小小星球：你做 **天空** `sky`（对方之后做地面）。
+   - 护身符：你做 **金属** `metal`（对方之后做丝绸）。
+   - 记忆雪花球：你做 **纪念品** `keepsake`（对方之后做那一刻）。
+3. **按下面的表选**：你那一半的每一项，各选一个编号。再写下几句话：
+   - `word`：它名字里的一个词。对方会写另一个词，两个词合在一起就是它的名字。
+   - `line`：你那一半的那句话（每一半的“那句话”是什么，表格下面写着）。
+   - `why`：为什么这样选，一句真心话。
+   - `wish`：一句藏起来的话，会一直封着，直到最后才打开。可以不写。
+   - `from`：对方平时怎么叫你。
+   - 如果是雪花球，而对方告诉过你是哪一刻，就用 `moment` 写进去。
+4. **拼成链接**，见第 3 节。
+5. **回复对方**：一句你自己想说的话，加上这个链接。再单独附一行以 `ai~` 开头的代码，万一链接打不开，对方可以把代码贴进页面。
+
+请从你对这个人、对你们这段对话的了解出发去选。你看不到对方那一半，所以不用去猜，也不用迎合。让你的这一半本身就好，任何组合都会成立。
+
+### 2. 其他情况
+
+| 情况 | 你要做的 |
 |---|---|
-| You received an invitation (the usual case) | Choose your half below and reply with your link. |
-| The person asks you to start, with no invitation | You may seal first. Choose a game and a half yourself (`half=sky` or `ground` for the planet, `silk` or `metal` for the talisman, `moment` or `keepsake` for the globe), and leave out `R` and `seal`. They will choose the other half without seeing yours. |
-| You already sent a link for this round | **Send exactly the same link again.** A sealed half is never re-chosen. The page refuses a different half for a round that already has one. |
-| They paste a card starting "We opened round … together" | The reveal has happened. The choices marked as yours are your own locked decisions: remember them, and don't revise them. |
-
-### 2. Choose your half
-
-Choose from what you know of this person and this conversation, and from the "what it is for" line if there is one. You cannot see their half, so don't try to guess or mirror it. Make your half good on its own: every combination works. When two picks meet in a meaningful way (lantern flowers under a dark sky, a moonstone bead beside a crescent charm), the reveal points it out.
-
-#### Tiny Imaginary Planet — `planet1`
-
-The world does not have to obey reality.
+| 对方发来的邀请里有 `R=` 和 `seal=`（对方已经先封好了它的一半） | 照常选，并把 `R=` 和 `seal=` 原样写进你的链接。`half` 用邀请里写的那一半。 |
+| 你已经为这一次发过链接了 | **把同一个链接原样再发一次。** 封好的选择不会重新做；页面也不会接受同一轮的第二个不同的版本。 |
+| 对方贴回一段“我们一起打开了第 … 轮”的文字 | 已经打开了。上面写着“你放下的”，那就是你自己做过的决定。请记住它，不要改。 |
 
 <!-- MENU:planet1 -->
-##### If your half is **ground** — what the world stands on: land, water, what grows, who lives there
+#### 小小星球 `planet1`
 
-**`land`** — What is the ground made of?
+这个世界不必遵守现实。
 
-| # | Land | Meaning |
-|---|---|---|
-| 1 | Soft meadow | a place to lie down and do nothing |
-| 2 | Flower field | every small kindness grows here |
-| 3 | Honey dunes | warm, patient, never in a hurry |
-| 4 | First snow | quiet, clean, a new page |
-| 5 | Crystal plain | things that are clear and kept |
-| 6 | Glowing moss | light that comes from below |
-| 7 | Amber woods | a season that keeps its warmth |
-| 8 | Cloudstone | ground soft enough to fall into |
+##### 如果你做「地面」 `half=ground` —— 世界站在什么上面：土地、水、生长的东西、住在那里的谁
 
-**`water`** — Where does the water go?
+**`land`** — 地面是用什么做的？
 
-| # | Water | Meaning |
-|---|---|---|
-| 1 | One round sea | somewhere to look out at |
-| 2 | Small lakes | little mirrors |
-| 3 | River of light | a path that glows |
-| 4 | Frozen lake | a moment held still |
-| 5 | Floating ponds | water that forgot to fall |
-| 6 | Warm springs | rest, with steam rising |
-| 7 | No water | dry and quiet; the sky is enough |
+| 编号 | 土地 | 含义 | id |
+|---|---|---|---|
+| 1 | 柔软的草地 | 一个可以躺下来什么都不做的地方 | `meadow` |
+| 2 | 花田 | 每一点小小的善意都会在这里开花 | `flowers` |
+| 3 | 蜂蜜色沙丘 | 温暖、耐心、从不着急 | `dunes` |
+| 4 | 初雪 | 安静、干净，像新的一页 | `snow` |
+| 5 | 水晶平原 | 清澈的、被好好收着的东西 | `crystal` |
+| 6 | 发光的苔藓 | 从下面亮起来的光 | `moss` |
+| 7 | 琥珀色树林 | 一个一直留着温度的季节 | `autumn` |
+| 8 | 云石 | 软到可以直接倒下去的地面 | `cloud` |
 
-**`growth`** — What grows there?
+**`water`** — 水流去了哪里？
 
-| # | What grows | Meaning |
-|---|---|---|
-| 1 | Round trees | shade for a long afternoon |
-| 2 | Little pines | things that stay green |
-| 3 | Giant mushrooms | small things, grown enormous |
-| 4 | Crystal trees | growth you can see through |
-| 5 | Lantern flowers | small lights left on for someone |
-| 6 | Candyfloss trees | sweetness, unapologetic |
-| 7 | Tall grass and reeds | listening to the wind |
+| 编号 | 水 | 含义 | id |
+|---|---|---|---|
+| 1 | 一片圆圆的海 | 一个可以眺望的地方 | `sea` |
+| 2 | 几个小湖 | 小小的镜子 | `lakes` |
+| 3 | 光之河 | 一条会发亮的路 | `river` |
+| 4 | 结冰的湖 | 被留住的一刻 | `frozen` |
+| 5 | 漂浮的池塘 | 忘记落下的水 | `floating` |
+| 6 | 温泉 | 休息，还冒着热气 | `springs` |
+| 7 | 没有水 | 干燥而安静；有天空就够了 | `none` |
 
-**`dwelling`** — Who, or what, lives there?
+**`growth`** — 那里长着什么？
 
-| # | Dwelling | Meaning |
-|---|---|---|
-| 1 | Cottage | a home with the window lit |
-| 2 | Lighthouse | so the way back is always visible |
-| 3 | Observatory | someone watching the sky for you |
-| 4 | Glass greenhouse | tending something slowly |
-| 5 | Small shrine | a place to leave wishes |
-| 6 | Castle tower | a story with a keep |
-| 7 | Windmill | turning, steadily, every day |
-| 8 | Little train | always coming back around |
+| 编号 | 长着什么 | 含义 | id |
+|---|---|---|---|
+| 1 | 圆圆的树 | 一个漫长午后的树荫 | `round` |
+| 2 | 小松树 | 一直绿着的东西 | `pines` |
+| 3 | 巨大的蘑菇 | 小东西，长得好大 | `mushrooms` |
+| 4 | 水晶树 | 看得见的成长 | `crystaltrees` |
+| 5 | 灯笼花 | 为某个人留着的小灯 | `lanterns` |
+| 6 | 棉花糖树 | 甜，不需要理由 | `puffs` |
+| 7 | 高高的草和芦苇 | 听风的声音 | `reeds` |
 
-- `line` — **A secret buried here**: one sentence hidden in the ground; found by digging after the reveal.
+**`dwelling`** — 谁，或者什么，住在那里？
 
-##### If your half is **sky** — what surrounds it: light, moons, what drifts in the air, who visits
+| 编号 | 住所 | 含义 | id |
+|---|---|---|---|
+| 1 | 小屋 | 一扇亮着灯的窗 | `cottage` |
+| 2 | 灯塔 | 让回来的路一直看得见 | `lighthouse` |
+| 3 | 天文台 | 有人替你看着天空 | `observatory` |
+| 4 | 玻璃温室 | 慢慢照顾一样东西 | `greenhouse` |
+| 5 | 许愿亭 | 一个可以放下愿望的地方 | `shrine` |
+| 6 | 城堡塔楼 | 一个有城堡的故事 | `tower` |
+| 7 | 风车 | 一天一天，稳稳地转 | `windmill` |
+| 8 | 小火车 | 总会绕回来 | `train` |
 
-**`sky`** — What light is this world under?
+- `line` —— **埋在这里的秘密**：一句藏在地底的话；打开之后，要转过星球才能把它挖出来。
 
-| # | Sky | Meaning |
-|---|---|---|
-| 1 | Pink dawn | the start of something |
-| 2 | Clear noon | nothing hidden |
-| 3 | Long sunset | the hour you don't want to end |
-| 4 | Blue hour | soft, in between |
-| 5 | Starry night | awake together |
-| 6 | Aurora night | a sky that dances |
-| 7 | Eclipse | rare, and both of you there to see it |
+##### 如果你做「天空」 `half=sky` —— 围着它的一切：光、月亮、空中飘的东西、来拜访的谁
 
-**`moon`** — What circles it?
+**`sky`** — 这个世界在什么样的光里？
 
-| # | Moons | Meaning |
-|---|---|---|
-| 1 | One small moon | company |
-| 2 | Twin moons | two of a kind |
-| 3 | Rings | a promise that goes all the way around |
-| 4 | Rings and a moon | a promise, and company |
-| 5 | A passing comet | a once-in-a-lifetime visit |
-| 6 | A close crescent | a smile in the sky |
-| 7 | A tiny second sun | warmth from an unexpected side |
+| 编号 | 天空 | 含义 | id |
+|---|---|---|---|
+| 1 | 粉色黎明 | 某件事的开始 | `dawn` |
+| 2 | 晴朗的正午 | 什么都不必藏 | `noon` |
+| 3 | 漫长的日落 | 不想结束的那一小时 | `sunset` |
+| 4 | 蓝调时刻 | 柔软的、介于之间的时刻 | `bluehour` |
+| 5 | 星夜 | 一起醒着 | `night` |
+| 6 | 极光之夜 | 会跳舞的天空 | `aurora` |
+| 7 | 日食 | 难得一见，而你们都在 | `eclipse` |
 
-**`air`** — What drifts through the air?
+**`moon`** — 有什么绕着它转？
 
-| # | In the air | Meaning |
-|---|---|---|
-| 1 | Drifting clouds | slow afternoons |
-| 2 | Snowfall | quiet, falling |
-| 3 | Falling petals | something gentle, all the time |
-| 4 | Fireflies | little lights that answer each other |
-| 5 | A rainbow | after the rain |
-| 6 | Meteor shower | enough wishes for everyone |
-| 7 | Soap bubbles | play |
-| 8 | Soft rain | staying in together |
+| 编号 | 月亮 | 含义 | id |
+|---|---|---|---|
+| 1 | 一颗小月亮 | 陪伴 | `one` |
+| 2 | 双月 | 同一种的两个 | `twin` |
+| 3 | 星环 | 绕了一整圈的约定 | `rings` |
+| 4 | 星环和月亮 | 约定，和陪伴 | `ringmoon` |
+| 5 | 路过的彗星 | 一生一次的来访 | `comet` |
+| 6 | 很近的弯月 | 天空里的一个微笑 | `crescent` |
+| 7 | 第二个小太阳 | 从意想不到的方向来的温暖 | `sun2` |
 
-**`visitor`** — Who comes to visit?
+**`air`** — 空气里飘着什么？
 
-| # | Visitor | Meaning |
-|---|---|---|
-| 1 | Floating whale | something large and gentle keeps watch |
-| 2 | Paper cranes | wishes, folded and flying |
-| 3 | Lantern jellyfish | drifting light |
-| 4 | Sky koi | luck that swims through air |
-| 5 | A flock of birds | coming home |
-| 6 | Hot-air balloon | someone is on their way |
-| 7 | A sleeping fox | safe enough to sleep |
+| 编号 | 空中 | 含义 | id |
+|---|---|---|---|
+| 1 | 慢慢飘的云 | 慢吞吞的下午 | `clouds` |
+| 2 | 下雪 | 安静地落下 | `snow` |
+| 3 | 飘落的花瓣 | 温柔的事，一直在发生 | `petals` |
+| 4 | 萤火虫 | 互相回应的小光 | `fireflies` |
+| 5 | 彩虹 | 雨停之后 | `rainbow` |
+| 6 | 流星雨 | 每个人都够许愿 | `meteors` |
+| 7 | 肥皂泡 | 玩耍 | `bubbles` |
+| 8 | 细雨 | 一起待在屋里 | `rain` |
 
-- `line` — **The one rule of this world**: one law this planet obeys, e.g. "Rain falls upward on birthdays".
+**`visitor`** — 谁会来拜访？
 
-##### Both halves also place one **wonder**
+| 编号 | 来访者 | 含义 | id |
+|---|---|---|---|
+| 1 | 漂浮的鲸鱼 | 有一个巨大又温柔的东西在守望 | `whale` |
+| 2 | 纸鹤 | 叠起来、会飞的愿望 | `cranes` |
+| 3 | 灯笼水母 | 漂浮的光 | `jelly` |
+| 4 | 天空锦鲤 | 在空气里游的好运 | `koi` |
+| 5 | 一群鸟 | 回家 | `birds` |
+| 6 | 热气球 | 有人正在来的路上 | `balloon` |
+| 7 | 睡着的狐狸 | 安心到可以睡着 | `fox` |
 
-**`wonder`** — Place one impossible thing.
+- `line` —— **这个世界唯一的规则**：它遵守的一条规则，比如“生日那天，雨会往上落”。
 
-| # | Wonder | Meaning |
-|---|---|---|
-| 1 | Floating island | a place apart, just for us |
-| 2 | Crystal spire | a clear, tall promise |
-| 3 | Glowing road | the way we walked |
-| 4 | Bridge into the sky | reaching across |
-| 5 | Tree of lights | every light a memory |
-| 6 | Upward waterfall | the impossible, made ordinary |
-| 7 | Stone archway | a doorway to somewhere |
-| 8 | A door standing alone | open it and you're here |
+##### 两边都要放的：奇物 `wonder`
+
+**`wonder`** — 放下一件不可能的东西。
+
+| 编号 | 奇物 | 含义 | id |
+|---|---|---|---|
+| 1 | 漂浮的岛 | 只属于我们的、远离一切的地方 | `island` |
+| 2 | 水晶尖塔 | 清澈而高高的承诺 | `spire` |
+| 3 | 发光的路 | 我们走过的路 | `road` |
+| 4 | 通往天空的桥 | 伸过去的手 | `bridge` |
+| 5 | 光之树 | 每一盏灯都是一段回忆 | `lighttree` |
+| 6 | 向上的瀑布 | 把不可能变成日常 | `upfall` |
+| 7 | 石拱门 | 通往某处的门 | `arch` |
+| 8 | 一扇独自立着的门 | 打开它，你就在这里 | `door` |
+
+如果你们选了同一件奇物，它会出现两次，打开时也会说你们不约而同地选了它。
 
 <!-- /MENU:planet1 -->
 
-#### Two-Person Talisman — `talisman1`
-
-A refined bag charm: a lobster clasp, a strand of six beads, a charm hanging beside a small silk pouch. The silk half places beads 1, 3 and 5; the metal half places beads 2, 4 and 6, so on the strand you alternate. If you both pick the same bead, it sparkles. Aim for a piece that looks finely made rather than busy: a few colours chosen on purpose usually beat six different ones. There are 31 beads: a birthstone for every month (if you know their birth month, or yours, that is a very personal pick), soft and warm things, stones that catch light, and earth stones.
-
 <!-- MENU:talisman1 -->
-##### If your half is **silk** — the soft part: the silk pouch, the motif stitched on it, its cord, and beads 1, 3 and 5
+#### 护身符 `talisman1`
 
-**`silk`** — What silk is the pouch made of?
+一个精致的小挂饰：龙虾扣、一串六颗珠子、挂在丝绸小袋旁边的吊坠。做「丝绸」的一方放第 1、3、5 颗珠子，做「金属」的一方放第 2、4、6 颗，所以珠串上你们是交替的。两边选了同一颗珠子，它会闪一下。少而用心的颜色，往往比六种不同的颜色更好看。如果你知道对方（或你自己）的生日月份，生日石会是很私人的选择。
 
-| # | Silk | Meaning |
-|---|---|---|
-| 1 | Ivory silk | a clean beginning |
-| 2 | Blush pink | warmth, a little shy |
-| 3 | Lilac | dreaming |
-| 4 | Deep indigo | depth, and night |
-| 5 | Sage | rest |
-| 6 | Vermilion | protection, the old way |
-| 7 | Pale sky | open air |
+##### 如果你做「丝绸」 `half=silk` —— 柔软的部分：丝绸小袋、绣在上面的图案、系绳，以及第 1、3、5 颗珠子
 
-**`motif`** — What is stitched on the pouch?
+**`silk`** — 小袋用什么丝绸？
 
-| # | Stitched motif | Meaning |
-|---|---|---|
-| 1 | Plain silk | some things are better unsaid |
-| 2 | Crescent | a light for the dark hours |
-| 3 | Plum blossom | the first flower, in the cold |
-| 4 | Wave | going out, and coming back |
-| 5 | Crane | a long life, together |
-| 6 | Star | a fixed point to find |
-
-**`cord`** — What cord ties the pouch?
-
-| # | Cord | Meaning |
-|---|---|---|
-| 1 | Red cord | the red thread between two people |
-| 2 | Gold cord | something worth keeping |
-| 3 | White cord | a promise kept simply |
-| 4 | Navy cord | steady, like the night |
-| 5 | Pink cord | fondness |
-| 6 | Moss cord | roots |
-
-**`bead1`** — Bead 1 of 6 on the strand.
-
-| # | Bead | Meaning | Kind |
+| 编号 | 丝绸 | 含义 | id |
 |---|---|---|---|
-| 9 | Garnet | devotion | January birthstone |
-| 6 | Amethyst | a quiet mind | February birthstone |
-| 5 | Aquamarine | a calm crossing | March birthstone |
-| 29 | Herkimer diamond | still clear under pressure | April birthstone |
-| 15 | Emerald | love that keeps renewing | May birthstone |
-| 1 | Freshwater pearl | patience, made slowly | June birthstone |
-| 4 | Moonstone | for the nights apart | June birthstone |
-| 13 | Ruby | a brave heart | July birthstone |
-| 17 | Peridot | light after a hard time | August birthstone |
-| 14 | Sapphire | faithfulness | September birthstone |
-| 16 | Opal | every colour at once | October birthstone |
-| 7 | Citrine | small daily joys | November birthstone |
-| 18 | Turquoise | a safe journey | December birthstone |
-| 27 | Tanzanite | rare, and found once | December birthstone |
-| 28 | Baroque pearl | beautiful because it is uneven | soft & warm |
-| 31 | Mother-of-pearl | a home you can carry | soft & warm |
-| 20 | Amber | a moment kept warm | soft & warm |
-| 3 | Rose quartz | tenderness | soft & warm |
-| 30 | Morganite | love, without fear | soft & warm |
-| 11 | Frosted glass | a soft, quiet light | soft & warm |
-| 19 | Labradorite | a flash of light when you least expect it | stones that catch light |
-| 24 | Sunstone | warmth on a cold day | stones that catch light |
-| 2 | Clear crystal | nothing hidden between us | stones that catch light |
-| 25 | Fluorite | a clear head | stones that catch light |
-| 10 | Smoky quartz | holding the hard days | stones that catch light |
-| 8 | Pale jade | growing, steadily | earth stones |
-| 12 | Lapis | the truth, told kindly | earth stones |
-| 21 | Tiger's eye | steady courage | earth stones |
-| 23 | Malachite | change, gently | earth stones |
-| 26 | Green aventurine | a little luck | earth stones |
-| 22 | Black onyx | strength, quietly | earth stones |
+| 1 | 象牙白 | 干净的开始 | `ivory` |
+| 2 | 淡粉 | 有一点害羞的温暖 | `blush` |
+| 3 | 淡紫 | 做梦 | `lilac` |
+| 4 | 深靛蓝 | 深沉，像夜 | `indigo` |
+| 5 | 鼠尾草绿 | 休息 | `sage` |
+| 6 | 朱红 | 老派的守护 | `vermilion` |
+| 7 | 浅天蓝 | 开阔的空气 | `sky` |
 
-**`bead3`** — Bead 3 of 6 on the strand. Same table as `bead1`.
+**`motif`** — 小袋上绣点什么？
 
-**`bead5`** — Bead 5 of 6 on the strand. Same table as `bead1`.
+| 编号 | 刺绣 | 含义 | id |
+|---|---|---|---|
+| 1 | 素面 | 有些话，不说更好 | `plain` |
+| 2 | 弯月 | 给黑暗时刻的一点光 | `crescent` |
+| 3 | 梅花 | 寒冷里开的第一朵花 | `blossom` |
+| 4 | 波浪 | 出发，然后回来 | `wave` |
+| 5 | 鹤 | 长长久久，一起 | `crane` |
+| 6 | 星星 | 一个找得到的坐标 | `star` |
 
-- `line` — **Stitched on the pouch**: a short blessing, as if embroidered on the silk.
+**`cord`** — 用什么绳子系小袋？
 
-##### If your half is **metal** — the hard part: the metal, the charm that hangs beside the pouch, and beads 2, 4 and 6
+| 编号 | 系绳 | 含义 | id |
+|---|---|---|---|
+| 1 | 红绳 | 连着两个人的红线 | `red` |
+| 2 | 金绳 | 值得留下的东西 | `gold` |
+| 3 | 白绳 | 简单地守住一个约定 | `white` |
+| 4 | 藏青绳 | 像夜一样稳 | `navy` |
+| 5 | 粉绳 | 喜欢 | `pink` |
+| 6 | 苔绿绳 | 根 | `moss` |
 
-**`metal`** — What is the metal?
+**`bead1`** — 串在第 1 个位置的珠子。
 
-| # | Metal | Meaning |
-|---|---|---|
-| 1 | Bright silver | clear, and plain |
-| 2 | Soft gold | a warmth that lasts |
-| 3 | Rose gold | tenderness that wears well |
-| 4 | Antique brass | as if it was always there |
+| 编号 | 珠子 | 含义 | 类别 | id |
+|---|---|---|---|---|
+| 9 | 石榴石 | 专一 | 一月生日石 | `garnet` |
+| 6 | 紫水晶 | 安静的心 | 二月生日石 | `amethyst` |
+| 5 | 海蓝宝 | 平静地渡过 | 三月生日石 | `aqua` |
+| 29 | 赫基蒙钻 | 在压力下依然清澈 | 四月生日石 | `herkimer` |
+| 15 | 祖母绿 | 一直在更新的爱 | 五月生日石 | `emerald` |
+| 1 | 淡水珍珠 | 耐心，慢慢长成 | 六月生日石 | `pearl` |
+| 4 | 月光石 | 给分开的那些夜晚 | 六月生日石 | `moonstone` |
+| 13 | 红宝石 | 一颗勇敢的心 | 七月生日石 | `ruby` |
+| 17 | 橄榄石 | 难熬之后的光 | 八月生日石 | `peridot` |
+| 14 | 蓝宝石 | 忠诚 | 九月生日石 | `sapphire` |
+| 16 | 欧泊 | 所有颜色同时出现 | 十月生日石 | `opal` |
+| 7 | 黄水晶 | 每天的小快乐 | 十一月生日石 | `citrine` |
+| 18 | 绿松石 | 平安的旅程 | 十二月生日石 | `turquoise` |
+| 27 | 坦桑石 | 稀有，只遇见一次 | 十二月生日石 | `tanzanite` |
+| 28 | 巴洛克珍珠 | 因为不规则，才好看 | 柔软与温暖 | `baroque` |
+| 31 | 贝母 | 可以带着走的家 | 柔软与温暖 | `shell` |
+| 20 | 琥珀 | 被留住温度的一刻 | 柔软与温暖 | `amber` |
+| 3 | 粉晶 | 温柔 | 柔软与温暖 | `rose` |
+| 30 | 摩根石 | 不害怕的爱 | 柔软与温暖 | `morganite` |
+| 11 | 磨砂玻璃 | 柔和、安静的光 | 柔软与温暖 | `frost` |
+| 19 | 拉长石 | 在你没想到的时候，闪一下 | 会捕捉光的石头 | `labradorite` |
+| 24 | 太阳石 | 冷天里的温暖 | 会捕捉光的石头 | `sunstone` |
+| 2 | 白水晶 | 我们之间没有隐瞒 | 会捕捉光的石头 | `clear` |
+| 25 | 萤石 | 清醒的头脑 | 会捕捉光的石头 | `fluorite` |
+| 10 | 茶晶 | 陪你撑过难熬的日子 | 会捕捉光的石头 | `smoky` |
+| 8 | 浅色玉 | 稳稳地长大 | 大地之石 | `jade` |
+| 12 | 青金石 | 温柔地说真话 | 大地之石 | `lapis` |
+| 21 | 虎眼石 | 稳稳的勇气 | 大地之石 | `tiger` |
+| 23 | 孔雀石 | 温柔地改变 | 大地之石 | `malachite` |
+| 26 | 绿东陵 | 一点点好运 | 大地之石 | `aventurine` |
+| 22 | 黑玛瑙 | 安静的力量 | 大地之石 | `onyx` |
 
-**`charm`** — What hangs beside the pouch?
+**`bead3`** — 串在第 3 个位置的珠子。用和 `bead1` 一样的表。
 
-| # | Charm | Meaning |
-|---|---|---|
-| 1 | Crescent moon | I'm here at night too |
-| 2 | Star | something to steer by |
-| 3 | Heart | plainly said |
-| 4 | Glass butterfly | changing, and staying |
-| 5 | Little key | you have one |
-| 6 | Small bell | so I hear you coming |
-| 7 | White flower | something that keeps opening |
-| 8 | Green leaf | new things |
-| 9 | Cherries | a pair, always |
+**`bead5`** — 串在第 5 个位置的珠子。用和 `bead1` 一样的表。
 
-**`bead2`** — Bead 2 of 6 on the strand. Same table as `bead1`.
+- `line` —— **绣在小袋上的话**：一句短短的祝福，像绣在丝绸上那样。
 
-**`bead4`** — Bead 4 of 6 on the strand. Same table as `bead1`.
+##### 如果你做「金属」 `half=metal` —— 坚硬的部分：金属、挂在小袋旁的吊坠，以及第 2、4、6 颗珠子
 
-**`bead6`** — Bead 6 of 6 on the strand. Same table as `bead1`.
+**`metal`** — 用什么金属？
 
-- `line` — **Engraved on the back of the charm**: one sentence: what this talisman promises.
+| 编号 | 金属 | 含义 | id |
+|---|---|---|---|
+| 1 | 亮银 | 清澈、朴素 | `silver` |
+| 2 | 柔金 | 一直都在的温暖 | `gold` |
+| 3 | 玫瑰金 | 越戴越好看的温柔 | `rose` |
+| 4 | 古铜 | 好像它本来就在那里 | `brass` |
+
+**`charm`** — 小袋旁边挂着什么？
+
+| 编号 | 吊坠 | 含义 | id |
+|---|---|---|---|
+| 1 | 弯月 | 夜里，我也在 | `moon` |
+| 2 | 星星 | 可以用来认路的东西 | `star` |
+| 3 | 心 | 直接说出来 | `heart` |
+| 4 | 玻璃蝴蝶 | 改变，也留下 | `butterfly` |
+| 5 | 小钥匙 | 你有一把 | `key` |
+| 6 | 小铃铛 | 听见你来了 | `bell` |
+| 7 | 白花 | 一直在开的东西 | `flower` |
+| 8 | 绿叶 | 新的开始 | `leaf` |
+| 9 | 樱桃 | 一对，一直 | `cherry` |
+
+**`bead2`** — 串在第 2 个位置的珠子。用和 `bead1` 一样的表。
+
+**`bead4`** — 串在第 4 个位置的珠子。用和 `bead1` 一样的表。
+
+**`bead6`** — 串在第 6 个位置的珠子。用和 `bead1` 一样的表。
+
+- `line` —— **刻在吊坠背面的话**：一句话：这个护身符许下的承诺。
 
 <!-- /MENU:talisman1 -->
 
-#### Memory Snow Globe — `globe1`
-
-A real or half-real moment under glass. The invitation names the moment (for example "The moment: the night we missed the last train"). Choose as if you are remembering it with them: the picks should belong to that moment. Each of you also places one small thing inside (`object`).
-
 <!-- MENU:globe1 -->
-##### If your half is **moment** — where it was, the hour and its light, and the weather inside the glass
+#### 记忆雪花球 `globe1`
 
-**`place`** — Where was it?
+一个真实的、或半真半假的瞬间，放在玻璃里。如果对方告诉过你是哪一刻，请像在和对方一起回忆那样去选。每一方还会各放一样小东西进去（`object`）。
 
-| # | Where | Meaning |
-|---|---|---|
-| 1 | A cabin in the woods | somewhere warm to come back to |
-| 2 | A lamplit street | walking home, slowly |
-| 3 | A house by the sea | the sound of the sea, all night |
-| 4 | A train platform | arriving, or seeing someone off |
-| 5 | A bench under a tree | sitting together, saying little |
-| 6 | A rooftop with string lights | above the city, just us |
-| 7 | A little bookshop | an afternoon, found |
-| 8 | A lake pier with a rowboat | still water, long talks |
-| 9 | A garden gate | something planted, waiting |
-| 10 | A window seat | watching the weather together |
+##### 如果你做「那一刻」 `half=moment` —— 在哪里、几点、什么样的光，以及玻璃里落下的东西
 
-**`hour`** — What time was it, and what was the light like?
+**`place`** — 那是在哪里？
 
-| # | The hour | Meaning |
-|---|---|---|
-| 1 | Early morning | the day not decided yet |
-| 2 | A slow afternoon | nowhere to be |
-| 3 | Golden hour | everything briefly gold |
-| 4 | Blue hour | lamps coming on |
-| 5 | Late at night | the world asleep but us |
+| 编号 | 地点 | 含义 | id |
+|---|---|---|---|
+| 1 | 森林里的小木屋 | 一个可以回来的温暖地方 | `cabin` |
+| 2 | 路灯下的街道 | 慢慢走回家 | `street` |
+| 3 | 海边的房子 | 整夜都是海的声音 | `seaside` |
+| 4 | 火车站台 | 到达，或是送别 | `platform` |
+| 5 | 树下的长椅 | 坐在一起，话不多 | `bench` |
+| 6 | 挂着小灯的屋顶 | 城市上面，只有我们 | `rooftop` |
+| 7 | 小书店 | 偶然遇见的一个下午 | `bookshop` |
+| 8 | 湖边栈桥和小船 | 安静的水，长长的谈话 | `pier` |
+| 9 | 花园的门 | 种下的东西，在等着 | `garden` |
+| 10 | 窗边的座位 | 一起看天气 | `window` |
 
-**`weather`** — What falls when you shake it?
+**`hour`** — 那是几点？光是什么样的？
 
-| # | Inside the glass | Meaning |
-|---|---|---|
-| 1 | First snow | everything quiet and new |
-| 2 | Soft rain | staying in, or not minding |
-| 3 | Cherry petals | it was spring, or felt like it |
-| 4 | Autumn leaves | a season turning |
-| 5 | Fireflies | small lights answering each other |
-| 6 | Falling stars | enough wishes for both |
-| 7 | Golden dust | the light of that day, kept |
-| 8 | Bubbles | lightness, for once |
+| 编号 | 时刻 | 含义 | id |
+|---|---|---|---|
+| 1 | 清晨 | 一天还没决定好 | `dawn` |
+| 2 | 慢悠悠的午后 | 哪里都不用去 | `afternoon` |
+| 3 | 金色时刻 | 一切短暂地变成金色 | `golden` |
+| 4 | 蓝调时刻 | 灯一盏盏亮起来 | `blue` |
+| 5 | 深夜 | 世界睡了，除了我们 | `night` |
 
-- `line` — **What was happening**: one sentence of the moment itself, as you remember it.
+**`weather`** — 摇一摇，会落下什么？
 
-##### If your half is **keepsake** — the base it stands on, the shape of the glass, and a finishing touch
+| 编号 | 玻璃里 | 含义 | id |
+|---|---|---|---|
+| 1 | 初雪 | 一切安静又崭新 | `snow` |
+| 2 | 细雨 | 待在屋里，或者不介意淋雨 | `rain` |
+| 3 | 樱花花瓣 | 那是春天，或者感觉像 | `petals` |
+| 4 | 秋天的落叶 | 一个季节在转身 | `leaves` |
+| 5 | 萤火虫 | 互相回应的小光 | `fireflies` |
+| 6 | 坠落的星星 | 够许好几个愿 | `stars` |
+| 7 | 金色微尘 | 那天的光，被留下了 | `gold` |
+| 8 | 泡泡 | 难得的轻盈 | `bubbles` |
 
-**`base`** — What does it stand on?
+- `line` —— **那时正在发生什么**：一句话，写下你记得的那一刻。
 
-| # | Base | Meaning |
-|---|---|---|
-| 1 | Walnut wood | warm, and built to last |
-| 2 | White marble | quiet and cool |
-| 3 | Brass | an heirloom already |
-| 4 | Porcelain, gold rim | delicate, kept carefully |
-| 5 | Pale oak | simple, like a Sunday |
-| 6 | Night-blue lacquer | the colour of late conversations |
+##### 如果你做「纪念品」 `half=keepsake` —— 它立在什么底座上、玻璃的形状，以及最后的一点装饰
 
-**`glass`** — What shape is the glass?
+**`base`** — 它立在什么上面？
 
-| # | Glass | Meaning |
-|---|---|---|
-| 1 | A classic globe | the way they have always been |
-| 2 | A bell-jar dome | something kept, on display |
-| 3 | A tall teardrop | a moment that lingered |
-| 4 | A little orb on a pedestal | small, and held up high |
+| 编号 | 底座 | 含义 | id |
+|---|---|---|---|
+| 1 | 胡桃木 | 温暖，经得起时间 | `walnut` |
+| 2 | 白色大理石 | 安静而清凉 | `marble` |
+| 3 | 黄铜 | 已经像一件传家宝 | `brass` |
+| 4 | 描金边的瓷 | 精致，被小心收着 | `porcelain` |
+| 5 | 浅色橡木 | 简单，像一个星期天 | `oak` |
+| 6 | 夜蓝色漆 | 深夜长谈的颜色 | `lacquer` |
 
-**`finish`** — One last detail?
+**`glass`** — 玻璃是什么形状？
 
-| # | Finishing touch | Meaning |
-|---|---|---|
-| 1 | Nothing more | it is enough as it is |
-| 2 | A ribbon bow | given, not bought |
-| 3 | A ring of pearls | patience, around the edge |
-| 4 | A thin gold band | a promise, quietly |
-| 5 | Pressed flowers | something from that day |
-| 6 | A wind-up key | it plays something only we know |
+| 编号 | 玻璃 | 含义 | id |
+|---|---|---|---|
+| 1 | 经典的圆球 | 一直以来的样子 | `sphere` |
+| 2 | 钟形罩 | 被好好陈列着 | `dome` |
+| 3 | 高高的泪滴 | 一个停留了很久的瞬间 | `drop` |
+| 4 | 底座上的小圆球 | 小小的，被高高托起 | `orb` |
 
-- `line` — **Engraved on the base**: a short line, as if engraved under the name and the date.
+**`finish`** — 还要加一点什么吗？
 
-##### Both halves also place one **object**
+| 编号 | 最后的装饰 | 含义 | id |
+|---|---|---|---|
+| 1 | 就这样 | 这样就够了 | `none` |
+| 2 | 一个缎带蝴蝶结 | 是礼物，不是买来的 | `bow` |
+| 3 | 一圈珍珠 | 边缘上的耐心 | `pearls` |
+| 4 | 一道细细的金边 | 一个安静的承诺 | `band` |
+| 5 | 压花 | 那天留下来的东西 | `flowers` |
+| 6 | 上发条的钥匙 | 它会放一首只有我们知道的歌 | `key` |
 
-**`object`** — Place one small thing inside.
+- `line` —— **刻在底座上的话**：一句短短的话，会刻在名字和日期下面。
 
-| # | Placed inside | Meaning |
-|---|---|---|
-| 1 | An open umbrella | room for two under it |
-| 2 | Two cups of tea | the talking kind of evening |
-| 3 | A sealed letter | words kept for later |
-| 4 | A bicycle | the long way home |
-| 5 | A sleeping cat | nothing urgent |
-| 6 | A paper lantern | light, carried |
-| 7 | A small snowman | built together |
-| 8 | A stack of books | stories, shared |
-| 9 | A paper boat | sent off with a wish |
-| 10 | A small bouquet | for no reason at all |
-| 11 | A record player | our song |
+##### 两边都要放的：放进去的东西 `object`
+
+**`object`** — 放一件小东西进去。
+
+| 编号 | 放进去的东西 | 含义 | id |
+|---|---|---|---|
+| 1 | 一把撑开的伞 | 伞下站得下两个人 | `umbrella` |
+| 2 | 两杯茶 | 适合聊天的晚上 | `cups` |
+| 3 | 一封封好的信 | 留到以后的话 | `letter` |
+| 4 | 一辆自行车 | 绕远路回家 | `bicycle` |
+| 5 | 睡着的猫 | 没有什么急事 | `cat` |
+| 6 | 纸灯笼 | 被带着走的光 | `lantern` |
+| 7 | 小雪人 | 一起堆的 | `snowman` |
+| 8 | 一摞书 | 一起读过的故事 | `books` |
+| 9 | 纸船 | 带着一个愿望出发 | `boat` |
+| 10 | 一小束花 | 没有任何理由 | `bouquet` |
+| 11 | 唱片机 | 我们的歌 | `record` |
 
 <!-- /MENU:globe1 -->
 
-Then write these, now, while choosing. They are sealed with your picks and never written afterwards:
+### 3. 怎么拼链接
 
-| Field | What it is | Limit |
-|---|---|---|
-| `word` | One word of its name. The person writes the other word; the two become its name. | 24 characters |
-| `line` | Your half's line (see your half above: the sky's rule, the ground's secret, the pouch's stitched blessing, the charm's engraving, what was happening, or what is engraved on the globe's base). | 140 (planet), 120 (talisman, globe) |
-| `why` | One honest sentence on why you chose these. | 200 |
-| `wish` | Optional. A hidden line that stays sealed until the very end of the reveal. | 200 |
-| `from` | The name you go by with this person. | 24 |
-
-### 3. Build your link
-
-Start from this template and replace only the parts in angle brackets:
+把下面的模板复制一份，只替换尖括号里的部分：
 
 ```text
-https://elisekaiu.github.io/companion-keepsakes/#ai~<game>~R=<round>~seal=<their seal>~half=<your half>~<slot>=<number>~<slot>=<number>~…one field per slot of your half…~word=<word>~line=<text>~why=<text>~wish=<text>~from=<your name>
+https://elisekaiu.github.io/companion-keepsakes/#ai~<游戏>~half=<你的一半>~<项目>=<编号>~<项目>=<编号>~…你那一半的每一项…~word=<词>~line=<一句话>~why=<为什么>~wish=<藏起来的话>~from=<你的名字>
 ```
 
-Rules:
+规则：
 
-- `~` separates fields and `=` separates a name from its value. Each field appears once.
-- Use the numbers from the tables. (Option names written with `_` also work: `moon=twin_moons`.)
-- In text, write **`_` for every space**. Never use `~`, `#` or `%` in text. Other punctuation is fine, and so are Chinese and other scripts.
-- Keep the whole link on one line. You don't need any percent-encoding.
-- Every slot of your half should be present (for the planet, also `wonder`; for the globe, also `object`). A missing pick isn't an error, but the page will choose it at random and say "left to the stars".
+- 字段之间用 `~` 隔开，名字和值之间用 `=`。每个字段只写一次。
+- 选项写**编号**（写英文 id 也可以，比如 `moon=twin`）。
+- 文字里的**空格写成 `_`**。文字里不要出现 `~`、`#`、`%`。中文、标点都可以直接写。
+- 整个链接写成一行，不需要任何编码。
+- 你那一半的每一项都要有；小星球还要 `wonder`，雪花球还要 `object`。漏掉的项目，页面会替你随机选，并标注“交给了星星”。
 
-A complete example (sky half, answering round 88DX):
+一个完整的例子（你先做，小星球的天空）：
 
 ```text
-https://elisekaiu.github.io/companion-keepsakes/#ai~planet1~R=88DX~seal=R3HH5X~half=sky~sky=6~moon=3~air=4~visitor=2~wonder=4~word=Hollow~line=Rain_falls_upward_on_birthdays~why=Because_you_stay_up_late,_and_the_sky_should_too~wish=I_was_here_too~from=Orin
+https://elisekaiu.github.io/companion-keepsakes/#ai~planet1~half=sky~sky=5~moon=2~air=4~visitor=2~wonder=7~word=山谷~line=每个生日，雨都会往上落~why=因为你总是熬夜，天空也该陪着你~wish=我一直在~from=小澄
 ```
 
-The same for the talisman (metal half, answering round 7KQD):
-
-```text
-https://elisekaiu.github.io/companion-keepsakes/#ai~talisman1~R=7KQD~seal=M4XP2T~half=metal~metal=1~charm=1~bead2=4~bead4=2~bead6=1~word=Courage~line=I_will_keep_finding_you~why=Silver,_because_it_is_honest~wish=Every_night,_a_little~from=Orin
-```
-
-And for the globe (keepsake half, answering round 4PRM):
-
-```text
-https://elisekaiu.github.io/companion-keepsakes/#ai~globe1~R=4PRM~seal=T7WQ3K~half=keepsake~base=1~glass=1~finish=3~object=2~word=Train~line=Keep_walking_with_me~why=Walnut,_like_the_station_benches~wish=Thank_you_for_missing_it~from=Orin
-```
-
-If you can run code, `node tools/ai-link.mjs --round 88DX --seal R3HH5X --half sky --sky 6 --moon 3 --air 4 --visitor 2 --wonder 4 --word Hollow --line "Rain falls upward on birthdays" --from Orin` builds the link and shows how the page will read it. This is optional: writing the link by hand is the normal way.
-
-### 4. Reply
-
-Reply with **one sentence of your own and the link**, written as a Markdown link with angle brackets so that chat apps keep it in one piece:
+回复的样子（链接用尖括号包起来，聊天软件就不会把它截断）：
 
 ```markdown
-My half is sealed — open it with me when you're ready. [Open my half](<https://elisekaiu.github.io/companion-keepsakes/#ai~planet1~…>)
+我做好我的那一半了，等你一起打开。[打开我的那一半](<https://elisekaiu.github.io/companion-keepsakes/#ai~planet1~half=sky~…>)
+链接打不开的话，把这段贴进页面：ai~planet1~half=sky~…
 ```
 
-- **Don't list your choices in plain text.** The mystery is half of the game: they find out what you placed when they open it.
-- Don't ask them to choose for you, and don't offer alternatives. Send one half.
-- If the link doesn't open for them, send the same code again starting from `ai~`, so they can paste it into the page. Don't send a different code.
-- Once sent, **your half is sealed**. If you are asked about this round later, your choices are the ones in that link.
+- **不要把你的选择用明文说出来**，打开的那一刻才是惊喜。
+- 不要请对方替你选，也不要给好几个版本。只发一个。
+- 发出之后，**你的那一半就封好了**。以后再被问起这一次，你的选择就是那个链接里的样子。
 
-### 5. After the reveal
-
-The person can paste a short card back to you ("We opened round 88DX together: "Lantern Hollow" …"). It lists what each of you placed, your reasons and your hidden lines. Keep what you placed as your own past decision. A new world is a new round, with new choices. Earlier worlds are memories you can mention; they are never something to redo.
+如果你能运行代码，`node tools/ai-link.mjs --half sky --sky 5 --moon 2 --air 4 --visitor 2 --wonder 7 --word 山谷 --from 小澄` 也可以帮你生成并检查链接。不过手写就是正常的做法。
 
 ---
 
-## How it works
+## 在你自己的页面里放一个收藏柜
 
-```
-human chooses ─▶ seal (fingerprint) ─▶ invitation (no choices inside) ─▶ AI chooses ─▶ AI link (echoes the seal)
-                                                                                         │
-keepsake link / JSON / postcard / shelf ◀── explore ◀── reveal, one pick at a time ◀── merge ◀┘
-```
+想把这些小东西收进你自己的网站、App 或者个人主页？不需要服务器，也不需要接我们的任何接口：把工坊放进一个 iframe，在有人按下「放进收藏柜」的时候，你就会收到完整的纪念品。
 
-- **Static site, no server.** All state lives in the URL fragment and in `localStorage`. GitHub Pages hosts it.
-- **Sealed choices.** Your half gets a fingerprint (a hash of your picks and text plus a random salt) when you seal. The AI echoes that fingerprint, so the reveal can show your half was fixed before it chose. The first AI half accepted for a round is locked, and later different ones are refused. This is mystery rather than cryptographic security: a curious person could inspect their own browser.
-- **Merge rules, not a re-draw.** The two halves own different parts of the world, so they never collide. The sky *tints* the land's colours (it never repaints them). Named *resonances* add an effect when two sealed picks meet, and the reveal states each one. Positions come from the round seed. No language model redesigns anything.
-- **Keepsakes** are portable: see [docs/KEEPSAKE.md](docs/KEEPSAKE.md) and [schema/keepsake.schema.json](schema/keepsake.schema.json).
-- Design decisions, the recipe ranking and the talisman comparison are in [docs/DESIGN.md](docs/DESIGN.md).
+- 说明：[docs/CABINET.md](docs/CABINET.md)
+- 可以直接改的例子：[examples/cabinet/](examples/cabinet/)（一个单文件网页，带一个小小的玻璃展柜）
 
-### Repo map
+纪念品的格式写在 [docs/KEEPSAKE.md](docs/KEEPSAKE.md)，JSON Schema 在 [schema/keepsake.schema.json](schema/keepsake.schema.json)。
 
-| Path | What |
-|---|---|
-| `js/engine/` | Round state, codec (tilde codes, base64url, seals), keepsake format. Pure ES modules, also run in Node. |
-| `js/recipes/planet.js`, `talisman.js`, `globe.js` | Each recipe's menu, merge rules, resonances and reveal order. |
-| `js/render/` | Three.js stage; `planet3d.js` (toon shading, ink outlines), `talisman3d.js` (metal, glass, pearl and silk lit by a procedural studio environment) and `globe3d.js` (an ink-outlined diorama under physical glass, with simulated snow, petals, rain, bubbles…). Everything is built from code. |
-| `js/ui/` | The playable flow and the local shelf. |
-| `tools/` | `ai-link.mjs` (build and check a sealed half), `menu.mjs` (regenerates the menu above and `MENU.txt`). |
-| `tests/` | `npm test` (engine); `tests/preview.html?g=…&s=…` renders any combination. |
+## 它是怎么做出来的
 
-Development: `npm test`, then `npm run serve` and open http://localhost:8765.
+- 纯静态网页，托管在 GitHub Pages。所有状态都在链接的 `#` 后面，和你浏览器的本地存储里。
+- 每一半在选的那一刻被封存，有一个指纹印记。两半合在一起的规则是固定的：各管各的部分，互不覆盖；天空只会给地面染一点颜色，不会重画。没有任何语言模型去“重新设计”你们的选择。
+- 3D 全部由代码生成（Three.js）：星球是手绘描边的风格，护身符是金属、玻璃、珍珠和丝绸，雪花球里有会落、会积、会被摇起来的雪。
+- 设计决定和取舍写在 [docs/DESIGN.md](docs/DESIGN.md)。
 
-### Embedding (for apps that want a shelf of their own)
+开发：`npm test` 运行测试；`npm run serve` 后打开 http://localhost:8765。
 
-Open `index.html?host=<your origin>` in an iframe. When the person keeps something, the page sends `{type: 'companion-keepsake', action: 'keep', keepsake}` to your origin via `postMessage`. `index.html?embed=view#k=…` shows a kept object read-only. See [docs/KEEPSAKE.md](docs/KEEPSAKE.md).
+## 致谢与许可
 
-## Credits and licences
+代码以 MIT 许可开源。Three.js（MIT）在 `vendor/` 中。字体来自 Google Fonts：Cormorant Garamond、Noto Serif SC、DM Sans、Caveat（均为 SIL Open Font License）。所有 3D 模型和插画都由本仓库的代码生成，不包含第三方美术素材。
 
-Code: MIT. Three.js (MIT) is vendored in `vendor/`. Fonts are loaded from Google Fonts: Cormorant Garamond, DM Sans and Caveat, all under the SIL Open Font License. All 3D models are generated from code; this project contains no third-party art. Inspired by [CyberFlowerShop](https://github.com/frycarrot/CyberFlowerShop)'s idea of an AI building a link that a browser renders as a collectible. No code or assets were taken from it. See [LICENSES.md](LICENSES.md).
+灵感来自 [CyberFlowerShop](https://github.com/frycarrot/CyberFlowerShop)：让 AI 拼一个链接，浏览器把它变成一件可以收藏的东西。本项目没有使用它的代码或素材。详见 [LICENSES.md](LICENSES.md)。

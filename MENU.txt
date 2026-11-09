@@ -1,43 +1,43 @@
-In text use _ for spaces; never use ~ # %. One line. Numbers below.
+文字里的空格写成 _；不要用 ~ # %。整段写在一行。选项写编号。
 
-[Companion Keepsakes · Tiny Imaginary Planet · planet1]
-Link: https://elisekaiu.github.io/companion-keepsakes/#ai~planet1~R=<round>~seal=<their seal>~half=<ground|sky>~<slot>=<number>~...~word=<one_word>~line=<text>~why=<text>~wish=<text>~from=<your_name>
-GROUND half (what the world stands on: land, water, what grows, who lives there); line = A secret buried here
-  land: 1 Soft meadow · 2 Flower field · 3 Honey dunes · 4 First snow · 5 Crystal plain · 6 Glowing moss · 7 Amber woods · 8 Cloudstone
-  water: 1 One round sea · 2 Small lakes · 3 River of light · 4 Frozen lake · 5 Floating ponds · 6 Warm springs · 7 No water
-  growth: 1 Round trees · 2 Little pines · 3 Giant mushrooms · 4 Crystal trees · 5 Lantern flowers · 6 Candyfloss trees · 7 Tall grass and reeds
-  dwelling: 1 Cottage · 2 Lighthouse · 3 Observatory · 4 Glass greenhouse · 5 Small shrine · 6 Castle tower · 7 Windmill · 8 Little train
-SKY half (what surrounds it: light, moons, what drifts in the air, who visits); line = The one rule of this world
-  sky: 1 Pink dawn · 2 Clear noon · 3 Long sunset · 4 Blue hour · 5 Starry night · 6 Aurora night · 7 Eclipse
-  moon: 1 One small moon · 2 Twin moons · 3 Rings · 4 Rings and a moon · 5 A passing comet · 6 A close crescent · 7 A tiny second sun
-  air: 1 Drifting clouds · 2 Snowfall · 3 Falling petals · 4 Fireflies · 5 A rainbow · 6 Meteor shower · 7 Soap bubbles · 8 Soft rain
-  visitor: 1 Floating whale · 2 Paper cranes · 3 Lantern jellyfish · 4 Sky koi · 5 A flock of birds · 6 Hot-air balloon · 7 A sleeping fox
-BOTH: wonder: 1 Floating island · 2 Crystal spire · 3 Glowing road · 4 Bridge into the sky · 5 Tree of lights · 6 Upward waterfall · 7 Stone archway · 8 A door standing alone
+[纪念品工坊 · 小小星球 · planet1]
+链接: https://elisekaiu.github.io/companion-keepsakes/#ai~planet1~half=<ground|sky>~<slot>=<number>~...~word=<...>~line=<...>~why=<...>~wish=<...>~from=<...>
+「地面」half=ground（世界站在什么上面：土地、水、生长的东西、住在那里的谁）；line = 埋在这里的秘密
+  land: 1 柔软的草地 · 2 花田 · 3 蜂蜜色沙丘 · 4 初雪 · 5 水晶平原 · 6 发光的苔藓 · 7 琥珀色树林 · 8 云石
+  water: 1 一片圆圆的海 · 2 几个小湖 · 3 光之河 · 4 结冰的湖 · 5 漂浮的池塘 · 6 温泉 · 7 没有水
+  growth: 1 圆圆的树 · 2 小松树 · 3 巨大的蘑菇 · 4 水晶树 · 5 灯笼花 · 6 棉花糖树 · 7 高高的草和芦苇
+  dwelling: 1 小屋 · 2 灯塔 · 3 天文台 · 4 玻璃温室 · 5 许愿亭 · 6 城堡塔楼 · 7 风车 · 8 小火车
+「天空」half=sky（围着它的一切：光、月亮、空中飘的东西、来拜访的谁）；line = 这个世界唯一的规则
+  sky: 1 粉色黎明 · 2 晴朗的正午 · 3 漫长的日落 · 4 蓝调时刻 · 5 星夜 · 6 极光之夜 · 7 日食
+  moon: 1 一颗小月亮 · 2 双月 · 3 星环 · 4 星环和月亮 · 5 路过的彗星 · 6 很近的弯月 · 7 第二个小太阳
+  air: 1 慢慢飘的云 · 2 下雪 · 3 飘落的花瓣 · 4 萤火虫 · 5 彩虹 · 6 流星雨 · 7 肥皂泡 · 8 细雨
+  visitor: 1 漂浮的鲸鱼 · 2 纸鹤 · 3 灯笼水母 · 4 天空锦鲤 · 5 一群鸟 · 6 热气球 · 7 睡着的狐狸
+两边都放: wonder: 1 漂浮的岛 · 2 水晶尖塔 · 3 发光的路 · 4 通往天空的桥 · 5 光之树 · 6 向上的瀑布 · 7 石拱门 · 8 一扇独自立着的门
 
-[Companion Keepsakes · Two-Person Talisman · talisman1]
-Link: https://elisekaiu.github.io/companion-keepsakes/#ai~talisman1~R=<round>~seal=<their seal>~half=<silk|metal>~<slot>=<number>~...~word=<one_word>~line=<text>~why=<text>~wish=<text>~from=<your_name>
-SILK half (the soft part: the silk pouch, the motif stitched on it, its cord, and beads 1, 3 and 5); line = Stitched on the pouch
-  silk: 1 Ivory silk · 2 Blush pink · 3 Lilac · 4 Deep indigo · 5 Sage · 6 Vermilion · 7 Pale sky
-  motif: 1 Plain silk · 2 Crescent · 3 Plum blossom · 4 Wave · 5 Crane · 6 Star
-  cord: 1 Red cord · 2 Gold cord · 3 White cord · 4 Navy cord · 5 Pink cord · 6 Moss cord
-  bead1: 9 Garnet · 6 Amethyst · 5 Aquamarine · 29 Herkimer diamond · 15 Emerald · 1 Freshwater pearl · 4 Moonstone · 13 Ruby · 17 Peridot · 14 Sapphire · 16 Opal · 7 Citrine · 18 Turquoise · 27 Tanzanite · 28 Baroque pearl · 31 Mother-of-pearl · 20 Amber · 3 Rose quartz · 30 Morganite · 11 Frosted glass · 19 Labradorite · 24 Sunstone · 2 Clear crystal · 25 Fluorite · 10 Smoky quartz · 8 Pale jade · 12 Lapis · 21 Tiger's eye · 23 Malachite · 26 Green aventurine · 22 Black onyx
-  bead3: same numbers as above
-  bead5: same numbers as above
-METAL half (the hard part: the metal, the charm that hangs beside the pouch, and beads 2, 4 and 6); line = Engraved on the back of the charm
-  metal: 1 Bright silver · 2 Soft gold · 3 Rose gold · 4 Antique brass
-  charm: 1 Crescent moon · 2 Star · 3 Heart · 4 Glass butterfly · 5 Little key · 6 Small bell · 7 White flower · 8 Green leaf · 9 Cherries
-  bead2: 9 Garnet · 6 Amethyst · 5 Aquamarine · 29 Herkimer diamond · 15 Emerald · 1 Freshwater pearl · 4 Moonstone · 13 Ruby · 17 Peridot · 14 Sapphire · 16 Opal · 7 Citrine · 18 Turquoise · 27 Tanzanite · 28 Baroque pearl · 31 Mother-of-pearl · 20 Amber · 3 Rose quartz · 30 Morganite · 11 Frosted glass · 19 Labradorite · 24 Sunstone · 2 Clear crystal · 25 Fluorite · 10 Smoky quartz · 8 Pale jade · 12 Lapis · 21 Tiger's eye · 23 Malachite · 26 Green aventurine · 22 Black onyx
-  bead4: same numbers as above
-  bead6: same numbers as above
+[纪念品工坊 · 护身符 · talisman1]
+链接: https://elisekaiu.github.io/companion-keepsakes/#ai~talisman1~half=<silk|metal>~<slot>=<number>~...~word=<...>~line=<...>~why=<...>~wish=<...>~from=<...>
+「丝绸」half=silk（柔软的部分：丝绸小袋、绣在上面的图案、系绳，以及第 1、3、5 颗珠子）；line = 绣在小袋上的话
+  silk: 1 象牙白 · 2 淡粉 · 3 淡紫 · 4 深靛蓝 · 5 鼠尾草绿 · 6 朱红 · 7 浅天蓝
+  motif: 1 素面 · 2 弯月 · 3 梅花 · 4 波浪 · 5 鹤 · 6 星星
+  cord: 1 红绳 · 2 金绳 · 3 白绳 · 4 藏青绳 · 5 粉绳 · 6 苔绿绳
+  bead1: 9 石榴石 · 6 紫水晶 · 5 海蓝宝 · 29 赫基蒙钻 · 15 祖母绿 · 1 淡水珍珠 · 4 月光石 · 13 红宝石 · 17 橄榄石 · 14 蓝宝石 · 16 欧泊 · 7 黄水晶 · 18 绿松石 · 27 坦桑石 · 28 巴洛克珍珠 · 31 贝母 · 20 琥珀 · 3 粉晶 · 30 摩根石 · 11 磨砂玻璃 · 19 拉长石 · 24 太阳石 · 2 白水晶 · 25 萤石 · 10 茶晶 · 8 浅色玉 · 12 青金石 · 21 虎眼石 · 23 孔雀石 · 26 绿东陵 · 22 黑玛瑙
+  bead3: 同上
+  bead5: 同上
+「金属」half=metal（坚硬的部分：金属、挂在小袋旁的吊坠，以及第 2、4、6 颗珠子）；line = 刻在吊坠背面的话
+  metal: 1 亮银 · 2 柔金 · 3 玫瑰金 · 4 古铜
+  charm: 1 弯月 · 2 星星 · 3 心 · 4 玻璃蝴蝶 · 5 小钥匙 · 6 小铃铛 · 7 白花 · 8 绿叶 · 9 樱桃
+  bead2: 9 石榴石 · 6 紫水晶 · 5 海蓝宝 · 29 赫基蒙钻 · 15 祖母绿 · 1 淡水珍珠 · 4 月光石 · 13 红宝石 · 17 橄榄石 · 14 蓝宝石 · 16 欧泊 · 7 黄水晶 · 18 绿松石 · 27 坦桑石 · 28 巴洛克珍珠 · 31 贝母 · 20 琥珀 · 3 粉晶 · 30 摩根石 · 11 磨砂玻璃 · 19 拉长石 · 24 太阳石 · 2 白水晶 · 25 萤石 · 10 茶晶 · 8 浅色玉 · 12 青金石 · 21 虎眼石 · 23 孔雀石 · 26 绿东陵 · 22 黑玛瑙
+  bead4: 同上
+  bead6: 同上
 
-[Companion Keepsakes · Memory Snow Globe · globe1]
-Link: https://elisekaiu.github.io/companion-keepsakes/#ai~globe1~R=<round>~seal=<their seal>~half=<moment|keepsake>~<slot>=<number>~...~word=<one_word>~line=<text>~why=<text>~wish=<text>~from=<your_name>
-MOMENT half (where it was, the hour and its light, and the weather inside the glass); line = What was happening
-  place: 1 A cabin in the woods · 2 A lamplit street · 3 A house by the sea · 4 A train platform · 5 A bench under a tree · 6 A rooftop with string lights · 7 A little bookshop · 8 A lake pier with a rowboat · 9 A garden gate · 10 A window seat
-  hour: 1 Early morning · 2 A slow afternoon · 3 Golden hour · 4 Blue hour · 5 Late at night
-  weather: 1 First snow · 2 Soft rain · 3 Cherry petals · 4 Autumn leaves · 5 Fireflies · 6 Falling stars · 7 Golden dust · 8 Bubbles
-KEEPSAKE half (the base it stands on, the shape of the glass, and a finishing touch); line = Engraved on the base
-  base: 1 Walnut wood · 2 White marble · 3 Brass · 4 Porcelain, gold rim · 5 Pale oak · 6 Night-blue lacquer
-  glass: 1 A classic globe · 2 A bell-jar dome · 3 A tall teardrop · 4 A little orb on a pedestal
-  finish: 1 Nothing more · 2 A ribbon bow · 3 A ring of pearls · 4 A thin gold band · 5 Pressed flowers · 6 A wind-up key
-BOTH: object: 1 An open umbrella · 2 Two cups of tea · 3 A sealed letter · 4 A bicycle · 5 A sleeping cat · 6 A paper lantern · 7 A small snowman · 8 A stack of books · 9 A paper boat · 10 A small bouquet · 11 A record player
+[纪念品工坊 · 记忆雪花球 · globe1]
+链接: https://elisekaiu.github.io/companion-keepsakes/#ai~globe1~half=<moment|keepsake>~<slot>=<number>~...~word=<...>~line=<...>~why=<...>~wish=<...>~from=<...>
+「那一刻」half=moment（在哪里、几点、什么样的光，以及玻璃里落下的东西）；line = 那时正在发生什么
+  place: 1 森林里的小木屋 · 2 路灯下的街道 · 3 海边的房子 · 4 火车站台 · 5 树下的长椅 · 6 挂着小灯的屋顶 · 7 小书店 · 8 湖边栈桥和小船 · 9 花园的门 · 10 窗边的座位
+  hour: 1 清晨 · 2 慢悠悠的午后 · 3 金色时刻 · 4 蓝调时刻 · 5 深夜
+  weather: 1 初雪 · 2 细雨 · 3 樱花花瓣 · 4 秋天的落叶 · 5 萤火虫 · 6 坠落的星星 · 7 金色微尘 · 8 泡泡
+「纪念品」half=keepsake（它立在什么底座上、玻璃的形状，以及最后的一点装饰）；line = 刻在底座上的话
+  base: 1 胡桃木 · 2 白色大理石 · 3 黄铜 · 4 描金边的瓷 · 5 浅色橡木 · 6 夜蓝色漆
+  glass: 1 经典的圆球 · 2 钟形罩 · 3 高高的泪滴 · 4 底座上的小圆球
+  finish: 1 就这样 · 2 一个缎带蝴蝶结 · 3 一圈珍珠 · 4 一道细细的金边 · 5 压花 · 6 上发条的钥匙
+两边都放: object: 1 一把撑开的伞 · 2 两杯茶 · 3 一封封好的信 · 4 一辆自行车 · 5 睡着的猫 · 6 纸灯笼 · 7 小雪人 · 8 一摞书 · 9 纸船 · 10 一小束花 · 11 唱片机

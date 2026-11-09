@@ -95,7 +95,7 @@ test('parseTilde: first value wins, unknown text survives', () => {
 
 test('README example link is valid and complete (protocol docs never drift)', async () => {
   const { readFileSync } = await import('node:fs');
-  const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+  const readme = readFileSync(new URL('../README.en.md', import.meta.url), 'utf8');
   const ex = readme.match(/https:\/\/\S+#ai~planet1~R=88DX[^\s`]+/)[0];
   const r = sealHuman(newRound({ id: '88DX', names: { human: 'Mira', ai: 'Orin' } }), humanDraft);
   const done = acceptAi({ ...r, human: { ...r.human, fp: 'R3HH5X' } }, readAiCode(ex));

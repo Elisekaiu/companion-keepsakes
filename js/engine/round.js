@@ -9,17 +9,19 @@
 
 import { parseTilde, buildTilde, readText, writeText, hash53, toCode, randomCode, normCode, canonical, rngFor } from './codec.js';
 import { recipes, recipeByCode } from '../recipes/index.js';
+import { loc } from '../recipes/loc.js';
 
 export const PROTOCOL = 'ckp/1';
 
 const clip = (s, n) => { s = String(s ?? '').replace(/\s+/g, ' ').trim(); return [...s].slice(0, n).join(''); };
 
-export function newRound({ recipe = 'planet1', humanHalf, theme = '', names = {}, id } = {}) {
+export function newRound({ recipe = 'planet1', humanHalf, theme = '', names = {}, id, mode = 'companion' } = {}) {
   const R = recipeByCode(recipe);
   if (!R) throw new Error('unknown recipe ' + recipe);
   return {
     id: id || randomCode(4),
     recipe: R.code,
+    mode: mode === 'solo' ? 'solo' : 'companion',
     humanHalf: humanHalf || R.defaultHumanHalf,
     theme: clip(theme, 140),
     names: { human: clip(names.human || 'You', 24), ai: clip(names.ai || 'Companion', 24) },
@@ -125,7 +127,9 @@ export function roundFromAi(parsed, names = {}) {
   const R = recipeByCode(parsed.recipe);
   const id = parsed.roundId || toCode(hash53(parsed.code), 4);
   const aiHalf = parsed.half || R.other(R.defaultHumanHalf);
-  const round = newRound({ recipe: parsed.recipe, humanHalf: R.other(aiHalf), names, id });
+  // An AI that goes first may say what the piece is for (e.g. the moment for a snow globe).
+  const theme = readText(parsed.fields.moment || parsed.fields.theme || parsed.fields.for || '');
+  const round = newRound({ recipe: parsed.recipe, humanHalf: R.other(aiHalf), names, id, theme });
   return acceptAi(round, parsed);
 }
 
@@ -147,15 +151,27 @@ export function expand(R, sealed) {
 
 export function mergeRound(round) {
   const R = recipeByCode(round.recipe);
-  return R.merge(expand(R, round.human), expand(R, round.ai), { order: round.order, seed: round.id });
+  return R.merge(expand(R, round.human), expand(R, round.ai), { order: round.order, seed: round.id, solo: round.mode === 'solo' });
 }
 
 /* ------------------------------------------------------------------ handoff text */
 
 /** What the human pastes to the AI. Contains no human choices. */
-export function invitation(round, { site, repo } = {}) {
+export function invitation(round, { site, repo, lang = 'en' } = {}) {
   const R = recipeByCode(round.recipe);
   const aiHalf = R.other(round.humanHalf);
+  const link = `${site || '<site>'}#ai~${round.recipe}~R=${round.id}~seal=${round.human ? round.human.fp : ''}~half=${aiHalf}~ …`;
+  if (lang === 'zh') {
+    const L = loc(R, 'zh');
+    return [
+      `我们一起来做${L.noun}吧 —— Companion Keepsakes，第 ${round.id} 轮。`,
+      `我的那一半（${L.halfTitle(round.humanHalf)}）已经封好了，印记是 ${round.human ? round.human.fp : '（还没封）'}。你看不到我的选择，我也看不到你的，等我们一起打开。`,
+      `你的那一半是「${L.halfTitle(aiHalf)}」（${R.halves[aiHalf].title}）：${L.halfBlurb(aiHalf)}${L.sharedBlurb ? '，' + L.sharedBlurb : ''}。`,
+      round.theme ? `${L.themeName}：${round.theme}` : null,
+      `玩法：请读 ${repo || '项目 README'} 里的 “For AI Companions” 一节，然后回我一句话和一个链接，链接以这样开头：${link}`,
+      `你发出之后，你的那一半也就封好了 —— 之后请不要再改。`
+    ].filter(Boolean).join('\n');
+  }
   const lines = [
     `Let's make a ${R.title} together — Companion Keepsakes, round ${round.id}.`,
     `My half (${R.halves[round.humanHalf].title}) is sealed: ${round.human ? round.human.fp : '(not sealed yet)'}. You can't see it, and I can't see yours until we open it together.`,
@@ -168,9 +184,25 @@ export function invitation(round, { site, repo } = {}) {
 }
 
 /** After the reveal: a plain-text record for the AI, so it can remember its locked choices. */
-export function revealCard(round) {
+export function revealCard(round, lang = 'en') {
   const R = recipeByCode(round.recipe);
   const spec = mergeRound(round);
+  if (lang === 'zh') {
+    const L = loc(R, 'zh');
+    const nm = who => who === 'human' ? round.names.human : round.names.ai;
+    const placed = who => spec.ledger.filter(x => x.by === who).map(x => `${L.slotTitle(x.slot)}：${L.opt(x.slot, x.id).name}`).join('；');
+    return [
+      `我们一起打开了第 ${round.id} 轮：「${spec.title}」（${L.title}）。`,
+      `${round.names.human}放下的 —— ${placed('human')}。`,
+      `${round.names.ai}放下的（已经封存，请把它们当作你自己做过的决定）—— ${placed('ai')}。`,
+      ...spec.lines.filter(l => l.text).map(l => `${L.lineLabel(l.half)}（${nm(l.by)}）：${l.text}`),
+      spec.resonances.length ? `它们之间发生的事：${spec.resonances.map(L.resonance).join('')}` : null,
+      round.human.why ? `${round.names.human}的理由：${round.human.why}` : null,
+      round.ai.why ? `${round.names.ai}的理由：${round.ai.why}` : null,
+      round.human.wish ? `${round.names.human}藏起来的话：${round.human.wish}` : null,
+      round.ai.wish ? `${round.names.ai}藏起来的话：${round.ai.wish}` : null
+    ].filter(Boolean).join('\n');
+  }
   const placed = who => spec.ledger.filter(x => x.by === who).map(x => `${x.title}: ${x.name}`).join('; ');
   const name = who => who === 'human' ? round.names.human : round.names.ai;
   return [
@@ -184,6 +216,32 @@ export function revealCard(round) {
     round.human.wish ? `${round.names.human}'s hidden line: ${round.human.wish}` : null,
     round.ai.wish ? `${round.names.ai}'s hidden line: ${round.ai.wish}` : null
   ].filter(Boolean).join('\n');
+}
+
+/**
+ * Solo mode: one person makes the whole thing. Both halves are sealed at once, by the same person.
+ * d.picks holds every slot of both halves; a shared slot's second pick is keyed '<slot>#2'.
+ * d.name is the whole name; d.lines is { <half>: text }.
+ */
+export function sealSolo(round, d) {
+  if (round.human) throw new Error('Already finished. A sealed choice stays as it is.');
+  const R = recipeByCode(round.recipe);
+  const A = round.humanHalf, B = R.other(A);
+  const draftOf = (half, second) => ({
+    picks: Object.fromEntries([...R.halves[half].slots.map(s => [s, d.picks?.[s]]), ...R.shared.map(s => [s, d.picks?.[second ? s + '#2' : s]])]),
+    word: '', line: d.lines?.[half] || '', why: second ? '' : d.why, wish: second ? '' : d.wish
+  });
+  const a = cleanHalf(R, A, draftOf(A, false)), b = cleanHalf(R, B, draftOf(B, true));
+  const missing = [...a.missing, ...b.missing.map(s => R.shared.includes(s) ? s + '#2' : s)];
+  if (missing.length) throw new Error('Still to choose: ' + missing.join(', '));
+  delete a.missing; delete b.missing;
+  a.word = clip(d.name, 40);
+  const now = new Date().toISOString(), name = round.names.human;
+  const human = { ...a, name, salt: randomCode(8), sealedAt: now };
+  human.fp = fingerprint(round, human);
+  const ai = { ...b, name, salt: randomCode(8), sealedAt: now, solo: true };
+  ai.fp = fingerprint(round, ai);
+  return { ...round, mode: 'solo', order: 'solo', human, ai };
 }
 
 /** Build an AI tilde code from structured picks (used by tools/ and tests; an AI may also write it by hand). */

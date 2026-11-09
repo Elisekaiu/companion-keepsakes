@@ -5,12 +5,15 @@
 //   KEEPSAKE — the base, the glass, and a finishing touch.
 // Each side also places one small thing inside (both appear; the same pick becomes a pair).
 
+import { joinWords, cap, enOf, zhOf } from './util.js';
+
 export const id = 'globe';
 export const version = 1;
 export const code = 'globe1';
 export const title = 'Memory Snow Globe';
 export const tagline = 'A moment, kept under glass. Shake it and it happens again.';
 export const noun = 'a snow globe';
+export const soloOrder = ['place', 'hour', 'weather', 'base', 'glass', 'finish', 'object', 'object#2'];
 export const waitingLine = 'the glass is still empty';
 export const renderer = 'globe3d';
 export const backdropSlot = 'hour';
@@ -148,23 +151,26 @@ export function option(slot, value) {
 }
 
 const low = o => o.name.charAt(0).toLowerCase() + o.name.slice(1);
+const zn = (slot, o) => zh.slots[slot].options[o.id][0];
 const either = (p, id) => p.objectH.id === id || p.objectA.id === id;
 const DARKISH = new Set(['blue', 'night']);
-// Named meetings between the two halves (or the two placed things).
+// Named meetings. m = the moment side's name, k = the keepsake side's name (both '' in solo).
 const RESONANCES = [
-  { id: 'snow-cabin', when: p => p.weather.id === 'snow' && p.place.id === 'cabin', flag: 'snowRoof', say: (m, k) => `Snow on ${m}'s cabin roof, and the window still lit.` },
-  { id: 'snowman-snow', when: p => p.weather.id === 'snow' && either(p, 'snowman'), say: () => `The snowman finally has snow to stand in.` },
-  { id: 'rain-umbrella', when: p => p.weather.id === 'rain' && either(p, 'umbrella'), say: () => `It rained, and someone had brought the umbrella.` },
-  { id: 'lantern-dark', when: p => DARKISH.has(p.hour.id) && either(p, 'lantern'), flag: 'lanternGlow', say: () => `The paper lantern is brighter now that it is dark.` },
-  { id: 'boat-water', when: p => either(p, 'boat') && ['pier', 'seaside'].includes(p.place.id), say: () => `The paper boat found water.` },
-  { id: 'cups-window', when: p => either(p, 'cups') && ['window', 'bookshop', 'cabin'].includes(p.place.id), say: () => `Two cups, still warm, by the window.` },
-  { id: 'key-record', when: p => p.finish.id === 'key' && either(p, 'record'), say: (m, k) => `${k}'s wind-up key and the record player: wind it, and it plays your song.` },
-  { id: 'gold-golden', when: p => p.weather.id === 'gold' && p.hour.id === 'golden', say: () => `Golden dust in the golden hour: everything is gold.` },
-  { id: 'stars-roof', when: p => p.weather.id === 'stars' && (p.place.id === 'rooftop' || p.hour.id === 'night'), say: () => `Falling stars, and nobody else looking up.` },
-  { id: 'petals-garden', when: p => p.weather.id === 'petals' && ['garden', 'bench'].includes(p.place.id), say: (m) => `The petals are falling from ${m}'s tree.` },
-  { id: 'fireflies-dusk', when: p => p.weather.id === 'fireflies' && DARKISH.has(p.hour.id), say: () => `The fireflies came out right on time.` },
-  { id: 'bicycle-street', when: p => either(p, 'bicycle') && ['street', 'platform'].includes(p.place.id), say: () => `A bicycle leaning there, as if someone missed the last train and rode home.` },
-  { id: 'flowers-bouquet', when: p => p.finish.id === 'flowers' && either(p, 'bouquet'), say: (m, k) => `Flowers outside the glass and flowers inside it.` }
+  { id: 'snow-cabin', when: p => p.weather.id === 'snow' && p.place.id === 'cabin', flag: 'snowRoof',
+    say: (m) => `Snow on ${enOf(m)}cabin roof, and the window still lit.`, zh: (m) => `雪落在${zhOf(m)}小木屋屋顶上，窗户还亮着。` },
+  { id: 'snowman-snow', when: p => p.weather.id === 'snow' && either(p, 'snowman'), say: () => 'The snowman finally has snow to stand in.', zh: () => '小雪人终于有雪可以站了。' },
+  { id: 'rain-umbrella', when: p => p.weather.id === 'rain' && either(p, 'umbrella'), say: () => 'It rained, and someone had brought the umbrella.', zh: () => '下雨了，刚好有人带了伞。' },
+  { id: 'lantern-dark', when: p => DARKISH.has(p.hour.id) && either(p, 'lantern'), flag: 'lanternGlow', say: () => 'The paper lantern is brighter now that it is dark.', zh: () => '天黑了，纸灯笼就更亮了。' },
+  { id: 'boat-water', when: p => either(p, 'boat') && ['pier', 'seaside'].includes(p.place.id), say: () => 'The paper boat found water.', zh: () => '纸船找到了水。' },
+  { id: 'cups-window', when: p => either(p, 'cups') && ['window', 'bookshop', 'cabin'].includes(p.place.id), say: () => 'Two cups, still warm, by the window.', zh: () => '两杯茶，还温着，就在窗边。' },
+  { id: 'key-record', when: p => p.finish.id === 'key' && either(p, 'record'),
+    say: (m, k) => `${cap(enOf(k))}wind-up key and the record player: wind it, and it plays that song.`, zh: (m, k) => `${zhOf(k)}发条钥匙和唱片机：拧一拧，它就放起那首歌。` },
+  { id: 'gold-golden', when: p => p.weather.id === 'gold' && p.hour.id === 'golden', say: () => 'Golden dust in the golden hour: everything is gold.', zh: () => '金色时刻里的金色微尘：一切都是金色的。' },
+  { id: 'stars-roof', when: p => p.weather.id === 'stars' && (p.place.id === 'rooftop' || p.hour.id === 'night'), say: () => 'Falling stars, and nobody else looking up.', zh: () => '星星在落，而没有别人抬头。' },
+  { id: 'petals-garden', when: p => p.weather.id === 'petals' && ['garden', 'bench'].includes(p.place.id), say: (m) => `The petals are falling from ${enOf(m)}tree.`, zh: (m) => `花瓣从${zhOf(m)}树上落下来。` },
+  { id: 'fireflies-dusk', when: p => p.weather.id === 'fireflies' && DARKISH.has(p.hour.id), say: () => 'The fireflies came out right on time.', zh: () => '萤火虫准时出来了。' },
+  { id: 'bicycle-street', when: p => either(p, 'bicycle') && ['street', 'platform'].includes(p.place.id), say: () => 'A bicycle leaning there, as if someone missed the last train and rode home.', zh: () => '一辆自行车靠在那里，好像有人错过了末班车，骑车回了家。' },
+  { id: 'flowers-bouquet', when: p => p.finish.id === 'flowers' && either(p, 'bouquet'), say: () => 'Flowers outside the glass and flowers inside it.', zh: () => '玻璃外有花，玻璃里也有花。' }
 ];
 
 export function merge(h, a, ctx = {}) {
@@ -177,16 +183,19 @@ export function merge(h, a, ctx = {}) {
 
   const resonances = [];
   const echo = p.objectH.id === p.objectA.id;
-  if (echo) resonances.push({ id: 'echo', text: `You both placed ${low(p.objectH)} without knowing. There are two of them now.` });
+  if (echo) resonances.push(ctx.solo
+    ? { id: 'echo', text: `${p.objectH.name}, placed twice. There are two of them now.`, zh: `${zn('object', p.objectH)}放了两次。现在有两个了。` }
+    : { id: 'echo', text: `You both placed ${low(p.objectH)} without knowing. There are two of them now.`, zh: `你们不约而同地放进了${zn('object', p.objectH)}。现在有两个了。` });
   const flags = {};
-  for (const r of RESONANCES) if (r.when(p)) { if (r.flag) flags[r.flag] = true; resonances.push({ id: r.id, text: r.say(Mo.name, Ke.name, p) }); }
+  const mn = ctx.solo ? '' : Mo.name, kn = ctx.solo ? '' : Ke.name;
+  for (const r of RESONANCES) if (r.when(p)) { if (r.flag) flags[r.flag] = true; resonances.push({ id: r.id, text: r.say(mn, kn, p), zh: r.zh(mn, kn, p) }); }
 
   const first = ctx.order === 'ai-first' ? a : h, second = first === h ? a : h;
   const words = [first, second].map(x => ({ text: x.word || '', by: x === h ? 'human' : 'ai' })).filter(w => w.text);
   const hour = p.hour;
   return {
     recipe: code,
-    title: words.map(w => w.text).join(' ') || 'An unnamed moment',
+    title: joinWords(words.map(w => w.text)) || 'An unnamed moment',
     words,
     halves: { moment: by.moment, keepsake: by.keepsake },
     picks: Object.fromEntries(['place', 'hour', 'weather', 'base', 'glass', 'finish'].map(slot => [slot, { ...p[slot], by: by[halfOfSlot(slot)] }])),
@@ -196,14 +205,14 @@ export function merge(h, a, ctx = {}) {
     flags,
     resonances,
     lines: [
-      { key: 'moment', label: halves.moment.line.label, text: Mo.line || '', by: by.moment },
-      { key: 'engraving', label: halves.keepsake.line.label, text: Ke.line || '', by: by.keepsake }
+      { key: 'moment', half: 'moment', label: halves.moment.line.label, text: Mo.line || '', by: by.moment },
+      { key: 'engraving', half: 'keepsake', label: halves.keepsake.line.label, text: Ke.line || '', by: by.keepsake }
     ],
     ledger: [
-      ...halves.moment.slots.map(slot => ({ slot, title: slots[slot].title, name: p[slot].name, meaning: p[slot].meaning, by: by.moment })),
-      ...halves.keepsake.slots.map(slot => ({ slot, title: slots[slot].title, name: p[slot].name, meaning: p[slot].meaning, by: by.keepsake })),
-      { slot: 'object', pick: 'object-human', title: 'Placed inside', name: p.objectH.name, meaning: p.objectH.meaning, by: 'human' },
-      { slot: 'object', pick: 'object-ai', title: 'Placed inside', name: p.objectA.name, meaning: p.objectA.meaning, by: 'ai' }
+      ...halves.moment.slots.map(slot => ({ slot, id: p[slot].id, title: slots[slot].title, name: p[slot].name, meaning: p[slot].meaning, by: by.moment })),
+      ...halves.keepsake.slots.map(slot => ({ slot, id: p[slot].id, title: slots[slot].title, name: p[slot].name, meaning: p[slot].meaning, by: by.keepsake })),
+      { slot: 'object', id: p.objectH.id, pick: 'object-human', title: 'Placed inside', name: p.objectH.name, meaning: p.objectH.meaning, by: 'human' },
+      { slot: 'object', id: p.objectA.id, pick: 'object-ai', title: 'Placed inside', name: p.objectA.name, meaning: p.objectA.meaning, by: 'ai' }
     ],
     why: { human: h.why || '', ai: a.why || '' },
     wish: { human: h.wish || '', ai: a.wish || '' },
@@ -222,3 +231,31 @@ export function revealSteps(spec) {
   steps.push({ kind: 'lines', lines: spec.lines });
   return steps;
 }
+
+/* ------------------------------------------------------------------ 中文 */
+export const zh = {
+  title: '记忆雪花球', noun: '一个雪花球', tagline: '把一个瞬间放进玻璃里。摇一摇，它就又发生一次。',
+  hand: 'a memory under glass',
+  card: '先说好是哪一刻，再一人填一半。把它放进玻璃里，摇一摇，它就又发生一次。',
+  cardSolo: '把一个真实的瞬间放进玻璃里：在哪里、几点、下着什么。摇一摇，它就又发生一次。',
+  halves: {
+    moment: { title: '那一刻', blurb: '在哪里、几点、什么样的光，以及玻璃里落下的东西', line: { label: '那时正在发生什么', hint: '一句话，写下你记得的那一刻' } },
+    keepsake: { title: '纪念品', blurb: '它立在什么底座上、玻璃的形状，以及最后的一点装饰', line: { label: '刻在底座上的话', hint: '一句短短的话，会刻在名字和日期下面' } }
+  },
+  sharedBlurb: '再各放一件小东西进去', waitingLine: '玻璃里，还空着',
+  themeName: '那一刻', themePrompt: { label: '这是哪一刻？（推荐写下来）', placeholder: '比如：那天我们错过了末班车，一路走回家' },
+  themePromptSolo: { label: '这是哪一刻？（可以不填）', placeholder: '比如：第一次一个人去看海' },
+  pairTitle: '放进去的东西', pairLede: '你们各放一件小东西进去。如果放了一样的，就会有两个。', pairLedeSolo: '放两件小东西进去。',
+  echoText: '你们不约而同地放了同一样东西。',
+  wishTitle: n => n === 2 ? '还有两句话，封在底座下面' : '还有一句话，封在底座下面',
+  text: { word: { label: '名字里的一个词', hint: '两个词合在一起，就是它的名字，会刻在底座上' }, wish: { label: '一句藏起来的话', hint: '可以不写；它会封在底座下面，直到最后' } },
+  slots: {
+    place: { title: '地点', prompt: '那是在哪里？', options: { cabin: ['森林里的小木屋', '一个可以回来的温暖地方'], street: ['路灯下的街道', '慢慢走回家'], seaside: ['海边的房子', '整夜都是海的声音'], platform: ['火车站台', '到达，或是送别'], bench: ['树下的长椅', '坐在一起，话不多'], rooftop: ['挂着小灯的屋顶', '城市上面，只有我们'], bookshop: ['小书店', '偶然遇见的一个下午'], pier: ['湖边栈桥和小船', '安静的水，长长的谈话'], garden: ['花园的门', '种下的东西，在等着'], window: ['窗边的座位', '一起看天气'] } },
+    hour: { title: '时刻', prompt: '那是几点？光是什么样的？', options: { dawn: ['清晨', '一天还没决定好'], afternoon: ['慢悠悠的午后', '哪里都不用去'], golden: ['金色时刻', '一切短暂地变成金色'], blue: ['蓝调时刻', '灯一盏盏亮起来'], night: ['深夜', '世界睡了，除了我们'] } },
+    weather: { title: '玻璃里', prompt: '摇一摇，会落下什么？', options: { snow: ['初雪', '一切安静又崭新'], rain: ['细雨', '待在屋里，或者不介意淋雨'], petals: ['樱花花瓣', '那是春天，或者感觉像'], leaves: ['秋天的落叶', '一个季节在转身'], fireflies: ['萤火虫', '互相回应的小光'], stars: ['坠落的星星', '够许好几个愿'], gold: ['金色微尘', '那天的光，被留下了'], bubbles: ['泡泡', '难得的轻盈'] } },
+    base: { title: '底座', prompt: '它立在什么上面？', options: { walnut: ['胡桃木', '温暖，经得起时间'], marble: ['白色大理石', '安静而清凉'], brass: ['黄铜', '已经像一件传家宝'], porcelain: ['描金边的瓷', '精致，被小心收着'], oak: ['浅色橡木', '简单，像一个星期天'], lacquer: ['夜蓝色漆', '深夜长谈的颜色'] } },
+    glass: { title: '玻璃', prompt: '玻璃是什么形状？', options: { sphere: ['经典的圆球', '一直以来的样子'], dome: ['钟形罩', '被好好陈列着'], drop: ['高高的泪滴', '一个停留了很久的瞬间'], orb: ['底座上的小圆球', '小小的，被高高托起'] } },
+    finish: { title: '最后的装饰', prompt: '还要加一点什么吗？', options: { none: ['就这样', '这样就够了'], bow: ['一个缎带蝴蝶结', '是礼物，不是买来的'], pearls: ['一圈珍珠', '边缘上的耐心'], band: ['一道细细的金边', '一个安静的承诺'], flowers: ['压花', '那天留下来的东西'], key: ['上发条的钥匙', '它会放一首只有我们知道的歌'] } },
+    object: { title: '放进去的东西', prompt: '放一件小东西进去。', options: { umbrella: ['一把撑开的伞', '伞下站得下两个人'], cups: ['两杯茶', '适合聊天的晚上'], letter: ['一封封好的信', '留到以后的话'], bicycle: ['一辆自行车', '绕远路回家'], cat: ['睡着的猫', '没有什么急事'], lantern: ['纸灯笼', '被带着走的光'], snowman: ['小雪人', '一起堆的'], books: ['一摞书', '一起读过的故事'], boat: ['纸船', '带着一个愿望出发'], bouquet: ['一小束花', '没有任何理由'], record: ['唱片机', '我们的歌'] } }
+  }
+};

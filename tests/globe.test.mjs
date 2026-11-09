@@ -35,7 +35,7 @@ test('globe: hand-written keepsake half merges; objects pair; resonances', () =>
 
 test('globe: README example link is valid and complete', async () => {
   const { readFileSync } = await import('node:fs');
-  const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+  const readme = readFileSync(new URL('../README.en.md', import.meta.url), 'utf8');
   const ex = readme.match(/https:\/\/\S+#ai~globe1~R=4PRM[^\s`]+/)[0];
   const r = sealHuman(newRound({ recipe: 'globe1', id: '4PRM', names: { human: 'Mira', ai: 'Orin' } }), draft);
   const done = acceptAi({ ...r, human: { ...r.human, fp: 'T7WQ3K' } }, readAiCode(ex));

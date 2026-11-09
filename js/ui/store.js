@@ -13,6 +13,11 @@ export const store = {
   names() { return { human: '', ai: '', ...(read().names || {}) }; },
   setNames(n) { const s = read(); s.names = { ...this.names(), ...n }; write(s); },
 
+  lang() { return read().lang || 'zh'; },
+  setLang(l) { const s = read(); s.lang = l; write(s); },
+  mode() { return read().mode || 'companion'; },
+  setMode(m) { const s = read(); s.mode = m; write(s); },
+
   rounds() { return Object.values(read().rounds || {}).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))); },
   round(id) { return (read().rounds || {})[id] || null; },
   saveRound(r) { const s = read(); s.rounds = { ...(s.rounds || {}), [r.id]: r }; write(s); return r; },

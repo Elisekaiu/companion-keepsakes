@@ -1,12 +1,15 @@
 // Companion Keepsakes — the playable flow.
-// choose -> seal (hold) -> hand the invitation to your companion -> their link arrives ("something was added")
-// -> Open Together -> reveal, one sealed pick at a time -> explore -> keep it on the shelf.
-import { newRound, sealHuman, readAiCode, acceptAi, roundFromAi, status, mergeRound, invitation, revealCard } from '../engine/round.js';
+// Two ways to make something:
+//   with a companion: choose -> seal (hold) -> invitation -> their link arrives -> Open Together -> reveal -> keep
+//   on your own:      choose everything -> hold to finish -> it takes shape (reveal) -> keep
+import { newRound, sealHuman, sealSolo, readAiCode, acceptAi, roundFromAi, status, mergeRound, invitation, revealCard } from '../engine/round.js';
 import { toLink, fromLink, toKeepsake } from '../engine/keepsake.js';
 import { softDecode, toB64url, fromB64url } from '../engine/codec.js';
-import { recipeByCode } from '../recipes/index.js';
+import { recipeByCode, recipes } from '../recipes/index.js';
+import { loc } from '../recipes/loc.js';
 import { store } from './store.js';
-import { PROTOCOL_URL, SITE_URL } from '../config.js';
+import { t, setLang, lang } from './i18n.js';
+import { PROTOCOL_URL, SITE_URL, REPO_URL } from '../config.js';
 
 const app = document.getElementById('app');
 const stageHost = document.getElementById('stage');
@@ -14,10 +17,15 @@ const params = new URLSearchParams(location.search);
 const EMBED = params.get('embed');               // "view" (read-only, e.g. inside a cabinet) or "play"
 const HOST = safeOrigin(params.get('host'));     // a parent page that wants the keepsake when it is kept
 const here = () => location.origin + location.pathname;
+const site = () => (location.protocol.startsWith('http') && !/localhost|127\.0\.0\.1/.test(location.host)) ? here() : SITE_URL;
+setLang(params.get('lang') || store.lang());
+
 // Hosts may prefill the two names (e.g. ?you=Mira&companion=Orin); the person can still change them.
 { const you = (params.get('you') || '').slice(0, 24), comp = (params.get('companion') || '').slice(0, 24); const n = store.names();
   if (you && !n.human) store.setNames({ human: you }); if (comp && !n.ai) store.setNames({ ai: comp }); }
-const site = () => (location.protocol.startsWith('http') && !/localhost|127\.0\.0\.1/.test(location.host)) ? here() : SITE_URL;
+
+const ORDER = ['planet1', 'globe1', 'talisman1'];
+const MINUTES = { planet1: 5, globe1: 4, talisman1: 4 };
 
 /* ------------------------------------------------------------------ tiny DOM helpers */
 function h(tag, attrs = {}, ...kids) {
@@ -37,20 +45,24 @@ function h(tag, attrs = {}, ...kids) {
 }
 function put(node, ...kids) { node.append(...kids.flat(3).filter(k => k != null && k !== false)); return node; }
 function screen(...kids) { document.querySelectorAll('.sheet').forEach(x => x.remove()); const s = h('section.screen', {}, ...kids); app.replaceChildren(s); window.scrollTo(0, 0); return s; }
-function toast(msg) { document.querySelectorAll('.toast').forEach(x => x.remove()); const t = h('div.toast', { role: 'status' }, msg); document.body.append(t); setTimeout(() => t.remove(), 2400); }
-async function copy(text, done = 'Copied') {
+function toast(msg) { document.querySelectorAll('.toast').forEach(x => x.remove()); const t2 = h('div.toast', { role: 'status' }, msg); document.body.append(t2); setTimeout(() => t2.remove(), 2600); }
+async function copy(text, done) {
   try { await navigator.clipboard.writeText(text); toast(done); }
   catch { const ta = h('textarea', { style: 'position:fixed;opacity:0' }); ta.value = text; document.body.append(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast(done); }
 }
 function safeOrigin(s) { try { const u = new URL(s); return /^https?:$/.test(u.protocol) ? u.origin : null; } catch { return null; } }
-const fmtDate = iso => { const d = new Date(iso); return Number.isFinite(d.getTime()) ? d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : ''; };
-const setHash = (hash) => history.replaceState(null, '', location.pathname + location.search + hash);
-const names = () => { const n = store.names(); return { human: n.human || 'You', ai: n.ai || 'your companion' }; };
+const fmtDate = iso => { const d = new Date(iso); if (!Number.isFinite(d.getTime())) return ''; return lang() === 'zh' ? `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日` : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); };
+const fmtTime = iso => { const d = new Date(iso); return Number.isFinite(d.getTime()) ? d.toLocaleString(lang() === 'zh' ? 'zh-CN' : 'en-GB', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'; };
+const setHash = hash => history.replaceState(null, '', location.pathname + location.search + hash);
+const names = () => { const n = store.names(); return { human: n.human || t('you2'), ai: n.ai || t('companionDefault') }; };
+const isSolo = r => r?.mode === 'solo';
+const L = R => loc(R, lang());
+const CJK = /[⺀-鿿]/;
 
 /* ------------------------------------------------------------------ hold-to-confirm */
 function holdButton(label, { ms = 1100, side = '', onDone }) {
   const C = 2 * Math.PI * 64;
-  const b = h('button.hold', { type: 'button', class: side, 'aria-label': label + ' (press and hold)' },
+  const b = h('button.hold', { type: 'button', class: side, 'aria-label': label },
     h('span', { html: `<svg viewBox="0 0 132 132"><circle class="track" cx="66" cy="66" r="64"/><circle class="fill" cx="66" cy="66" r="64"/></svg>` }).firstChild,
     h('span.face', {}, label));
   const fill = b.querySelector('circle.fill');
@@ -61,7 +73,7 @@ function holdButton(label, { ms = 1100, side = '', onDone }) {
   const stop = () => { if (done) return; cancelAnimationFrame(raf); b.classList.remove('is-holding'); fill.style.strokeDashoffset = C; };
   const finish = () => { done = true; cancelAnimationFrame(raf); navigator.vibrate?.([12, 40, 18]); onDone(); };
   b.addEventListener('pointerdown', start); b.addEventListener('pointerup', stop); b.addEventListener('pointerleave', stop); b.addEventListener('pointercancel', stop);
-  b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); finish(); } }); // keyboard: no hold needed
+  b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); finish(); } });
   b.addEventListener('contextmenu', e => e.preventDefault());
   return b;
 }
@@ -79,12 +91,11 @@ async function route() {
   const raw = softDecode(location.hash.slice(1));
   stageHost.classList.add('hidden');
   if (raw.startsWith('ai~')) return handleAi(raw);
-  if (raw.startsWith('k=')) { const r = fromLink(raw); return r ? explore(r, { visiting: true }) : home('That keepsake link could not be read. It may have been cut off.'); }
+  if (raw.startsWith('k=')) { const r = fromLink(raw); return r ? explore(r, { visiting: true }) : home(t('badKeepsake')); }
   if (raw.startsWith('m=')) return importMine(raw.slice(2));
-  if (raw.startsWith('r=')) { const r = store.round(raw.slice(2)); return r ? resume(r) : home('That round is not in this browser.'); }
+  if (raw.startsWith('r=')) { const r = store.round(raw.slice(2)); return r ? resume(r) : home(t('roundMissing')); }
   if (raw === 'shelf') return shelf();
-  if (raw === 'new') return home();
-  if (raw.startsWith('new=')) return chooseHalf(raw.slice(4));
+  if (raw.startsWith('new=')) return begin(raw.slice(4));
   return home();
 }
 window.addEventListener('hashchange', route);
@@ -94,66 +105,120 @@ function resume(r) {
   const st = status(r);
   if (st === 'choosing' || st === 'waiting-human') return choose(r);
   if (st === 'waiting-ai') return waiting(r);
-  if (st === 'ready') return arrived(r);
+  if (st === 'ready') return isSolo(r) ? reveal(r) : arrived(r);
   return explore(r);
+}
+function begin(code, mode = store.mode()) {
+  const R = recipeByCode(code) || recipes.planet1;
+  if (mode === 'solo') {
+    const r = newRound({ recipe: R.code, mode: 'solo', names: { human: store.names().human || '' } });
+    store.saveRound(r);
+    return choose(r);
+  }
+  return startWithAI(R.code);
+}
+
+/* ------------------------------------------------------------------ with an AI companion: the simple way (it goes first) */
+function startWithAI(code) {
+  const R = recipeByCode(code) || recipes.planet1, l = L(R);
+  const repo = REPO_URL;
+  const momentIn = code === 'globe1' ? h('input.input', { maxlength: 140, placeholder: l.themePrompt(false)?.placeholder || '' }) : null;
+  const message = () => t('askMsg', { noun: l.noun, repo }) + (momentIn?.value.trim() ? '\n' + t('askMoment', { theme: momentIn.value.trim() }) : '');
+  const msgBox = h('pre.invite.ask', {}, message());
+  momentIn?.addEventListener('input', () => { msgBox.textContent = message(); });
+  const paste = h('textarea.input', { placeholder: t('pastePh'), 'aria-label': t('pasteHead') });
+  screen(
+    h('div.eyebrow', {}, l.title),
+    h('h1.display', {}, t('startTitle', { noun: l.noun })),
+    h('ol.steps-guide', {},
+      h('li', {}, h('b', {}, t('step1')),
+        momentIn ? h('div.field', { style: 'margin:10px 0' }, h('label', {}, t('momentAsk')), momentIn) : null,
+        msgBox,
+        h('div.row', { style: 'margin-top:10px' }, h('button.btn.primary', { type: 'button', on: { click: () => copy(message(), t('askCopied')) } }, t('copyAsk')))),
+      h('li', {}, h('b', {}, t('step2'))),
+      h('li', {}, h('b', {}, t('step3')),
+        h('div.stack', { style: 'margin-top:10px' }, paste, h('button.btn', { type: 'button', on: { click: () => takeCode(paste.value) } }, t('addHalf'))))),
+    h('div.advanced', {}, h('span.note', {}, t('advanced')), ' ', h('button.linkish', { type: 'button', on: { click: () => chooseHalf(R.code) } }, t('advancedBtn'))),
+    h('div.dock', {}, h('div.inner', {}, h('button.btn.ghost', { type: 'button', on: { click: () => home() } }, t('back'))))
+  );
 }
 
 /* ------------------------------------------------------------------ home */
 function home(error) {
   setHash('');
+  const mode = store.mode();
   const n = store.names();
   const nameIn = (k, label, ph) => h('div.field', {}, h('label', { for: 'n-' + k }, label),
     h('input.input', { id: 'n-' + k, value: n[k] || '', placeholder: ph, maxlength: 24, on: { change: e => store.setNames({ [k]: e.target.value.trim() }) } }));
-  const pending = store.rounds().filter(r => !r.openedAt);
+  const pending = store.rounds().filter(r => !r.openedAt && (r.human || r.ai || r.draft));
   const kept = store.shelf().length;
-  const paste = h('input.input', { placeholder: 'Paste a link or code from your companion', 'aria-label': 'Companion link' });
+  const modeBtn = (m, title, icon) => h('button.mode-btn', { type: 'button', 'aria-pressed': String(mode === m), on: { click: () => { store.setMode(m); home(); } } }, h('span.mode-icon', { html: icon }), h('b', {}, title));
+  const paste = h('input.input', { placeholder: t('pastePh'), 'aria-label': t('pasteHead') });
   screen(
-    h('div.brand', {}, h('b', {}, 'Companion Keepsakes'), h('span.hand', { style: 'color:var(--ink-3)' }, 'made by two')),
-    h('h1.display', {}, 'Make something ', h('em', {}, 'together'), '.'),
-    h('p.lede', {}, 'You choose half and seal it. Your companion chooses the other half by reading, not by looking at your screen. Neither of you sees the other’s choices until you open it together.'),
+    h('header.topline', {},
+      h('div.brand', {}, h('b', {}, t('brand')), h('span.hand', {}, t('brandHand'))),
+      h('button.lang', { type: 'button', on: { click: () => { const l = lang() === 'zh' ? 'en' : 'zh'; store.setLang(l); setLang(l); home(); } } }, t('langSwitch'))),
+    h('div.hero', {},
+      h('span.hero-orn', { html: ORNAMENT }),
+      h('h1.display.hero-title', {}, t('heroTitle')),
+      h('p.lede', {}, t('heroLede'))),
     error ? h('p.warn', {}, error) : null,
-    h('div.names', {}, nameIn('human', 'You', 'Your name'), nameIn('ai', 'Your companion', 'Their name')),
-    h('div.recipes', {},
-      h('button.recipe', { type: 'button', on: { click: () => { location.hash = 'new=planet1'; } } },
-        h('span.art', { html: planetArt() }), h('span', {}, h('h3', {}, 'Tiny Imaginary Planet'), h('p', {}, 'A small world that obeys only the two of you. You take the ground or the sky.'))),
-      h('button.recipe', { type: 'button', on: { click: () => { location.hash = 'new=talisman1'; } } },
-        h('span.art', { html: charmArt() }), h('span', {}, h('h3', {}, 'Two-Person Talisman'), h('p', {}, 'A small charm to carry. One bead each, in turn, and a silk pouch for two wishes.'))),
-      h('button.recipe', { type: 'button', on: { click: () => { location.hash = 'new=globe1'; } } },
-        h('span.art', { html: globeArt() }), h('span', {}, h('h3', {}, 'Memory Snow Globe'), h('p', {}, 'A real moment, kept under glass. Name the moment, then each of you fills half of it. Shake it to make it happen again.')))
-    ),
-    h('div.stack', {},
-      h('div.row', {}, paste, h('button.btn.small', { type: 'button', on: { click: () => takeCode(paste.value) } }, 'Open')),
-      h('div.row', {}, h('button.btn.ghost.small', { type: 'button', on: { click: () => { location.hash = 'shelf'; } } }, `Your shelf${kept ? ' · ' + kept : ''}`))
-    ),
-    pending.length ? h('div.pending', {}, h('div.eyebrow', {}, 'In progress'), h('ul', {}, pending.map(r => h('li', {},
-      h('span', {}, h('b', {}, 'Round ' + r.id), ' · ', ({ choosing: 'choosing', 'waiting-human': `${r.names.ai} sealed; your turn`, 'waiting-ai': `waiting for ${r.names.ai}`, ready: 'ready to open' })[status(r)]),
-      h('button.btn.small', { type: 'button', on: { click: () => resume(r) } }, 'Open'))))) : null
+    h('div.modes', {},
+      h('div.eyebrow', {}, t('modeQ')),
+      h('div.mode-row', {}, modeBtn('companion', t('modeCompanion'), ICON_TWO), modeBtn('solo', t('modeSolo'), ICON_ONE)),
+      h('p.mode-note', {}, mode === 'solo' ? t('modeSoloNote') : t('modeCompanionNote'))),
+    mode === 'solo'
+      ? h('div.names.one', {}, nameIn('human', t('yourName'), t('yourNamePh')))
+      : h('div.names', {}, nameIn('human', t('you'), t('yourNamePh')), nameIn('ai', t('companion'), t('companionPh'))),
+    h('div.section-head', {}, h('span.hand', {}, t('recipesHead'))),
+    h('div.recipes', {}, ORDER.map((code, i) => recipeCard(code, i, mode))),
+    mode === 'companion' ? h('div.paste', {}, h('div.eyebrow', {}, t('pasteHead')), h('div.row', {}, paste, h('button.btn.small', { type: 'button', on: { click: () => takeCode(paste.value) } }, t('open')))) : null,
+    h('div.row.shelf-link', {}, h('button.btn.ghost', { type: 'button', on: { click: () => { location.hash = 'shelf'; } } }, h('span', { html: ICON_CABINET }), kept ? t('shelfCount', { n: kept }) : t('shelf'))),
+    pending.length ? h('div.pending', {}, h('div.eyebrow', {}, t('inProgress')), h('ul', {}, pending.map(r => {
+      const R = recipeByCode(r.recipe);
+      const st = status(r), nm = r.names?.ai || names().ai;
+      return h('li', {},
+        h('span', {}, h('b', {}, L(R).title), ' · ', isSolo(r) ? t('st.choosing') : t('st.' + st, { ai: nm })),
+        h('button.btn.small', { type: 'button', on: { click: () => resume(r) } }, t('continue')));
+    }))) : null,
+    h('footer.foot', {}, h('span', {}, t('footer')), ' · ', h('a', { href: REPO_URL, target: '_blank', rel: 'noopener' }, t('footerLink')))
   );
 }
 
-function takeCode(text) {
-  const t = softDecode(String(text || ''));
-  const ai = t.match(/ai~[^\s)>\]"']+/);
-  if (ai) return handleAi(ai[0]);
-  const k = t.match(/k=[A-Za-z0-9_-]+/);
-  if (k) { const r = fromLink(k[0]); if (r) return explore(r, { visiting: true }); }
-  toast('No companion code found in that text.');
+function recipeCard(code, i, mode) {
+  const R = recipeByCode(code), l = L(R);
+  return h('button.invite-card', { type: 'button', style: `--i:${i}`, 'data-recipe': code, on: { click: () => { location.hash = 'new=' + code; } } },
+    h('span.tape', { 'aria-hidden': 'true' }),
+    h('span.arch', { html: ART[code] }),
+    h('span.card-body', {},
+      h('span.hand', {}, l.hand),
+      h('h3', {}, l.title),
+      h('p', {}, l.card(mode === 'solo')),
+      h('span.card-foot', {}, h('span.begin', {}, t('begin'), ' →'), h('span.meta', {}, t('minutes', { n: MINUTES[code] })))));
 }
 
-/* ------------------------------------------------------------------ choosing */
-function chooseHalf(code = 'planet1') {
-  const R = recipeByCode(code) || recipeByCode('planet1');
+function takeCode(text) {
+  const s = softDecode(String(text || ''));
+  const ai = s.match(/ai~[^\s)>\]"']+/);
+  if (ai) return handleAi(ai[0]);
+  const k = s.match(/k=[A-Za-z0-9_-]+/);
+  if (k) { const r = fromLink(k[0]); if (r) return explore(r, { visiting: true }); }
+  toast(t('noCode'));
+}
+
+/* ------------------------------------------------------------------ choosing (companion: one half; solo: everything) */
+function chooseHalf(code) {
+  const R = recipeByCode(code) || recipes.planet1, l = L(R);
   const n = names();
-  const what = R.code === 'talisman1' ? 'this talisman' : 'this world';
-  const tp = R.themePrompt || { label: `What is ${what} for? (optional)`, placeholder: R.code === 'talisman1' ? 'e.g. for the long trip in March' : 'e.g. for the nights we stay up talking' };
+  const tp = l.themePrompt(false) || { label: '', placeholder: '' };
   screen(
-    h('div.eyebrow', {}, R.title),
-    h('h1.display', {}, 'Which half is ', h('em', {}, 'yours'), '?'),
-    h('p.lede', {}, `${n.ai} will make the other half without seeing yours.`),
-    h('div.options', { style: 'grid-template-columns:1fr' }, Object.keys(R.halves).map(half => h('button.opt', { type: 'button', class: 'human', on: { click: () => start(half) } },
-      h('b', { style: 'font-size:26px' }, R.halves[half].title), h('span', {}, R.halves[half].blurb + (R.sharedBlurb ? ', ' + R.sharedBlurb : ''))))),
-    h('div.field', {}, h('label', { for: 'theme' }, tp.label), h('input.input', { id: 'theme', maxlength: 140, placeholder: tp.placeholder }), h('small', {}, `${n.ai} will see this line — it is the only thing you share before the reveal.`)),
-    h('div.dock', {}, h('div.inner', {}, h('button.btn.ghost', { type: 'button', on: { click: () => home() } }, 'Back')))
+    h('div.eyebrow', {}, l.title),
+    h('h1.display', {}, t('whichHalf')),
+    h('p.lede', {}, t('whichHalfLede', { ai: n.ai })),
+    h('div.options.halves', {}, Object.keys(R.halves).map(half => h('button.opt', { type: 'button', class: 'human', on: { click: () => start(half) } },
+      h('b', {}, l.halfTitle(half)), h('span', {}, l.halfBlurb(half) + (l.sharedBlurb ? (lang() === 'zh' ? '，' : ', ') + l.sharedBlurb : ''))))),
+    h('div.field', {}, h('label', { for: 'theme' }, tp.label), h('input.input', { id: 'theme', maxlength: 140, placeholder: tp.placeholder }), h('small', {}, t('themeShared', { ai: n.ai }))),
+    h('div.dock', {}, h('div.inner', {}, h('button.btn.ghost', { type: 'button', on: { click: () => home() } }, t('back'))))
   );
   function start(half) {
     const r = newRound({ recipe: R.code, humanHalf: half, theme: document.getElementById('theme').value, names: names() });
@@ -163,11 +228,13 @@ function chooseHalf(code = 'planet1') {
 }
 
 function choose(round) {
-  const R = recipeByCode(round.recipe);
+  const R = recipeByCode(round.recipe), l = L(R);
+  const solo = isSolo(round);
   const half = round.humanHalf;
-  const slots = R.slotsOf(half);
-  const draft = round.draft || { picks: {}, word: '', line: '', why: '', wish: '' };
-  const steps = [...slots, 'words', 'review'];
+  const keys = solo ? R.soloOrder : R.slotsOf(half);
+  const draft = round.draft || { picks: {}, word: '', line: '', why: '', wish: '', name: '', lines: {}, theme: round.theme || '' };
+  draft.lines ||= {};
+  const steps = [...keys, 'words', 'review'];
   let i = Math.min(round.step || 0, steps.length - 1);
   const save = () => store.saveRound({ ...round, draft, step: i });
   setHash('#r=' + round.id);
@@ -176,83 +243,125 @@ function choose(round) {
     const step = steps[i];
     const bar = h('div.steps', { class: 'human' }, steps.map((_, k) => h('i', { class: k <= i ? 'on' : '' })));
     const head = h('div', {},
-      h('div.eyebrow', {}, `Your half · ${R.halves[half].title} · Round ${round.id}`), bar,
-      round.ai ? h('p.note', {}, `${round.ai.name} has already sealed the ${R.halves[round.ai.half].title.toLowerCase()}. Their choices stay hidden until you open it together.`) : null);
-    const back = h('button.btn.ghost', { type: 'button', on: { click: () => { if (i === 0) { round.ai ? home() : chooseHalf(round.recipe); return; } i--; save(); render(); } } }, 'Back');
-    if (slots.includes(step)) {
-      const S = R.slots[step];
-      const next = h('button.btn.primary', { type: 'button', disabled: !draft.picks[step], on: { click: () => { i++; save(); render(); } } }, 'Next');
+      h('div.eyebrow', {}, solo ? t('soloEyebrow', { title: l.title }) : t('yourHalfEyebrow', { half: l.halfTitle(half), id: round.id })), bar,
+      !solo && round.ai ? h('p.note', {}, t('aiSealedNote', { ai: round.names.ai, half: l.halfTitle(round.ai.half) })) : null);
+    const back = h('button.btn.ghost', { type: 'button', on: { click: () => { if (i === 0) { solo || round.ai ? home() : chooseHalf(round.recipe); return; } i--; save(); render(); } } }, t('back'));
+    if (keys.includes(step)) {
+      const slot = step.replace(/#\d$/, ''), S = R.slots[slot], second = step.endsWith('#2');
+      const next = h('button.btn.primary', { type: 'button', disabled: !draft.picks[step], on: { click: () => { i++; save(); render(); } } }, t('next'));
+      const lede = R.shared.includes(slot) ? l.pairLede(solo) : null;
       screen(head,
-        h('h1.display', {}, S.prompt),
-        step === 'wonder' ? h('p.lede', {}, 'Both of you place one wonder. If you both choose the same one, it stands twice.') : null,
-        h('div.options', { class: 'human' }, S.options.map((o, k) => [S.grouped && o.group !== S.options[k - 1]?.group ? h('div.opt-group', {}, o.group) : null, h('button.opt', {
-          type: 'button', 'aria-pressed': String(draft.picks[step] === o.n),
-          on: { click: e => { draft.picks[step] = o.n; save(); e.currentTarget.parentNode.querySelectorAll('.opt').forEach(b => b.setAttribute('aria-pressed', String(b === e.currentTarget))); next.disabled = false; navigator.vibrate?.(5); } }
-        }, swatch(step, o), h('span.num', {}, o.n), h('b', {}, o.name), h('span', {}, o.meaning), o.month ? h('em.month', {}, o.month) : null)])),
+        h('h1.display', {}, second ? (lang() === 'zh' ? '再放一件。' : 'And one more.') : l.slotPrompt(slot)),
+        lede ? h('p.lede', {}, lede) : null,
+        h('div.options', { class: 'human' }, S.options.map((o, k) => [
+          S.grouped && o.group !== S.options[k - 1]?.group ? h('div.opt-group', {}, l.group(o.group)) : null,
+          h('button.opt', {
+            type: 'button', 'aria-pressed': String(draft.picks[step] === o.n),
+            on: { click: e => { draft.picks[step] = o.n; save(); e.currentTarget.parentNode.querySelectorAll('.opt').forEach(b => b.setAttribute('aria-pressed', String(b === e.currentTarget))); next.disabled = false; navigator.vibrate?.(5); } }
+          }, swatch(o), h('span.num', {}, o.n), h('b', {}, l.opt(slot, o).name), h('span', {}, l.opt(slot, o).meaning), o.month ? h('em.month', {}, l.month(o.month)) : null)])),
         h('div.dock', {}, h('div.inner', {}, back, next)));
     } else if (step === 'words') {
-      const f = (key, label, hint, max, area) => h('div.field', {}, h('label', { for: 'f-' + key }, label),
-        h(area ? 'textarea.input' : 'input.input', { id: 'f-' + key, maxlength: max, value: area ? null : draft[key], on: { input: e => { draft[key] = e.target.value; save(); } } }, area ? draft[key] : null),
+      const f = (key, label, hint, max, area, ph, get, set) => h('div.field', {}, h('label', { for: 'f-' + key }, label),
+        h(area ? 'textarea.input' : 'input.input', { id: 'f-' + key, maxlength: max, placeholder: ph || null, value: area ? null : get(), on: { input: e => { set(e.target.value); save(); } } }, area ? get() : null),
         hint ? h('small', {}, hint) : null);
+      const dv = k => [() => draft[k] || '', v => { draft[k] = v; }];
+      let fields;
+      if (solo) {
+        const tp = l.themePrompt(true);
+        fields = [
+          f('name', t('soloName'), t('soloNameHint'), 40, false, t('soloNamePh'), ...dv('name')),
+          tp ? f('theme', tp.label, '', 140, false, tp.placeholder, ...dv('theme')) : null,
+          ...Object.keys(R.halves).map(hf => f('line-' + hf, l.lineLabel(hf), l.lineHint(hf), R.text.line.max, true, '', () => draft.lines[hf] || '', v => { draft.lines[hf] = v; })),
+          f('why', t('soloWhy'), t('soloWhyHint'), R.text.why.max, true, '', ...dv('why')),
+          f('wish', t('soloWish'), t('soloWishHint'), R.text.wish.max, true, '', ...dv('wish'))
+        ];
+      } else {
+        fields = [
+          f('word', l.text('word').label, l.text('word').hint, R.text.word.max, false, '', ...dv('word')),
+          f('line', l.lineLabel(half), l.lineHint(half), R.text.line.max, true, '', ...dv('line')),
+          f('why', l.text('why').label, l.text('why').hint, R.text.why.max, true, '', ...dv('why')),
+          f('wish', l.text('wish').label, l.text('wish').hint, R.text.wish.max, true, '', ...dv('wish'))
+        ];
+      }
       screen(head,
-        h('h1.display', {}, 'Say it ', h('em', {}, 'now'), ', while it is true.'),
-        h('p.lede', {}, 'These are sealed with your choices. You will not be able to change them after.'),
-        h('div.stack', {},
-          f('word', R.text.word.label, R.text.word.hint, R.text.word.max),
-          f('line', R.halves[half].line.label, R.halves[half].line.hint, R.text.line.max, true),
-          f('why', R.text.why.label, R.text.why.hint, R.text.why.max, true),
-          f('wish', R.text.wish.label, R.text.wish.hint, R.text.wish.max, true)),
-        h('div.dock', {}, h('div.inner', {}, back, h('button.btn.primary', { type: 'button', on: { click: () => { i++; save(); render(); } } }, 'Review'))));
+        h('h1.display', {}, t('wordsTitle')),
+        h('p.lede', {}, solo ? t('wordsLedeSolo') : t('wordsLede')),
+        h('div.stack', {}, fields),
+        h('div.dock', {}, h('div.inner', {}, back, h('button.btn.primary', { type: 'button', on: { click: () => { i++; save(); render(); } } }, t('review')))));
     } else {
-      const rows = slots.map(s => { const o = R.option(s, draft.picks[s]); return h('div', {}, h('dt', {}, R.slots[s].title), h('dd', {}, h('b', {}, o.name), h('span', {}, o.meaning))); });
-      const words = [['Name word', draft.word], [R.halves[half].line.label, draft.line], ['Why', draft.why], ['Hidden line', draft.wish ? '••• sealed' : '']]
-        .filter(([, v]) => v).map(([k, v]) => h('div', {}, h('dt', {}, k), h('dd', {}, v)));
+      const rows = keys.map(k => { const slot = k.replace(/#\d$/, ''), o = R.option(slot, draft.picks[k]); const z = l.opt(slot, o); return h('div', {}, h('dt', {}, l.slotTitle(slot)), h('dd', {}, h('b', {}, z.name), h('span', {}, z.meaning))); });
+      const words = solo
+        ? [[t('soloName'), draft.name], ...Object.keys(R.halves).map(hf => [l.lineLabel(hf), draft.lines[hf]]), [t('soloWhy'), draft.why], [t('hiddenLine'), draft.wish ? t('sealedDots') : '']]
+        : [[t('nameWord'), draft.word], [l.lineLabel(half), draft.line], [t('why'), draft.why], [t('hiddenLine'), draft.wish ? t('sealedDots') : '']];
       screen(head,
-        h('h1.display', {}, 'Your half'),
-        h('dl.ledger', {}, rows, words),
-        h('div.hold-wrap', { class: 'human' }, holdButton('Hold to seal', { side: 'human', onDone: () => seal() }), h('small', {}, 'Once sealed, it stays exactly like this.')),
+        h('h1.display', {}, solo ? t('soloReviewTitle') : t('yourHalfTitle')),
+        h('dl.ledger', {}, rows, words.filter(([, v]) => v).map(([k, v]) => h('div', {}, h('dt', {}, k), h('dd', {}, v)))),
+        h('div.hold-wrap', { class: 'human' }, solo
+          ? holdButton(t('holdFinish'), { side: 'human', onDone: () => finishSolo() })
+          : holdButton(t('holdSeal'), { side: 'human', onDone: () => seal() }), h('small', {}, solo ? t('finishNote') : t('sealNote'))),
         h('div.dock', {}, h('div.inner', {}, back, h('span'))));
     }
   }
   function seal() {
     try {
-      let r = sealHuman(round, draft);
+      const r = sealHuman(round, draft);
       delete r.draft; delete r.step;
       store.saveRound(r);
       r.ai ? arrived(r, { justSealed: true }) : waiting(r, { justSealed: true });
     } catch (e) { toast(e.message); }
   }
+  function finishSolo() {
+    try {
+      const nm = store.names().human || '';
+      const r = sealSolo({ ...round, theme: (draft.theme || '').slice(0, 140), names: { human: nm, ai: nm } }, draft);
+      delete r.draft; delete r.step;
+      store.saveRound(r);
+      soloCeremony(r);
+    } catch (e) { toast(e.message); }
+  }
   render();
 }
 
-function swatch(slot, o) {
-  const cols = o.colors || o.bg || (o.color ? [o.color] : null);
+function swatch(o) {
+  const cols = o.colors || o.bg || o.bands || (o.color ? [o.color] : null);
   if (!cols) return null;
   return h('span.sw', {}, cols.slice(0, 3).map(c => h('i', { style: 'background:' + c })));
+}
+
+/* ------------------------------------------------------------------ solo: a seal, then it takes shape */
+function soloCeremony(round) {
+  setHash('#r=' + round.id);
+  screen(
+    h('div.ceremony', {},
+      h('div.seals', {}, h('figure', {}, wax(round.human.fp, round.names.human || '✦', 'human', { stamp: true }))),
+      h('h1.display', {}, t('soloSealed')),
+      h('p.lede', {}, t('soloSealedLede'))));
+  setTimeout(() => reveal(round), 1500);
 }
 
 /* ------------------------------------------------------------------ waiting for the companion */
 function waiting(round, { justSealed = false } = {}) {
   setHash('#r=' + round.id);
-  const inv = invitation(round, { site: site(), repo: PROTOCOL_URL });
-  const paste = h('textarea.input', { placeholder: `Paste ${round.names.ai}’s reply or link here`, 'aria-label': 'Companion reply' });
+  const R = recipeByCode(round.recipe), l = L(R);
+  const inv = invitation(round, { site: site(), repo: PROTOCOL_URL, lang: lang() });
+  const paste = h('textarea.input', { placeholder: t('pasteReplyPh', { ai: round.names.ai }), 'aria-label': t('pasteHead') });
   screen(
-    h('div.eyebrow', {}, `Round ${round.id} · ${recipeByCode(round.recipe).title}`),
-    h('div.seals', {}, h('figure', {}, wax(round.human.fp, round.names.human, 'human', { stamp: justSealed }), h('figcaption', { class: 'human who' }, 'sealed'))),
-    h('h1.display', { style: 'text-align:center' }, 'Your half is ', h('em', {}, 'sealed'), '.'),
-    h('p.lede', { style: 'text-align:center;margin-inline:auto' }, `Now it is ${round.names.ai}’s turn. Send them this invitation. It carries your seal, not your choices.`),
+    h('div.eyebrow', {}, `${t('roundN', { id: round.id })} · ${l.title}`),
+    h('div.seals', {}, h('figure', {}, wax(round.human.fp, round.names.human, 'human', { stamp: justSealed }))),
+    h('h1.display.center', {}, t('sealedTitle')),
+    h('p.lede.center', {}, t('sealedLede', { ai: round.names.ai })),
     h('pre.invite', {}, inv),
-    h('div.row', { style: 'justify-content:center;margin:12px 0 4px' }, h('button.btn.primary', { type: 'button', on: { click: () => copy(inv, 'Invitation copied') } }, 'Copy invitation')),
-    h('div.waiting', {}, h('div.orb', { 'aria-hidden': 'true' }), h('div.hand', {}, recipeByCode(round.recipe).waitingLine || 'half of it is still unmade'), h('p.note', {}, `When ${round.names.ai} replies with a link, open it here, or paste it below.`)),
-    h('div.stack', {}, paste, h('button.btn', { type: 'button', on: { click: () => { const t = softDecode(paste.value), m = t.match(/ai~[^\s)>\]"']+/); m ? handleAi(m[0]) : toast('No companion code in that text.'); } } }, 'Add their half')),
-    h('p.note', { style: 'margin-top:22px' }, 'Opening the link on another device? ', h('button.linkish', { type: 'button', on: { click: () => copy(here() + '#m=' + toB64url(round), 'Round link copied — open it there first') } }, 'Copy this round’s link'), '.'),
-    h('div.dock', {}, h('div.inner', {}, h('button.btn.ghost', { type: 'button', on: { click: () => home() } }, 'Home')))
+    h('div.row.center', { style: 'margin:12px 0 4px' }, h('button.btn.primary', { type: 'button', on: { click: () => copy(inv, t('inviteCopied')) } }, t('copyInvite'))),
+    h('div.waiting', {}, h('div.orb', { 'aria-hidden': 'true' }), h('div.hand', {}, l.waitingLine), h('p.note', {}, t('waitingNote', { ai: round.names.ai }))),
+    h('div.stack', {}, paste, h('button.btn', { type: 'button', on: { click: () => { const s = softDecode(paste.value), m = s.match(/ai~[^\s)>\]"']+/); m ? handleAi(m[0]) : toast(t('noCode')); } } }, t('addHalf'))),
+    h('p.note', { style: 'margin-top:22px' }, t('otherDevice'), ' ', h('button.linkish', { type: 'button', on: { click: () => copy(here() + '#m=' + toB64url(round), t('roundLinkCopied')) } }, t('copyRoundLink'))),
+    h('div.dock', {}, h('div.inner', {}, h('button.btn.ghost', { type: 'button', on: { click: () => home() } }, t('home'))))
   );
 }
 
 function importMine(b64) {
   const r = fromB64url(b64);
-  if (!r || !r.id || !r.recipe) return home('That round link could not be read.');
+  if (!r || !r.id || !r.recipe) return home(t('roundMissing'));
   const mine = store.round(r.id);
   if (!mine || (!mine.human && r.human)) store.saveRound(r);
   resume(store.round(r.id));
@@ -269,55 +378,50 @@ function handleAi(raw) {
     setHash('#r=' + r.id);
     return status(r) === 'ready' ? arrived(r, { justArrived: true }) : resume(r);
   }
-  // No local round with that id: the companion started one, or this is another device.
   const nm = store.names();
-  const fresh = roundFromAi(parsed, { human: nm.human || 'You', ai: nm.ai || 'Companion' });
+  const fresh = roundFromAi(parsed, { human: nm.human || t('you2'), ai: nm.ai || t('companionDefault') });
   const known = store.round(fresh.id);
   if (known) return resume(known);
+  const R = recipeByCode(fresh.recipe), l = L(R);
   if (parsed.roundId && parsed.echoed) {
-    // It answers a round sealed somewhere else.
     return screen(
-      h('div.eyebrow', {}, `Round ${parsed.roundId}`),
-      h('h1.display', {}, 'This half belongs to a round sealed ', h('em', {}, 'elsewhere'), '.'),
-      h('p.lede', {}, `${fresh.names.ai} sealed their half for round ${parsed.roundId}, but your sealed half is not in this browser. Open the round on the device where you sealed it (or use its “round link”), then open this link again.`),
-      h('div.row', {}, h('button.btn', { type: 'button', on: { click: () => home() } }, 'Home'),
-        h('button.btn.ghost', { type: 'button', on: { click: () => { store.saveRound(fresh); choose(fresh); } } }, 'Start fresh with their half'))
-    );
+      h('div.eyebrow', {}, t('roundN', { id: parsed.roundId })),
+      h('h1.display', {}, t('elsewhereTitle')),
+      h('p.lede', {}, t('elsewhereLede', { ai: fresh.names.ai, id: parsed.roundId })),
+      h('div.row', {}, h('button.btn', { type: 'button', on: { click: () => home() } }, t('home')),
+        h('button.btn.ghost', { type: 'button', on: { click: () => { store.saveRound(fresh); choose(fresh); } } }, t('startFresh'))));
   }
   store.saveRound(fresh);
   setHash('#r=' + fresh.id);
-  const R = recipeByCode(fresh.recipe);
   screen(
-    h('div.eyebrow', {}, `Round ${fresh.id} · ${R.title}`),
-    h('div.seals', {}, h('figure', {}, wax(fresh.ai.fp, fresh.names.ai, 'ai', { stamp: true }), h('figcaption', { class: 'ai who' }, 'sealed'))),
-    h('h1.display', { style: 'text-align:center' }, `${fresh.names.ai} has started ${R.noun}.`),
-    h('p.lede', { style: 'text-align:center;margin-inline:auto' }, `They sealed the ${R.halves[fresh.ai.half].title.toLowerCase()} before you chose anything. Choose the ${R.halves[fresh.humanHalf].title.toLowerCase()} without seeing theirs.`),
-    h('div.row', { style: 'justify-content:center' }, h('button.btn.primary', { type: 'button', on: { click: () => choose(fresh) } }, 'Choose my half'))
-  );
+    h('div.eyebrow.center', {}, `${t('roundN', { id: fresh.id })} · ${l.title}`),
+    h('div.seals', {}, h('figure', {}, wax(fresh.ai.fp, fresh.names.ai, 'ai', { stamp: true }))),
+    h('h1.display.center', {}, t('aiStarted', { ai: fresh.names.ai, noun: l.noun })),
+    h('p.lede.center', {}, t('aiStartedLede', { half: l.halfTitle(fresh.ai.half), other: l.halfTitle(fresh.humanHalf) })),
+    h('div.row.center', {}, h('button.btn.primary', { type: 'button', on: { click: () => choose(fresh) } }, t('chooseMine'))));
 }
 
 function arrived(round, { justSealed = false, justArrived = false } = {}) {
   setHash('#r=' + round.id);
   const ai = round.ai;
-  const prov = round.order === 'ai-first'
-    ? h('p.ok', {}, `${round.names.ai} sealed first; you chose without seeing it.`)
-    : ai.sealMatch ? h('p.ok', {}, `${round.names.ai} answered your seal ${round.human.fp}: your half was fixed before they chose.`)
-      : h('p.note', {}, `${round.names.ai} did not echo your seal; your half was still sealed before their link arrived.`);
+  const prov = round.order === 'ai-first' ? h('p.ok', {}, t('provAiFirst', { ai: round.names.ai }))
+    : ai.sealMatch ? h('p.ok', {}, t('provMatch', { ai: round.names.ai, fp: round.human.fp }))
+      : h('p.note', {}, t('provNoEcho', { ai: round.names.ai }));
   screen(
-    h('div.eyebrow', { style: 'text-align:center' }, `Round ${round.id}`),
+    h('div.eyebrow.center', {}, t('roundN', { id: round.id })),
     h('div.seals', {},
-      h('figure', {}, wax(round.human.fp, round.names.human, 'human', { stamp: justSealed, size: 104 }), h('figcaption', { class: 'human who' }, 'you')),
+      h('figure', {}, wax(round.human.fp, round.names.human, 'human', { stamp: justSealed, size: 104 }), h('figcaption', { class: 'human who' }, t('you'))),
       h('figure', {}, wax(ai.fp, round.names.ai, 'ai', { stamp: justArrived, size: 104 }), h('figcaption', { class: 'ai who' }, round.names.ai))),
-    h('h1.display', { style: 'text-align:center' }, justArrived ? 'Something was added.' : 'Both halves are sealed.'),
-    h('p.lede', { style: 'text-align:center;margin-inline:auto' }, 'Ready to open together.'),
-    h('div', { style: 'text-align:center' }, prov, ...(ai.warnings || []).map(w => h('p.note', {}, w))),
-    h('div.hold-wrap', {}, holdButton('Open Together', { side: 'ai', ms: 1300, onDone: () => reveal(round) }), h('small', {}, 'Best opened with them, in the same conversation.')),
-    h('div.dock', {}, h('div.inner', {}, h('button.btn.ghost', { type: 'button', on: { click: () => home() } }, 'Later')))
+    h('h1.display.center', {}, justArrived ? t('added') : t('bothSealed')),
+    h('p.lede.center', {}, t('readyTogether')),
+    h('div.center', {}, prov, ...(ai.warnings || []).map(w => h('p.note', {}, w))),
+    h('div.hold-wrap', {}, holdButton(t('openTogether'), { side: 'ai', ms: 1300, onDone: () => reveal(round) }), h('small', {}, t('openNote'))),
+    h('div.dock', {}, h('div.inner', {}, h('button.btn.ghost', { type: 'button', on: { click: () => home() } }, t('later'))))
   );
 }
 
 /* ------------------------------------------------------------------ the stage (lazy: three.js loads only when needed) */
-let stage = null;
+let stage = null, world3d = null;
 const renderers = {};
 async function getStage() {
   if (!stage) { const { createStage } = await import('../render/stage.js'); stage = createStage(stageHost); }
@@ -325,27 +429,30 @@ async function getStage() {
   stage.resume();
   return stage;
 }
-/** Build a recipe's 3D object with its own renderer module (js/render/<recipe.renderer>.js). */
-async function buildWorld(st, R, spec, seed, date) {
+const plaqueOf = round => ({ name: round.plaque?.name || '', date: round.plaque?.date || fmtDate(round.openedAt || round.ai?.sealedAt || Date.now()) });
+async function buildWorld(st, R, spec, round) {
   const mod = renderers[R.renderer] ||= await import('../render/' + R.renderer + '.js');
-  return mod.build(spec, seed, { renderer: st.renderer, date });
+  world3d = mod.build(spec, round.id, { renderer: st.renderer, date: round.openedAt || round.ai?.sealedAt, plaque: plaqueOf(round) });
+  return world3d;
 }
 
 /* ------------------------------------------------------------------ reveal */
 async function reveal(round) {
-  const R = recipeByCode(round.recipe);
+  const R = recipeByCode(round.recipe), l = L(R);
+  const solo = isSolo(round);
+  round = { ...round, openedAt: round.openedAt || new Date().toISOString() };
   const spec = mergeRound(round);
   app.replaceChildren();
   const st = await getStage();
-  const p = await buildWorld(st, R, spec, round.id, round.openedAt || new Date().toISOString());
+  const p = await buildWorld(st, R, spec, round);
   st.setWorld(p);
   st.autoSpin = 0.1;
-  st.backdrop(['#F3EEE8', '#E2D9CF'], false, round.id, '#8C8499');
+  st.backdrop(['#F7F1E8', '#E8DED3'], false, round.id, '#8C8499');
   stageHost.querySelector('.stage-ornament').style.opacity = '0';
   p.prepareReveal();
 
-  const top = h('div.over.top-bar', {}, h('div.title-plate', {}, h('div.eyebrow', {}, `Opening round ${round.id}`)),
-    h('button.iconbtn', { type: 'button', 'aria-label': 'Skip to the end', on: { click: () => finish() } }, '»'));
+  const top = h('div.over.top-bar', {}, h('div.title-plate', {}, h('div.eyebrow', {}, solo ? t('openingSolo') : t('opening', { id: round.id }))),
+    h('button.iconbtn', { type: 'button', 'aria-label': t('skip'), on: { click: () => finish() } }, '»'));
   const cap = h('div.over.caption');
   app.replaceChildren(top, cap);
   const steps = R.revealSteps(spec);
@@ -355,13 +462,12 @@ async function reveal(round) {
   const all = [...steps, ...extra];
   let i = -1, busy = false, ended = false;
 
-  const sideOf = by => by === 'human' ? 'human' : 'ai';
+  const sideOf = by => solo || by === 'human' ? 'human' : 'ai';
   const nameOf = by => by === 'human' ? round.names.human : round.names.ai;
   const dots = () => h('div.dots', {}, all.map((_, k) => h('i', { class: k <= i ? 'on' : '' })));
-  const nextBtn = (label = 'Next') => h('button.btn.small.primary', { type: 'button', on: { click: () => advance() } }, label);
+  const nextBtn = (label = t('next')) => h('button.btn.small.primary', { type: 'button', on: { click: () => advance() } }, label);
   const outBack = k2 => { const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(k2 - 1, 3) + c1 * Math.pow(k2 - 1, 2); };
 
-  // A renderer may reveal a slot its own way; otherwise its parts grow into place.
   function show(slot, delay = 0) {
     if (p.reveal?.(slot, (d, fn, e, dl = 0) => st.tween(d, fn, e, dl + delay))) return;
     (p.parts[slot] || []).forEach((o, k) => {
@@ -381,45 +487,46 @@ async function reveal(round) {
       show(s.slot);
       focus(s.focus);
       const chance = (spec.chance[s.by] || []).includes(s.slot);
+      const z = l.opt(s.slot, s.pick);
       card.classList.add(sideOf(s.by));
-      put(card, h('div.by', {}, h('i'), `${nameOf(s.by)} placed · ${s.title}`), h('h2', {}, s.pick.name), h('div.meaning', {}, s.pick.meaning), chance ? h('div.note', {}, 'left to the stars') : null);
+      put(card, h('div.by', {}, h('i'), solo ? t('placedSolo', { slot: l.slotTitle(s.slot) }) : t('placedBy', { name: nameOf(s.by), slot: l.slotTitle(s.slot) })),
+        h('h2', {}, z.name), h('div.meaning', {}, z.meaning), chance ? h('div.note', {}, t('leftToStars')) : null);
     } else if (s.kind === 'pair') {
       (s.show || []).forEach((slot, k) => show(slot, k * 0.35));
       focus(s.focus);
-      put(card, h('div.by', {}, h('i'), s.title),
-        h('div.pair', {}, s.picks.map(w => h('div', { class: sideOf(w.by) }, h('div.by', {}, h('i'), nameOf(w.by)), h('b', {}, w.name), h('span.meaning', { style: 'font-size:15px' }, w.meaning)))),
-        s.echo ? h('p.hand', { style: 'margin:10px 0 0;color:var(--gold)' }, s.echoText || 'You both chose the same, without knowing.') : null);
+      const echoR = spec.resonances.find(r => r.id === 'echo');
+      put(card, h('div.by', {}, h('i'), l.pairTitle || s.title),
+        h('div.pair', {}, s.picks.map(w => { const z = l.opt(R.shared[0], w); return h('div', { class: sideOf(w.by) }, solo ? null : h('div.by', {}, h('i'), nameOf(w.by)), h('b', {}, z.name), h('span.meaning', { style: 'font-size:15px' }, z.meaning)); })),
+        echoR ? h('p.hand', { style: 'margin:10px 0 0;color:var(--gold)' }, l.resonance(echoR)) : null);
     } else if (s.kind === 'resonance') {
-      put(card, h('div.by', {}, h('i', { style: 'background:var(--gold)' }), 'Something new happened'), h('div.meaning', { style: 'margin-top:8px;font-size:19px;color:var(--ink)' }, s.text));
+      const r = spec.resonances.find(x => x.text === s.text) || { text: s.text };
+      put(card, h('div.by', {}, h('i', { style: 'background:var(--gold)' }), t('somethingNew')), h('div.meaning', { style: 'margin-top:8px;font-size:19px;color:var(--ink)' }, l.resonance(r)));
     } else if (s.kind === 'name') {
-      put(card, h('div.by', {}, h('i'), 'Its name'), h('h2', {}, s.words.length ? s.words.map((w, k) => [k ? ' ' : '', h('span', { class: sideOf(w.by), style: 'border-bottom:2px solid var(--side)' }, w.text)]) : s.title),
-        h('div.note', {}, s.words.map(w => `${nameOf(w.by)}: “${w.text}”`).join(' · ')));
+      put(card, h('div.by', {}, h('i'), t('itsName')),
+        h('h2', {}, !solo && s.words.length > 1 ? s.words.map((w, k) => [k && !CJK.test(w.text) ? ' ' : '', h('span', { class: sideOf(w.by), style: 'border-bottom:2px solid var(--side)' }, w.text)]) : s.title),
+        solo ? null : h('div.note', {}, s.words.map(w => `${nameOf(w.by)}：“${w.text}”`).join(' · ')));
     } else if (s.kind === 'lines') {
-      const shown = s.lines.filter(l => l.text);
+      const shown = s.lines.filter(x => x.text);
       if (!shown.length) return advance();
-      shown.forEach((l, k) => {
-        const box = h('div', { class: sideOf(l.by), style: k ? 'margin-top:10px' : '' }, h('div.by', {}, h('i'), `${l.label} · ${nameOf(l.by)}`));
-        if (l.find) {
-          // This line is hidden in the object: uncover it first.
-          const find = h('button.btn.small', { type: 'button', on: { click: async () => { show(l.find); await focus(l.find); find.replaceWith(h('p.quote', {}, l.text)); } } }, l.findLabel || 'Find it');
+      shown.forEach((ln, k) => {
+        const label = l.lineLabel(ln.half) || ln.label;
+        const box = h('div', { class: sideOf(ln.by), style: k ? 'margin-top:10px' : '' }, h('div.by', {}, h('i'), solo ? label : `${label} · ${nameOf(ln.by)}`));
+        if (ln.find) {
+          const find = h('button.btn.small', { type: 'button', on: { click: async () => { show(ln.find); await focus(ln.find); find.replaceWith(h('p.quote', {}, ln.text)); } } }, l.findLabel(ln.key) || ln.findLabel || 'Find it');
           box.append(find);
-          st.onPick = what => { if (what === l.find && find.isConnected) find.click(); };
-        } else box.append(h('p.quote', {}, l.text));
+          st.onPick = what => { if (what === ln.find && find.isConnected) find.click(); };
+        } else box.append(h('p.quote', {}, ln.text));
         put(card, box);
       });
     } else if (s.kind === 'why') {
-      put(card, h('div.by', {}, h('i'), 'Why, in their own words'), h('div.pair', {},
-        ['human', 'ai'].filter(k => spec.why[k]).map(k => h('div', { class: k }, h('div.by', {}, h('i'), nameOf(k)), h('span.meaning', { style: 'color:var(--ink)' }, spec.why[k])))));
+      put(card, h('div.by', {}, h('i'), solo ? t('whySolo') : t('whyTogether')), h('div.pair', { class: solo ? 'one' : '' },
+        ['human', 'ai'].filter(k => spec.why[k]).map(k => h('div', { class: sideOf(k) }, solo ? null : h('div.by', {}, h('i'), nameOf(k)), h('span.meaning', { style: 'color:var(--ink)' }, spec.why[k])))));
     } else if (s.kind === 'wishes') {
-      const env = k => {
-        const e = h('button.envelope', { type: 'button', class: k, on: { click: () => { e.classList.add('open'); navigator.vibrate?.(10); } } }, h('span.dot'), h('div.text', {}, spec.wish[k]), h('small', {}, `from ${nameOf(k)}`));
-        return e;
-      };
       const n = ['human', 'ai'].filter(k => spec.wish[k]);
-      p.reveal?.('wishes', (d, fn, e, dl) => st.tween(d, fn, e, dl));
-      put(card, h('div.by', {}, h('i'), R.wishTitle ? R.wishTitle(n.length) : 'Sealed lines'), h('div.envelopes', {}, n.map(env)));
+      const env = k => { const e = h('button.envelope', { type: 'button', class: sideOf(k), on: { click: () => { e.classList.add('open'); navigator.vibrate?.(10); } } }, h('span.dot'), h('div.text', {}, spec.wish[k]), h('small', {}, solo ? '✦' : (lang() === 'zh' ? `来自${nameOf(k)}` : `from ${nameOf(k)}`))); return e; };
+      put(card, h('div.by', {}, h('i'), l.wishTitle(n.length)), h('div.envelopes', { class: n.length === 1 ? 'one' : '' }, n.map(env)));
     }
-    put(card, h('div.next', {}, dots(), i === all.length - 1 ? nextBtn('Done') : nextBtn()));
+    put(card, h('div.next', {}, dots(), i === all.length - 1 ? nextBtn(t('done')) : nextBtn()));
     cap.replaceChildren(card);
   }
   async function advance() {
@@ -431,55 +538,56 @@ async function reveal(round) {
   }
   function finish() {
     if (ended) return; ended = true;
-    p.revealAll(); // whatever was not shown yet appears at once
+    p.revealAll();
     st.backdrop(spec.palette.bg, spec.palette.dark, round.id, spec.palette.ink);
     stageHost.querySelector('.stage-ornament').style.opacity = '1';
-    const r = { ...round, openedAt: round.openedAt || new Date().toISOString() };
-    if (store.round(r.id)) store.saveRound(r);
-    explore(r, { keepWorld: true });
+    if (store.round(round.id)) store.saveRound(round);
+    explore(round, { keepWorld: true });
   }
   advance();
 }
 
 /* ------------------------------------------------------------------ explore + keep */
 async function explore(round, { keepWorld = false, visiting = false } = {}) {
-  const R = recipeByCode(round.recipe);
+  const R = recipeByCode(round.recipe), l = L(R);
+  const solo = isSolo(round);
   const spec = mergeRound(round);
   const st = await getStage();
   if (!keepWorld) {
-    const p = await buildWorld(st, R, spec, round.id, round.openedAt || round.ai?.sealedAt);
+    const p = await buildWorld(st, R, spec, round);
     p.revealAll();
     st.setWorld(p);
     st.backdrop(spec.palette.bg, spec.palette.dark, round.id, spec.palette.ink);
     stageHost.querySelector('.stage-ornament').style.opacity = '1';
   }
   st.autoSpin = 0.12;
-  const hidden = spec.lines.find(l => l.find && l.text);
-  // Tapping a part says what it is, what it means, and who placed it.
+  const hidden = spec.lines.find(x => x.find && x.text);
+  const who = by => solo ? t('you2') : by === 'human' ? round.names.human : round.names.ai;
   st.onPick = what => {
     if (hidden && what === hidden.find) return toast('“' + hidden.text + '”');
-    const x = spec.ledger.find(l => (l.pick || l.slot) === what);
-    if (x) toast(`${x.name} — ${x.meaning} · ${x.by === 'human' ? round.names.human : round.names.ai}`);
+    const x = spec.ledger.find(e => (e.pick || e.slot) === what);
+    if (x) { const z = l.opt(x.slot, x.id || x); toast(`${z.name} —— ${z.meaning} · ${who(x.by)}`); }
   };
-  const doc = () => toKeepsake(round);
   const id = `${round.recipe}-${round.id}-${round.human.fp}`;
-  setHash(toLink(round).slice(toLink(round).indexOf('#')));
-  const sideOf = by => by === 'human' ? 'human' : 'ai';
+  const refreshHash = () => { const k = toLink(round); setHash(k.slice(k.indexOf('#'))); };
+  refreshHash();
+  const sideOf = by => solo || by === 'human' ? 'human' : 'ai';
+  const dateStr = fmtDate(round.openedAt || round.ai.sealedAt);
+  const by = solo ? (round.names.human ? t('bySolo', { a: round.names.human, date: dateStr }) : t('bySoloNoName', { date: dateStr })) : t('byTwo', { a: round.names.human, b: round.names.ai, date: dateStr });
   const top = h('div.over.top-bar', {},
     h('div.title-plate', {},
-      h('div.eyebrow', {}, `${R.title} · Round ${round.id}`),
-      h('h1', {}, spec.words.length ? spec.words.map((w, k) => [k ? ' ' : '', h('span.w', { class: sideOf(w.by) }, w.text)]) : spec.title),
-      h('p', {}, `${round.names.human} & ${round.names.ai} · ${fmtDate(round.openedAt || round.ai.sealedAt)}`)),
-    EMBED === 'view' ? null : h('button.iconbtn', { type: 'button', 'aria-label': 'Home', on: { click: () => { stageHost.classList.add('hidden'); stage?.pause(); home(); } } }, '✕'));
-  // With a host listening, "keep" always hands the piece to the host, even if it is already on this browser's shelf.
+      h('div.eyebrow', {}, solo ? l.title : `${l.title} · ${t('roundN', { id: round.id })}`),
+      h('h1', {}, !solo && spec.words.length > 1 ? spec.words.map((w, k) => [k && !CJK.test(w.text) ? ' ' : '', h('span.w', { class: sideOf(w.by) }, w.text)]) : spec.title),
+      h('p', {}, by)),
+    EMBED === 'view' ? null : h('button.iconbtn', { type: 'button', 'aria-label': t('home'), on: { click: () => { stageHost.classList.add('hidden'); stage?.pause(); home(); } } }, '✕'));
   const kept = () => !HOST && store.onShelf(id);
-  const keepBtn = h('button.btn', { type: 'button', class: kept() ? '' : 'primary', on: { click: () => keepSheet() } }, kept() ? 'On your shelf' : 'Keep this');
+  const keepBtn = h('button.btn', { type: 'button', class: kept() ? '' : 'primary', on: { click: () => keepSheet() } }, kept() ? t('onShelf') : t('keep'));
   const bar = h('div.over.toolbar', {}, h('div.inner', {},
-    h('button.btn', { type: 'button', on: { click: () => storySheet(round, spec) } }, 'Story'),
+    h('button.btn', { type: 'button', on: { click: () => storySheet(round, spec) } }, t('story')),
     EMBED === 'view' ? null : keepBtn,
-    h('button.btn', { type: 'button', on: { click: () => share() } }, 'Share'),
-    h('button.btn', { type: 'button', 'aria-label': 'More', on: { click: () => moreSheet() } }, '…')));
-  const hint = h('div.hint', {}, 'turn it with your finger');
+    h('button.btn', { type: 'button', on: { click: () => share() } }, t('share')),
+    h('button.btn', { type: 'button', 'aria-label': t('more'), on: { click: () => moreSheet() } }, '…')));
+  const hint = h('div.hint', {}, t('turnHint'));
   [top, bar].forEach(n => n.classList.toggle('on-dark', spec.palette.dark));
   hint.style.color = spec.palette.dark ? '#C9C3DE' : '';
   app.replaceChildren(top, hint, bar);
@@ -487,69 +595,97 @@ async function explore(round, { keepWorld = false, visiting = false } = {}) {
 
   async function share() {
     const url = toLink(round, site());
-    const text = `${spec.title} — ${R.noun} ${round.names.human} and ${round.names.ai} made together.`;
+    const text = solo ? t('shareTextSolo', { title: spec.title, a: round.names.human || t('you2'), noun: l.noun }) : t('shareText', { title: spec.title, a: round.names.human, b: round.names.ai, noun: l.noun });
     if (navigator.share) { try { await navigator.share({ title: spec.title, text, url }); return; } catch { } }
-    copy(url, 'Link copied — anyone with it can open this world');
+    copy(url, t('linkCopied'));
   }
 
+  // The plaque on a globe's base can be engraved with any name and date. It is display, not a sealed choice.
+  const engraving = () => {
+    if (!world3d?.setPlaque) return null;
+    const cur = plaqueOf(round);
+    const nameIn = h('input.input', { maxlength: 30, value: cur.name || spec.title });
+    const dateIn = h('input.input', { maxlength: 30, value: cur.date, placeholder: t('plaqueDatePh') });
+    const live = () => world3d.setPlaque(nameIn.value.trim() || spec.title, dateIn.value.trim() || fmtDate(round.openedAt));
+    nameIn.addEventListener('input', live); dateIn.addEventListener('input', live);
+    return { el: h('div.engrave', {}, h('h3', {}, t('plaqueHead')), h('div.field', {}, h('label', {}, t('plaqueName')), nameIn), h('div.field', {}, h('label', {}, t('plaqueDate')), dateIn)),
+      value: () => ({ name: nameIn.value.trim() === spec.title ? '' : nameIn.value.trim(), date: dateIn.value.trim() === fmtDate(round.openedAt) ? '' : dateIn.value.trim() }) };
+  };
+  const applyPlaque = v => {
+    if (!v) return;
+    round.plaque = v.name || v.date ? { name: v.name, date: v.date } : null;
+    if (store.round(round.id)) store.saveRound(round);
+    if (store.onShelf(id)) { const it = store.shelf().find(x => x.id === id); const d = toKeepsake(round); store.keep({ ...it, title: v.name || spec.title, link: d.link, doc: d }); }
+    refreshHash();
+  };
+
   function keepSheet() {
-    const plaque = h('div.plaque', {}, h('b', {}, spec.title), h('span', {}, `${round.names.human} & ${round.names.ai} · ${fmtDate(new Date().toISOString())}`));
+    const plaque = h('div.plaque', {}, h('b', {}, round.plaque?.name || spec.title), h('span', {}, round.plaque?.date || dateStr));
     const already = kept();
-    const panel = sheet(h('div.eyebrow', {}, 'The cabinet'), h('h2', {}, already ? 'It is already on your shelf.' : 'Keep this one?'),
-      h('p.note', {}, HOST ? 'It goes into your cabinet, with both halves, both seals and every sealed line.' : 'It goes on the shelf in this browser, with both halves, both seals and every sealed line. Nothing is uploaded.'),
-      plaque,
-      already ? null : h('div.hold-wrap', {}, holdButton('Place on the shelf', { ms: 1000, onDone: () => place() })));
+    const eng = already ? null : engraving();
+    eng?.el.querySelectorAll('input').forEach((inp, k) => inp.addEventListener('input', () => { if (k === 0) plaque.querySelector('b').textContent = inp.value || spec.title; else plaque.querySelector('span').textContent = inp.value || dateStr; }));
+    const panel = sheet(h('div.eyebrow', {}, t('keepEyebrow')), h('h2', {}, already ? t('keptAlready') : t('keepTitle')),
+      h('p.note', {}, HOST ? t('keepNoteHost') : solo ? t('keepNoteSolo') : t('keepNote')),
+      plaque, eng?.el,
+      already ? null : h('div.hold-wrap', {}, holdButton(t('holdPlace'), { ms: 1000, onDone: () => place() })));
     async function place() {
+      if (eng) applyPlaque(eng.value());
       plaque.classList.add('engrave');
-      const r = { ...round, keptAt: new Date().toISOString() };
-      round.keptAt = r.keptAt;
+      round.keptAt = new Date().toISOString();
       const thumb = await thumbnail(st);
-      const d = toKeepsake(r);
-      store.keep({ id, title: spec.title, recipe: round.recipe, keptAt: r.keptAt, link: d.link, thumb, doc: d, names: round.names, dark: spec.palette.dark, bg: spec.palette.bg });
-      if (store.round(r.id)) store.saveRound(r);
+      const d = toKeepsake(round);
+      store.keep({ id, title: round.plaque?.name || spec.title, recipe: round.recipe, keptAt: round.keptAt, link: d.link, thumb, doc: d, names: round.names, mode: round.mode, dark: spec.palette.dark, bg: spec.palette.bg });
+      if (store.round(round.id)) store.saveRound(round);
       if (HOST && window.parent !== window) window.parent.postMessage({ type: 'companion-keepsake', action: 'keep', keepsake: { ...d, display: { ...d.display, thumbnail: thumb } } }, HOST);
-      if (!HOST) { keepBtn.textContent = 'On your shelf'; keepBtn.classList.remove('primary'); }
-      setTimeout(() => { panel.close(); toast('Placed on your shelf'); }, 1300);
+      if (!HOST) { keepBtn.textContent = t('onShelf'); keepBtn.classList.remove('primary'); }
+      setTimeout(() => { panel.close(); toast(t('placed')); }, 1300);
     }
   }
 
   function moreSheet() {
-    const s = sheet(h('h2', {}, 'Take it with you'), h('div.stack', {},
-      h('button.btn', { type: 'button', on: { click: () => { s.close(); postcard(st, round, spec); } } }, 'Save a postcard image'),
-      h('button.btn', { type: 'button', on: { click: () => copy(revealCard(round), `Copied — paste it to ${round.names.ai} so they remember`) } }, `Tell ${round.names.ai} what we made`),
-      h('button.btn', { type: 'button', on: { click: () => download(`${spec.title.replace(/[^\w\- ]+/g, '').trim() || 'keepsake'}.keepsake.json`, JSON.stringify(doc(), null, 2), 'application/json') } }, 'Download keepsake file (JSON)'),
-      h('button.btn', { type: 'button', on: { click: () => copy(toLink(round, site()), 'Keepsake link copied') } }, 'Copy keepsake link'),
-      EMBED ? null : h('button.btn.ghost', { type: 'button', on: { click: () => { s.close(); stageHost.classList.add('hidden'); stage?.pause(); location.hash = 'shelf'; } } }, 'Open the shelf')));
+    const s = sheet(h('h2', {}, t('takeWith')), h('div.stack', {},
+      world3d?.setPlaque ? h('button.btn', { type: 'button', on: { click: () => { s.close(); engraveSheet(); } } }, t('engrave')) : null,
+      h('button.btn', { type: 'button', on: { click: () => { s.close(); postcard(st, round, spec); } } }, t('postcard')),
+      solo ? null : h('button.btn', { type: 'button', on: { click: () => copy(revealCard(round, lang()), t('tellCopied', { ai: round.names.ai })) } }, t('tellAI', { ai: round.names.ai })),
+      h('button.btn', { type: 'button', on: { click: () => download(`${spec.title.replace(/[^\w\- ⺀-鿿]+/g, '').trim() || 'keepsake'}.keepsake.json`, JSON.stringify(toKeepsake(round), null, 2), 'application/json') } }, t('download')),
+      h('button.btn', { type: 'button', on: { click: () => copy(toLink(round, site()), t('linkCopied')) } }, t('copyLink')),
+      EMBED ? null : h('button.btn.ghost', { type: 'button', on: { click: () => { s.close(); stageHost.classList.add('hidden'); stage?.pause(); location.hash = 'shelf'; } } }, t('openShelf'))));
+  }
+  function engraveSheet() {
+    const eng = engraving();
+    const s = sheet(eng.el, h('div.row', { style: 'margin-top:14px' }, h('button.btn.primary', { type: 'button', on: { click: () => { applyPlaque(eng.value()); s.close(); toast(t('engraved')); } } }, t('save'))));
   }
 }
 
 function storySheet(round, spec) {
-  const R = recipeByCode(round.recipe);
-  const col = (who) => {
+  const R = recipeByCode(round.recipe), l = L(R);
+  const solo = isSolo(round);
+  const item = x => { const z = l.opt(x.slot, x.id || x); return h('div.story-item', {}, h('dt', {}, l.slotTitle(x.slot)), h('dd', {}, h('b', {}, z.name), h('span', {}, z.meaning))); };
+  const quote = (label, text) => text ? h('div', {}, h('div.eyebrow', { style: 'margin-top:12px' }, label), h('p.quote', {}, text)) : null;
+  const col = who => {
     const half = who === 'human' ? round.human : round.ai;
-    const items = spec.ledger.filter(x => x.by === who).map(x => h('div.story-item', {}, h('dt', {}, x.title), h('dd', {}, h('b', {}, x.name), h('span', {}, x.meaning))));
-    if (half.word) items.push(h('div.story-item', {}, h('dt', {}, 'Name word'), h('dd', {}, h('b', {}, half.word))));
-    const line = spec.lines.find(l => l.by === who) || {};
-    return h('div', { class: who }, h('h3', {}, `${who === 'human' ? round.names.human : round.names.ai} added · ${R.halves[half.half].title}`),
-      h('div.story-col', {}, items),
-      line.text ? h('div', {}, h('div.eyebrow', { style: 'margin-top:12px' }, line.label), h('p.quote', {}, line.text)) : null,
-      half.why ? h('div', {}, h('div.eyebrow', { style: 'margin-top:12px' }, 'Why'), h('p.quote', {}, half.why)) : null,
-      half.wish ? h('div', {}, h('div.eyebrow', { style: 'margin-top:12px' }, 'Hidden line'), h('p.quote', {}, half.wish)) : null);
+    const items = spec.ledger.filter(x => x.by === who).map(item);
+    if (half.word) items.push(h('div.story-item', {}, h('dt', {}, t('nameWord')), h('dd', {}, h('b', {}, half.word))));
+    const ln = spec.lines.find(x => x.by === who) || {};
+    return h('div', { class: who }, h('h3', {}, t('addedBy', { name: who === 'human' ? round.names.human : round.names.ai, half: l.halfTitle(half.half) })),
+      h('div.story-col', {}, items), quote(l.lineLabel(ln.half), ln.text), quote(t('why'), half.why), quote(t('hiddenLine'), half.wish));
   };
-  const t = d => d ? new Date(d).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
+  const soloCol = () => h('div', { class: 'human' }, h('h3', {}, t('addedSolo')), h('div.story-col', {}, spec.ledger.map(item)),
+    spec.lines.map(ln => quote(l.lineLabel(ln.half), ln.text)), quote(t('soloWhy'), round.human.why), quote(t('hiddenLine'), round.human.wish));
+  const tt = round.human.sealedAt, ta = round.ai.sealedAt;
   sheet(
-    h('div.eyebrow', {}, `${R.title} · Round ${round.id}`),
-    h('h2', {}, spec.title),
+    h('div.eyebrow', {}, solo ? l.title : `${l.title} · ${t('roundN', { id: round.id })}`),
+    h('h2', {}, round.plaque?.name || spec.title),
     round.theme ? h('p.meaning', {}, round.theme) : null,
-    col('human'), col('ai'),
-    spec.resonances.length ? h('div', {}, h('h3', {}, 'Between them'), spec.resonances.map(r => h('p.meaning', {}, r.text))) : null,
-    h('h3', {}, 'Seals'),
-    h('p.prov', {},
-      `${round.names.human} sealed ${round.human.fp} at ${t(round.human.sealedAt)}. `,
-      `${round.names.ai} sealed ${round.ai.fp} at ${t(round.ai.sealedAt)}`,
-      round.order === 'ai-first' ? `, before ${round.names.human} chose. ` : round.ai.sealMatch ? `, answering seal ${round.human.fp}. ` : '. ',
-      'Nothing in this world was regenerated: every part is one of these sealed picks, or a named meeting of two of them.'),
-    round.ai.code ? h('details', {}, h('summary', { class: 'prov' }, `${round.names.ai}’s sealed code, as sent`), h('pre.invite', {}, round.ai.code)) : null
+    solo ? soloCol() : [col('human'), col('ai')],
+    spec.resonances.length ? h('div', {}, h('h3', {}, t('between')), spec.resonances.map(r => h('p.meaning', {}, l.resonance(r)))) : null,
+    h('h3', {}, t('seals')),
+    h('p.prov', {}, solo ? t('sealSolo', { name: round.names.human || t('you2'), t: fmtTime(tt) }) : [
+      t('sealHuman', { name: round.names.human, fp: round.human.fp, t: fmtTime(tt) }),
+      t('sealAi', { name: round.names.ai, fp: round.ai.fp, t: fmtTime(ta) }),
+      round.order === 'ai-first' ? t('sealAiFirst', { name: round.names.human }) : round.ai.sealMatch ? t('sealAnswered', { fp: round.human.fp }) : (lang() === 'zh' ? '。' : '. ')
+    ], ' ', t('notRegenerated')),
+    !solo && round.ai.code ? h('details', {}, h('summary', { class: 'prov' }, t('codeAsSent', { ai: round.names.ai })), h('pre.invite', {}, round.ai.code)) : null
   );
 }
 
@@ -579,12 +715,12 @@ async function thumbnail(st) {
 }
 
 async function postcard(st, round, spec) {
+  const R = recipeByCode(round.recipe), l = L(R);
   const W = 1200, H = 1560, c = document.createElement('canvas'); c.width = W; c.height = H;
   const g = c.getContext('2d');
   const grad = g.createRadialGradient(W / 2, 620, 80, W / 2, 620, 900);
   grad.addColorStop(0, spec.palette.bg[0]); grad.addColorStop(1, spec.palette.bg[1]);
   g.fillStyle = grad; g.fillRect(0, 0, W, H);
-  // ornament
   const svg = stageHost.querySelector('.stage-ornament');
   try {
     const src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(svg).replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"'));
@@ -593,48 +729,86 @@ async function postcard(st, round, spec) {
   const shot = await loadImg(st.capture(1100, 1100)); g.drawImage(shot, 50, 70, 1100, 1100);
   await document.fonts?.ready;
   const ink = spec.palette.dark ? '#F2EFFA' : '#2E2A3C', ink2 = spec.palette.dark ? '#C9C3DE' : '#6A6379';
+  const serif = '"Cormorant Garamond", "Noto Serif SC", Georgia, serif';
   g.textAlign = 'center'; g.fillStyle = ink;
-  g.font = '500 78px "Cormorant Garamond", Georgia, serif'; g.fillText(spec.title, W / 2, 1250);
-  g.font = '500 24px "DM Sans", sans-serif'; g.fillStyle = ink2;
-  g.fillText(`${round.names.human.toUpperCase()}  &  ${round.names.ai.toUpperCase()}   ·   ${fmtDate(round.openedAt || new Date()).toUpperCase()}`, W / 2, 1306);
-  const shown = spec.lines.find(l => l.text && !l.find);
-  if (shown) { g.font = 'italic 400 38px "Cormorant Garamond", Georgia, serif'; g.fillStyle = ink; wrap(g, '“' + shown.text + '”', W / 2, 1390, 940, 46); }
-  g.font = '500 30px Caveat, cursive'; g.fillStyle = ink2; g.fillText(`${recipeByCode(round.recipe).noun} we made together`, W / 2, 1510);
+  g.font = `500 78px ${serif}`; g.fillText(round.plaque?.name || spec.title, W / 2, 1250, W - 120);
+  g.font = '500 26px "DM Sans", "Noto Serif SC", sans-serif'; g.fillStyle = ink2;
+  const solo = isSolo(round), d = fmtDate(round.openedAt || new Date());
+  g.fillText(solo ? `${round.names.human ? round.names.human + '   ·   ' : ''}${d}` : `${round.names.human}  &  ${round.names.ai}   ·   ${d}`, W / 2, 1306);
+  const shown = spec.lines.find(x => x.text && !x.find);
+  if (shown) { g.font = `italic 400 38px ${serif}`; g.fillStyle = ink; wrap(g, '“' + shown.text + '”', W / 2, 1390, 940, 50); }
+  g.font = '500 32px Caveat, "Noto Serif SC", cursive'; g.fillStyle = ink2;
+  g.fillText(solo ? t('postcardLineSolo', { noun: l.noun }) : t('postcardLine', { noun: l.noun }), W / 2, 1510);
   c.toBlob(b => { const a = h('a', { href: URL.createObjectURL(b), download: `${spec.title}.png` }); document.body.append(a); a.click(); a.remove(); }, 'image/png');
 }
 function loadImg(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
 function wrap(g, text, x, y, max, lh) {
-  const words = text.split(/(\s+)/); let line = '';
-  for (const w of words) { const test = line + w; if (g.measureText(test).width > max && line.trim()) { g.fillText(line.trim(), x, y); y += lh; line = w.trimStart(); } else line = test; }
+  const cjk = CJK.test(text);
+  const words = cjk ? [...text] : text.split(/(\s+)/); let line = '';
+  for (const w of words) { const test = line + w; if (g.measureText(test).width > max && line.trim()) { g.fillText(line.trim(), x, y); y += lh; line = cjk ? w : w.trimStart(); } else line = test; }
   if (line.trim()) g.fillText(line.trim(), x, y);
 }
 
-/* ------------------------------------------------------------------ shelf */
+/* ------------------------------------------------------------------ the cabinet */
 function shelf() {
   stageHost.classList.add('hidden'); stage?.pause();
   const items = store.shelf();
   const rows = [];
   for (let k = 0; k < items.length; k += 3) rows.push(items.slice(k, k + 3));
   screen(
-    h('div.eyebrow', {}, 'Companion Keepsakes'),
-    h('h1.display', {}, 'The ', h('em', {}, 'shelf')),
-    h('p.lede', {}, 'Things you made together and chose to keep. They live in this browser; download a keepsake file to keep one anywhere.'),
-    items.length ? h('div.shelf', {}, rows.map(row => h('div.shelf-row', {}, row.map(it => h('button.curio', { type: 'button', on: { click: () => { const r = fromLink(it.link); if (r) explore({ ...r, keptAt: it.keptAt }); } } },
-      it.thumb ? h('img', { src: it.thumb, alt: it.title }) : h('span.art', { html: planetArt(), style: 'width:100%;aspect-ratio:1;display:grid;place-items:center' }),
-      h('span.label', {}, it.title), h('span.when', {}, fmtDate(it.keptAt))))))) : h('p.empty', {}, 'Nothing kept yet. The first one will sit right here.'),
-    h('div.dock', {}, h('div.inner', {}, h('button.btn.ghost', { type: 'button', on: { click: () => home() } }, 'Home'), h('button.btn', { type: 'button', on: { click: () => home() } }, 'Make another')))
+    h('header.topline', {}, h('div.brand', {}, h('b', {}, t('brand')))),
+    h('h1.display', {}, t('shelfTitle')),
+    h('p.lede', {}, t('shelfLede')),
+    items.length ? h('div.shelf', {}, rows.map(row => h('div.shelf-row', {}, row.map(it => h('button.curio', { type: 'button', 'data-recipe': it.recipe, on: { click: () => { const r = fromLink(it.link); if (r) explore({ ...r, keptAt: it.keptAt }); } } },
+      it.thumb ? h('img', { src: it.thumb, alt: it.title }) : h('span.art', { html: ART[it.recipe] || ART.planet1 }),
+      h('span.label', {}, it.title), h('span.when', {}, fmtDate(it.keptAt))))))) : h('div.empty', {}, h('span', { html: ICON_CABINET }), h('p', {}, t('shelfEmpty'))),
+    h('div.dock', {}, h('div.inner', {}, h('button.btn.ghost', { type: 'button', on: { click: () => home() } }, t('home')), h('button.btn', { type: 'button', on: { click: () => home() } }, t('makeAnother'))))
   );
 }
 
-/* ------------------------------------------------------------------ small art */
-function planetArt() {
-  return `<svg viewBox="0 0 92 92" width="92" height="92" aria-hidden="true"><circle cx="46" cy="46" r="44" fill="#E6EEF4"/><circle cx="46" cy="47" r="22" fill="#A9CF9A" stroke="#2E2A3C" stroke-width="1.4"/><path d="M32 52c6-3 9 2 14 0s6-6 12-4" fill="none" stroke="#8CC4E6" stroke-width="5" stroke-linecap="round"/><ellipse cx="46" cy="47" rx="36" ry="10" fill="none" stroke="#C4607A" stroke-width="1.4" transform="rotate(-16 46 47)" stroke-dasharray="2 3"/><circle cx="74" cy="30" r="4" fill="#F2CF5B"/><path d="M20 22l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z" fill="#69C8D8"/></svg>`;
-}
-function globeArt() {
-  return `<svg viewBox="0 0 92 92" width="92" height="92" aria-hidden="true"><circle cx="46" cy="46" r="44" fill="#F1ECF4"/><circle cx="46" cy="40" r="22" fill="#fff" fill-opacity=".7" stroke="#2E2A3C" stroke-width="1.4"/><path d="M28 58h36l-4 10H32z" fill="#D9BFA0" stroke="#2E2A3C" stroke-width="1.4"/><circle cx="40" cy="36" r="1.6" fill="#9AA"/><circle cx="52" cy="30" r="1.3" fill="#9AA"/><circle cx="48" cy="44" r="1.5" fill="#9AA"/><path d="M38 52c3-6 13-6 16 0" fill="#B7D4C2"/></svg>`;
-}
-function charmArt() {
-  return `<svg viewBox="0 0 92 92" width="92" height="92" aria-hidden="true"><circle cx="46" cy="46" r="44" fill="#F6ECEE"/><path d="M46 10v8" stroke="#8E8A99" stroke-width="2"/><circle cx="46" cy="22" r="4" fill="none" stroke="#8E8A99" stroke-width="2"/><circle cx="46" cy="31" r="4.5" fill="#F4F0EA" stroke="#2E2A3C"/><circle cx="46" cy="41" r="5" fill="#C9D8F2" stroke="#2E2A3C"/><circle cx="46" cy="51" r="4.5" fill="#F6C9D6" stroke="#2E2A3C"/><path d="M38 60h16l-2 16H40z" fill="#E7B9C4" stroke="#2E2A3C"/><path d="M42 60l4-4 4 4" fill="none" stroke="#2E2A3C"/></svg>`;
-}
+/* ------------------------------------------------------------------ small art (hand-drawn feeling, soft pastel) */
+const INK = '#4A4560';
+const ART = {
+  planet1: `<svg viewBox="0 0 120 120" aria-hidden="true"><defs><radialGradient id="pg" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#EEF4E6"/><stop offset=".55" stop-color="#BAD5B2"/><stop offset="1" stop-color="#94BBA6"/></radialGradient></defs>
+    <ellipse cx="60" cy="66" rx="46" ry="11" fill="none" stroke="#D3A9B9" stroke-width="1.2" transform="rotate(-14 60 66)" stroke-dasharray="1 3.4" stroke-linecap="round"/>
+    <circle cx="60" cy="64" r="27" fill="url(#pg)" stroke="${INK}" stroke-width="1.1"/>
+    <path d="M42 70c7-4 11 3 18 0s8-8 15-5" fill="none" stroke="#9DC6E4" stroke-width="5" stroke-linecap="round" opacity=".85"/>
+    <circle cx="51" cy="54" r="2.2" fill="#F2B8C6"/><circle cx="69" cy="57" r="1.8" fill="#FFF6DA"/><circle cx="57" cy="77" r="1.6" fill="#F2B8C6"/><circle cx="72" cy="72" r="1.4" fill="#FFFFFF"/>
+    <path d="M56.5 41.5l3.5-6 3.5 6z" fill="#E6A5A3" stroke="${INK}" stroke-width=".8"/><rect x="57" y="41.5" width="6" height="4.5" fill="#FBF6EE" stroke="${INK}" stroke-width=".8"/>
+    <path d="M24 60a46 11 -14 0 0 72 -14" fill="none" stroke="#D3A9B9" stroke-width="1.4" transform="rotate(-14 60 66)" opacity=".6"/>
+    <path d="M93 31a8.5 8.5 0 1 1-6.5-12.5 7 7 0 0 0 6.5 12.5z" fill="#F4DD9C" stroke="${INK}" stroke-width=".9"/>
+    <path d="M25 30l1.4 3.6 3.6 1.4-3.6 1.4L25 40l-1.4-3.6-3.6-1.4 3.6-1.4z" fill="#A9C4E6"/>
+    <path d="M98 88l1 2.6 2.6 1-2.6 1-1 2.6-1-2.6-2.6-1 2.6-1z" fill="#E7B7C8"/><circle cx="20" cy="88" r="1.6" fill="#C8B8E8"/><circle cx="100" cy="52" r="1.2" fill="#E3C47E"/></svg>`,
+  globe1: `<svg viewBox="0 0 120 120" aria-hidden="true"><defs><radialGradient id="gg" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".95"/><stop offset=".6" stop-color="#E7ECF7" stop-opacity=".75"/><stop offset="1" stop-color="#CCD5EC" stop-opacity=".85"/></radialGradient></defs>
+    <circle cx="60" cy="54" r="30" fill="url(#gg)" stroke="${INK}" stroke-width="1.1"/>
+    <path d="M36 70c6-6 42-6 48 0" fill="#F7F8FC" stroke="${INK}" stroke-width=".8"/>
+    <path d="M51 65v-7l6-5 6 5v7z" fill="#F2DCC8" stroke="${INK}" stroke-width=".8"/><rect x="55" y="60" width="4" height="5" fill="#F6D88A"/>
+    <path d="M69 67l4.5-11 4.5 11z" fill="#9EBEA6" stroke="${INK}" stroke-width=".7"/><path d="M43 67l3-7 3 7z" fill="#B4CDB8" stroke="${INK}" stroke-width=".6"/>
+    <g fill="#fff" stroke="#B9C2DA" stroke-width=".5"><circle cx="46" cy="40" r="1.3"/><circle cx="66" cy="33" r="1.1"/><circle cx="75" cy="45" r="1.2"/><circle cx="54" cy="47" r=".9"/><circle cx="62" cy="42" r=".8"/><circle cx="40" cy="55" r=".9"/></g>
+    <path d="M37 47a24 24 0 0 1 10-16" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".9"/>
+    <path d="M33 82h54l-5 14H38z" fill="#CBAA86" stroke="${INK}" stroke-width="1.1"/><path d="M36 86h48" stroke="#E7D3B4" stroke-width="1"/>
+    <rect x="51" y="88" width="18" height="5" rx="1" fill="#E8D39C" stroke="${INK}" stroke-width=".6"/>
+    <path d="M60 82c-6-5-11-1-7 3 2 2 7 0 7-3zm0 0c6-5 11-1 7 3-2 2-7 0-7-3z" fill="#E9B9C5" stroke="${INK}" stroke-width=".7"/><path d="M58 83l-3 6m5-6l3 6" stroke="#E9B9C5" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M98 26l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2z" fill="#E7B7C8"/><path d="M20 40l1 2.6 2.6 1-2.6 1-1 2.6-1-2.6-2.6-1 2.6-1z" fill="#A9C4E6"/><circle cx="100" cy="64" r="1.3" fill="#E3C47E"/></svg>`,
+  talisman1: `<svg viewBox="0 0 120 120" aria-hidden="true">
+    <circle cx="60" cy="13" r="6" fill="none" stroke="#BDB2A2" stroke-width="2"/><path d="M57 19h6l-1 11h-4z" fill="#DCD6CF" stroke="${INK}" stroke-width=".8"/>
+    <circle cx="60" cy="36" r="5.4" fill="#F7F1EA" stroke="${INK}" stroke-width=".9"/><circle cx="58.3" cy="34.4" r="1.4" fill="#fff"/>
+    <path d="M53.6 47.5l6.4-5.2 6.4 5.2-6.4 5.2z" fill="#B9CBEF" stroke="${INK}" stroke-width=".9"/>
+    <circle cx="60" cy="58.6" r="5.4" fill="#F2C9D3" stroke="${INK}" stroke-width=".9"/><circle cx="58.3" cy="57" r="1.3" fill="#fff" opacity=".8"/>
+    <path d="M53.6 69.7l6.4-5.2 6.4 5.2-6.4 5.2z" fill="#D4C7F0" stroke="${INK}" stroke-width=".9"/>
+    <circle cx="60" cy="81" r="3" fill="none" stroke="#BDB2A2" stroke-width="1.6"/>
+    <path d="M47 90l3.2-3h19.6l3.2 3v21H47z" fill="#EBC6CD" stroke="${INK}" stroke-width="1"/>
+    <rect x="50" y="92.5" width="20" height="16" rx="2" fill="none" stroke="#C6A15C" stroke-width=".8" stroke-dasharray="1.6 1.4"/>
+    <path d="M62.5 98a4.6 4.6 0 1 1-3.6-5.6 3.7 3.7 0 0 0 3.6 5.6z" fill="#D6B166"/>
+    <path d="M57.5 86.5c-3-2-5-1-4 1m9-1c3-2 5-1 4 1" fill="none" stroke="#C0545F" stroke-width="1.2"/>
+    <path d="M80 89a6.4 6.4 0 1 1-5.2-8.4 5 5 0 0 0 5.2 8.4z" fill="#EAD49E" stroke="${INK}" stroke-width=".8"/>
+    <path d="M25 50l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2z" fill="#E7B7C8"/><path d="M95 62l1 2.6 2.6 1-2.6 1-1 2.6-1-2.6-2.6-1 2.6-1z" fill="#A9C4E6"/><circle cx="91" cy="30" r="1.5" fill="#C8B8E8"/><circle cx="28" cy="88" r="1.2" fill="#E3C47E"/></svg>`
+};
+const ORNAMENT = `<svg viewBox="0 0 240 40" aria-hidden="true"><path d="M20 22c30-10 60 8 100 0s70-10 100 0" fill="none" stroke="#C9A96E" stroke-width="1" stroke-dasharray="1 4" stroke-linecap="round"/>
+  <path d="M120 8l2.4 6.6 6.6 2.4-6.6 2.4L120 26l-2.4-6.6-6.6-2.4 6.6-2.4z" fill="#E3C47E"/><path d="M96 20l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2z" fill="#A9C2E6"/><path d="M146 18l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2z" fill="#E8B8C6"/>
+  <circle cx="70" cy="18" r="1.6" fill="#C9BDE6"/><circle cx="172" cy="24" r="1.6" fill="#C9BDE6"/></svg>`;
+const ICON_TWO = `<svg viewBox="0 0 36 24" aria-hidden="true"><circle cx="13" cy="12" r="8" fill="#F2D3DA" stroke="#4A4560" stroke-width="1"/><circle cx="23" cy="12" r="8" fill="#CFDBF2" fill-opacity=".85" stroke="#4A4560" stroke-width="1"/></svg>`;
+const ICON_ONE = `<svg viewBox="0 0 36 24" aria-hidden="true"><circle cx="18" cy="12" r="8" fill="#F3E3C6" stroke="#4A4560" stroke-width="1"/><path d="M18 7l1.2 3.4 3.4 1.2-3.4 1.2L18 16l-1.2-3.4-3.4-1.2 3.4-1.2z" fill="#C9A96E"/></svg>`;
+const ICON_CABINET = `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" style="vertical-align:-3px;margin-right:6px"><path d="M5 21V9a7 7 0 0 1 14 0v12z" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M3.5 21h17M5 15h14" stroke="currentColor" stroke-width="1.1"/><circle cx="12" cy="11.6" r="2" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>`;
 
 route();

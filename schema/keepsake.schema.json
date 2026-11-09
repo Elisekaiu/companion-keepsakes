@@ -10,6 +10,7 @@
     "id": { "type": "string" },
     "recipe": { "type": "object", "required": ["id", "version", "code"], "properties": { "id": { "type": "string" }, "version": { "type": "integer" }, "code": { "type": "string" }, "title": { "type": "string" } } },
     "title": { "type": "string" },
+    "mode": { "enum": ["companion", "solo"] },
     "round": { "type": "string" },
     "seed": { "type": "string" },
     "theme": { "type": "string" },
@@ -28,14 +29,14 @@
       "type": "object", "required": ["protocol", "order", "humanSeal"],
       "properties": {
         "protocol": { "type": "string" },
-        "order": { "enum": ["human-first", "ai-first"] },
+        "order": { "enum": ["human-first", "ai-first", "solo"] },
         "humanSeal": { "type": "string" },
         "aiEchoedSeal": { "type": ["string", "null"] },
         "sealMatches": { "type": ["boolean", "null"] },
         "note": { "type": "string" }
       }
     },
-    "display": { "type": "object", "properties": { "accent": { "type": "string" }, "background": { "type": "array", "items": { "type": "string" } }, "dark": { "type": "boolean" }, "thumbnail": { "type": ["string", "null"] } } },
+    "display": { "type": "object", "properties": { "accent": { "type": "string" }, "background": { "type": "array", "items": { "type": "string" } }, "dark": { "type": "boolean" }, "thumbnail": { "type": ["string", "null"] }, "plaque": { "type": "object", "properties": { "name": { "type": "string" }, "date": { "type": "string" } } } } },
     "render": { "type": "object", "required": ["renderer", "spec"], "properties": { "renderer": { "type": "string" }, "spec": { "type": "object" } } },
     "link": { "type": "string", "pattern": "#k=" }
   },

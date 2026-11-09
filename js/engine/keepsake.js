@@ -26,7 +26,9 @@ const unpackHalf = o => o && ({
 /** Round -> compact link payload. */
 export function toLink(round, base = '') {
   const payload = {
-    f: 1, c: round.recipe, R: round.id, o: round.order === 'ai-first' ? 'a' : 'h',
+    f: 1, c: round.recipe, R: round.id, o: round.order === 'ai-first' ? 'a' : round.order === 'solo' ? 's' : 'h',
+    md: round.mode === 'solo' ? 's' : undefined,
+    pl: round.plaque?.name || undefined, pd: round.plaque?.date || undefined,
     H: packHalf(round.human), A: packHalf(round.ai),
     m: round.theme || undefined, ct: round.createdAt, ot: round.openedAt || undefined, kt: round.keptAt || undefined
   };
@@ -44,7 +46,9 @@ export function fromLink(raw) {
   return {
     id: payload.R, recipe: payload.c, humanHalf: human.half, theme: payload.m || '',
     names: { human: human.name || 'You', ai: ai.name || 'Companion' },
-    order: payload.o === 'a' ? 'ai-first' : 'human-first',
+    mode: payload.md === 's' ? 'solo' : 'companion',
+    order: payload.o === 'a' ? 'ai-first' : payload.o === 's' ? 'solo' : 'human-first',
+    plaque: payload.pl || payload.pd ? { name: payload.pl || '', date: payload.pd || '' } : null,
     createdAt: payload.ct || human.sealedAt, human, ai,
     openedAt: payload.ot || ai.sealedAt, keptAt: payload.kt || null
   };
@@ -72,6 +76,7 @@ export function toKeepsake(round, extra = {}) {
     v: VERSION,
     id: `${round.recipe}-${round.id}-${round.human.fp}`,
     recipe: { id: R.id, version: R.version, code: R.code, title: R.title },
+    mode: round.mode === 'solo' ? 'solo' : 'companion',
     title: spec.title,
     round: round.id,
     seed: round.id,
@@ -96,6 +101,7 @@ export function toKeepsake(round, extra = {}) {
       accent: spec.palette.bg[1],
       background: spec.palette.bg,
       dark: spec.palette.dark,
+      ...(round.plaque ? { plaque: round.plaque } : {}),
       ...(extra.display || {})
     },
     render: { renderer: `${R.id}@${R.version}`, spec },
@@ -107,7 +113,7 @@ export function toKeepsake(round, extra = {}) {
 export function fromKeepsake(doc) {
   if (typeof doc === 'string') { try { doc = JSON.parse(doc); } catch { return fromLink(doc); } }
   if (!doc || doc.format !== FORMAT) return null;
-  if (doc.link) { const r = fromLink(doc.link); if (r) return { ...r, keptAt: doc.keptAt || r.keptAt }; }
+  if (doc.link) { const r = fromLink(doc.link); if (r) return { ...r, keptAt: doc.keptAt || r.keptAt, plaque: r.plaque || doc.display?.plaque || null }; }
   return null;
 }
 

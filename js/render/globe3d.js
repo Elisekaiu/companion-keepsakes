@@ -357,19 +357,28 @@ function buildParticles(kind, shape, rand) {
 }
 
 /* ---------------- the plaque on the base ---------------- */
-function plaqueTexture(title, date, dark) {
-  return canvasTex(512, 160, (g, w, h) => {
+const PLAQUE_SERIF = '"Cormorant Garamond", "Noto Serif SC", "Songti SC", Georgia, serif';
+function drawPlaque(g, w, h, title, date) {
+    g.clearRect(0, 0, w, h);
     const grad = g.createLinearGradient(0, 0, w, h); grad.addColorStop(0, '#E9D6A6'); grad.addColorStop(0.45, '#C9A866'); grad.addColorStop(0.6, '#E6D19C'); grad.addColorStop(1, '#B8924A');
     g.fillStyle = grad; g.fillRect(0, 0, w, h);
     g.strokeStyle = 'rgba(80,55,15,.5)'; g.lineWidth = 3; g.strokeRect(10, 10, w - 20, h - 20);
     g.fillStyle = '#4A3A1C'; g.textAlign = 'center';
-    g.font = 'italic 600 52px "Cormorant Garamond", Georgia, serif'; g.fillText(title, w / 2, 80, w - 60);
-    g.font = '500 22px "DM Sans", sans-serif'; g.fillText(date.toUpperCase().split('').join(String.fromCharCode(8202)), w / 2, 124, w - 60);
-  });
+    const cjk = /[\u2E80-\u9FFF]/.test(title);
+    g.font = `${cjk ? '' : 'italic '}600 ${cjk ? 46 : 52}px ${PLAQUE_SERIF}`; g.fillText(title, w / 2, 80, w - 60);
+    g.font = `500 ${/[\u2E80-\u9FFF]/.test(date) ? 22 : 21}px "DM Sans", "Noto Serif SC", sans-serif`;
+    g.fillText(/[\u2E80-\u9FFF]/.test(date) ? date : date.toUpperCase().split('').join(String.fromCharCode(8202)), w / 2, 124, w - 60);
+}
+function plaqueTexture(title, date) {
+  const tex = canvasTex(512, 160, (g, w, h) => drawPlaque(g, w, h, title, date));
+  tex.redraw = (t, d) => { const c = tex.image; drawPlaque(c.getContext('2d'), c.width, c.height, t, d); tex.needsUpdate = true; };
+  // redraw once the fonts (including Chinese) have arrived
+  document.fonts?.load?.(`600 46px ${PLAQUE_SERIF}`, title + date).then(() => tex.redraw(title, date)).catch(() => {});
+  return tex;
 }
 
 /* ---------------- build ---------------- */
-export function build(spec, seed, { renderer, date: when } = {}) {
+export function build(spec, seed, { renderer, date: when, plaque: engraving } = {}) {
   const rand = rngFor(seed, 'globe');
   const env = studio(renderer);
   const pal = spec.palette, P = spec.picks;
@@ -419,7 +428,8 @@ export function build(spec, seed, { renderer, date: when } = {}) {
   // the date of the round (when it was opened), so a kept globe always shows the same plaque
   const d0 = new Date(when || Date.now());
   const date = (Number.isFinite(d0.getTime()) ? d0 : new Date()).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-  const plaque = new THREE.Mesh(new THREE.CylinderGeometry(0.942, 0.97, 0.15, 48, 1, true, -0.5, 1.0), new THREE.MeshStandardMaterial({ map: plaqueTexture(spec.title, date, pal.dark), metalness: 0.6, roughness: 0.35, envMap: env, envMapIntensity: 0.8 }));
+  const plaqueTex = plaqueTexture(engraving?.name || spec.title, engraving?.date || date);
+  const plaque = new THREE.Mesh(new THREE.CylinderGeometry(0.942, 0.97, 0.15, 48, 1, true, -0.5, 1.0), new THREE.MeshStandardMaterial({ map: plaqueTex, metalness: 0.6, roughness: 0.35, envMap: env, envMapIntensity: 0.8 }));
   plaque.position.y = -1.04; // the open cylinder segment is centred on +z: the front
   world.add(plaque); reg('base', plaque);
 
@@ -529,6 +539,8 @@ export function build(spec, seed, { renderer, date: when } = {}) {
     touch(pick, strength = 1) { kickShake(0.5 * Math.min(2, strength)); },
     drag(dx) { if (Math.abs(dx) > 0.004) kickShake(Math.min(1.2, Math.abs(dx) * 14)); },
     shake: kickShake,
+    /** Re-engrave the plaque (a name and a date chosen by the people who keep it). */
+    setPlaque(name, d) { plaqueTex.redraw(name || spec.title, d || date); },
     dispose() { [world, skyLayer].forEach(g => g.traverse(o => o.geometry?.dispose?.())); }
   };
 }

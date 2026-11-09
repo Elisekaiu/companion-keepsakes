@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>我的收藏柜</title>
+<style>
+body{margin:0;font:15px/1.7 system-ui,-apple-system,"PingFang SC",sans-serif;background:#FAF5EE;color:#3D3950}
+main{max-width:640px;margin:0 auto;padding:28px 20px 80px}h1{font:600 30px/1.2 Georgia,"Songti SC",serif;margin:0 0 6px}
+.case{margin:22px 0;padding:26px 14px 6px;border:1px solid #e3d6bd;border-radius:120px 120px 18px 18px/80px 80px 18px 18px;background:rgba(255,253,249,.7)}
+.row{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 6px 34px}
+.row::after{content:"";position:absolute;left:-10px;right:-10px;bottom:36px;height:8px;border-radius:3px;background:linear-gradient(#DCC7A6,#C0A17A)}
+.item{position:relative;z-index:1;border:0;background:none;cursor:pointer;display:grid;justify-items:center;font:inherit;color:inherit}
+.item img{width:100%;aspect-ratio:1;object-fit:contain}.item b{font-size:13px;font-weight:600}
+button.btn{border:0;border-radius:999px;background:#4E4A6B;color:#FBF6EE;padding:10px 20px;font:inherit;cursor:pointer}
+dialog{width:min(100%,720px);height:min(92vh,820px);padding:0;border:0;border-radius:20px}dialog iframe{width:100%;height:100%;border:0}
+.empty{text-align:center;color:#A29BB0;padding:30px 0}
+</style></head>
+<body><main>
+<h1>我的收藏柜</h1>
+<p>在工坊里做好、按下「放进收藏柜」的东西，会出现在这里。它们只存在这个浏览器里。</p>
+<button class="btn" id="make">做一件新的</button>
+<div class="case" id="case"></div>
+</main>
+<dialog id="dlg"><iframe id="frame" title="纪念品工坊" allow="clipboard-write; web-share"></iframe></dialog>
+<script>
+// 改成你自己部署的工坊地址也可以。
+const WORKSHOP = 'https://elisekaiu.github.io/companion-keepsakes/';
+const ORIGIN = new URL(WORKSHOP).origin, KEY = 'my-cabinet';
+const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } };
+const save = list => { try { localStorage.setItem(KEY, JSON.stringify(list)); } catch {} };
+const dlg = document.getElementById('dlg'), frame = document.getElementById('frame');
+function open(url) { frame.src = url; dlg.showModal(); }
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+document.getElementById('make').onclick = () => open(WORKSHOP + '?host=' + encodeURIComponent(location.origin));
+addEventListener('message', e => {
+  if (e.origin !== ORIGIN || e.source !== frame.contentWindow) return;
+  const m = e.data;
+  if (!m || m.type !== 'companion-keepsake' || m.action !== 'keep' || m.keepsake?.format !== 'companion-keepsake') return;
+  const k = m.keepsake;
+  save([{ id: k.id, title: k.display?.plaque?.name || k.title, thumb: k.display?.thumbnail || '', link: k.link, keptAt: new Date().toISOString(), doc: k }, ...load().filter(x => x.id !== k.id)]);
+  setTimeout(() => dlg.close(), 1200); paint();
+});
+function paint() {
+  const box = document.getElementById('case'), items = load();
+  box.replaceChildren();
+  if (!items.length) { const p = document.createElement('p'); p.className = 'empty'; p.textContent = '这里还空着。第一件留下来的东西，会放在这里。'; box.append(p); return; }
+  for (let i = 0; i < items.length; i += 3) {
+    const row = document.createElement('div'); row.className = 'row';
+    for (const it of items.slice(i, i + 3)) {
+      const b = document.createElement('button'); b.className = 'item';
+      const img = document.createElement('img'); img.src = it.thumb; img.alt = '';
+      const t = document.createElement('b'); t.textContent = it.title;
+      b.append(img, t); b.onclick = () => open(WORKSHOP + '?embed=view' + it.link.slice(it.link.indexOf('#')));
+      row.append(b);
+    }
+    box.append(row);
+  }
+}
+paint();
+</script></body></html>

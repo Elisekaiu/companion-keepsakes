@@ -4,12 +4,15 @@
 // METAL (the finish, the charm, beads 2·4·6). On the strand the two of you alternate, bead by bead.
 // Both hidden lines are folded inside the pouch and come out last ("untie the pouch").
 
+import { joinWords, cap, enOf, zhOf, MONTHS_ZH } from './util.js';
+
 export const id = 'talisman';
 export const version = 1;
 export const code = 'talisman1';
 export const title = 'Two-Person Talisman';
 export const tagline = 'A small charm to carry: one bead each, in turn, and a pouch for two wishes.';
 export const noun = 'a talisman';
+export const soloOrder = ['metal', 'silk', 'motif', 'cord', 'bead1', 'bead2', 'bead3', 'bead4', 'bead5', 'bead6', 'charm'];
 export const waitingLine = 'half of the strand is still unstrung';
 export const renderer = 'talisman3d';
 export const backdropSlot = 'silk';
@@ -166,23 +169,48 @@ function mix(a, b, t) {
 
 const low = s => s.charAt(0).toLowerCase() + s.slice(1);
 const p_charm = p => p.charm.name.toLowerCase();
+const zn = (slot, o) => (slot.startsWith('bead') ? zh.beads[o.id] : zh.slots[slot].options[o.id])[0];
 const hasBead = (p, id) => [1, 2, 3, 4, 5, 6].some(k => p['bead' + k].id === id);
-// Named meetings between the two halves. Each one names both people and changes nothing they chose.
+// Named meetings between the two halves. With names (companion mode) they say who; alone (solo) they don't.
+// Arguments: s = the silk side's name, m = the metal side's name (both '' in solo).
 const RESONANCES = [
-  { id: 'same-moon', when: p => p.motif.id === 'crescent' && p.charm.id === 'moon', say: (s, m) => `The same moon twice: ${s} stitched it in silk, ${m} cast it in metal.` },
-  { id: 'same-star', when: p => p.motif.id === 'star' && p.charm.id === 'star', say: (s, m) => `The same star twice: ${s} stitched it, ${m} cast it.` },
-  { id: 'moonstone-moon', when: p => p.charm.id === 'moon' && hasBead(p, 'moonstone'), say: (s, m) => `The moonstone on the strand catches the light of ${m}'s crescent.` },
-  { id: 'heart-rose', when: p => p.charm.id === 'heart' && hasBead(p, 'rose'), say: (s, m) => `Rose quartz on the strand, and ${m}'s heart beside the pouch: it says the same thing twice.` },
-  { id: 'star-citrine', when: p => p.charm.id === 'star' && hasBead(p, 'citrine'), say: () => `The citrine and the star keep the same small gold light.` },
-  { id: 'leaf-jade', when: p => p.charm.id === 'leaf' && hasBead(p, 'jade'), say: () => `Pale jade and a green leaf: everything on it is growing.` },
-  { id: 'red-thread', when: p => p.cord.id === 'red', say: (s, m) => `${s}'s red cord is the thread that holds ${m}'s charm to the pouch.` },
-  { id: 'key-pouch', when: p => p.charm.id === 'key', say: (s, m) => `${m}'s little key hangs beside ${s}'s pouch, as if it opens it.` },
-  { id: 'bell-pouch', when: p => p.charm.id === 'bell', say: (s, m) => `${m}'s bell rests against ${s}'s pouch; it rings softly when you walk.` },
-  { id: 'crane-wave', when: p => p.motif.id === 'crane' && p.charm.id === 'butterfly', say: (s, m) => `${s}'s crane and ${m}'s butterfly: two things that fly, on one charm.` },
-  { id: 'amber-sun', when: p => hasBead(p, 'amber') && hasBead(p, 'sunstone'), say: () => `Amber and sunstone: two small, kept warmths.` },
-  { id: 'labradorite-moon', when: p => hasBead(p, 'labradorite') && ['moon', 'star'].includes(p.charm.id), say: (s, m, p) => `The labradorite flashes blue whenever ${m}'s ${p_charm(p)} turns.` },
-  { id: 'pearls', when: p => hasBead(p, 'pearl') && hasBead(p, 'baroque'), say: () => `A round pearl and an uneven one: both pearls, both right.` },
-  { id: 'gold-gold', when: p => p.cord.id === 'gold' && ['gold', 'brass'].includes(p.metal.id), say: () => `Gold cord and warm metal: it reads as one piece.` }
+  { id: 'same-moon', when: p => p.motif.id === 'crescent' && p.charm.id === 'moon',
+    say: (s, m) => s ? `The same moon twice: ${s} stitched it in silk, ${m} cast it in metal.` : 'The same moon twice: stitched in silk, and cast in metal.',
+    zh: (s, m) => s ? `同一个月亮出现了两次：${s}把它绣在丝绸上，${m}把它铸成了金属。` : '同一个月亮出现了两次：一个绣在丝绸上，一个铸成了金属。' },
+  { id: 'same-star', when: p => p.motif.id === 'star' && p.charm.id === 'star',
+    say: (s, m) => s ? `The same star twice: ${s} stitched it, ${m} cast it.` : 'The same star twice: one stitched, one cast.',
+    zh: (s, m) => s ? `同一颗星星出现了两次：${s}绣了它，${m}铸了它。` : '同一颗星星出现了两次：一颗绣的，一颗铸的。' },
+  { id: 'moonstone-moon', when: p => p.charm.id === 'moon' && hasBead(p, 'moonstone'),
+    say: (s, m) => `The moonstone on the strand catches the light of ${enOf(m)}crescent.`,
+    zh: (s, m) => `串上的月光石，接住了${zhOf(m)}弯月的光。` },
+  { id: 'heart-rose', when: p => p.charm.id === 'heart' && hasBead(p, 'rose'),
+    say: (s, m) => `Rose quartz on the strand, and ${enOf(m)}heart beside the pouch: it says the same thing twice.`,
+    zh: (s, m) => `串上的粉晶，和小袋旁${zhOf(m)}那颗心：同一句话，说了两次。` },
+  { id: 'star-citrine', when: p => p.charm.id === 'star' && hasBead(p, 'citrine'),
+    say: () => 'The citrine and the star keep the same small gold light.', zh: () => '黄水晶和星星，守着同一点小小的金光。' },
+  { id: 'leaf-jade', when: p => p.charm.id === 'leaf' && hasBead(p, 'jade'),
+    say: () => 'Pale jade and a green leaf: everything on it is growing.', zh: () => '浅色玉和绿叶：上面的一切都在生长。' },
+  { id: 'red-thread', when: p => p.cord.id === 'red',
+    say: (s, m) => s ? `${s}'s red cord is the thread that holds ${m}'s charm to the pouch.` : 'The red cord is the thread that holds the charm to the pouch.',
+    zh: (s, m) => `${zhOf(s)}红绳，就是把${zhOf(m)}吊坠系在小袋上的那根线。` },
+  { id: 'key-pouch', when: p => p.charm.id === 'key',
+    say: (s, m) => cap(`${enOf(m)}little key hangs beside ${enOf(s)}pouch, as if it opens it.`),
+    zh: (s, m) => `${zhOf(m)}小钥匙挂在${zhOf(s)}小袋旁边，好像能把它打开。` },
+  { id: 'bell-pouch', when: p => p.charm.id === 'bell',
+    say: (s, m) => cap(`${enOf(m)}bell rests against ${enOf(s)}pouch; it rings softly when you walk.`),
+    zh: (s, m) => `${zhOf(m)}小铃铛靠着${zhOf(s)}小袋；走路的时候，会轻轻地响。` },
+  { id: 'crane-wave', when: p => p.motif.id === 'crane' && p.charm.id === 'butterfly',
+    say: (s, m) => s ? `${s}'s crane and ${m}'s butterfly: two things that fly, on one charm.` : 'A crane and a butterfly: two things that fly, on one charm.',
+    zh: (s, m) => `${zhOf(s)}鹤和${zhOf(m)}蝴蝶：两样会飞的东西，在同一个护身符上。` },
+  { id: 'amber-sun', when: p => hasBead(p, 'amber') && hasBead(p, 'sunstone'),
+    say: () => 'Amber and sunstone: two small, kept warmths.', zh: () => '琥珀和太阳石：两份被留住的小小温暖。' },
+  { id: 'labradorite-moon', when: p => hasBead(p, 'labradorite') && ['moon', 'star'].includes(p.charm.id),
+    say: (s, m, p) => `The labradorite flashes blue whenever ${enOf(m)}${p_charm(p)} turns.`,
+    zh: (s, m, p) => `每当${zhOf(m)}${zn('charm', p.charm)}转过来，拉长石就闪一下蓝光。` },
+  { id: 'pearls', when: p => hasBead(p, 'pearl') && hasBead(p, 'baroque'),
+    say: () => 'A round pearl and an uneven one: both pearls, both right.', zh: () => '一颗圆珍珠，一颗不规则的：都是珍珠，都刚刚好。' },
+  { id: 'gold-gold', when: p => p.cord.id === 'gold' && ['gold', 'brass'].includes(p.metal.id),
+    say: () => 'Gold cord and warm metal: it reads as one piece.', zh: () => '金绳和暖色的金属：看起来像是一体的。' }
 ];
 
 export function merge(h, a, ctx = {}) {
@@ -199,13 +227,19 @@ export function merge(h, a, ctx = {}) {
   // Echo: the same bead chosen on both sides, without knowing.
   const silkBeads = new Set([1, 3, 5].map(k => p['bead' + k].id));
   const shared = [...new Set([2, 4, 6].map(k => p['bead' + k].id).filter(id => silkBeads.has(id)))];
-  for (const id of shared) resonances.push({ id: 'echo-' + id, text: `You both chose ${low(BEADS.find(b => b.id === id).name)} without knowing; it sits on both sides of the strand.` });
+  for (const id of shared) {
+    const b = BEADS.find(x => x.id === id);
+    resonances.push(ctx.solo
+      ? { id: 'echo-' + id, text: `${b.name}, chosen twice: it sits on both sides of the strand.`, zh: `${zh.beads[id][0]}选了两次；珠串的两边都有它。` }
+      : { id: 'echo-' + id, text: `You both chose ${low(b.name)} without knowing; it sits on both sides of the strand.`, zh: `你们不约而同地选了${zh.beads[id][0]}；珠串的两边都有它。` });
+  }
   // Birthstones: if a month appears on both sides, say so.
   const months = side => new Set((side === 'silk' ? [1, 3, 5] : [2, 4, 6]).map(k => p['bead' + k].month).filter(Boolean));
   const ms = months('silk'), mm = months('metal');
   const bothMonths = [...ms].filter(m => mm.has(m));
-  if (bothMonths.length) resonances.push({ id: 'month', text: `Two stones from ${bothMonths.join(' and ')} met on the strand.` });
-  for (const r of RESONANCES) if (r.when(p)) resonances.push({ id: r.id, text: r.say(S.name, M.name, p) });
+  if (bothMonths.length) resonances.push({ id: 'month', text: `Two stones from ${bothMonths.join(' and ')} met on the strand.`, zh: `两颗${bothMonths.map(m => MONTHS_ZH[m]).join('和')}的生日石，在珠串上相遇了。` });
+  const sn = ctx.solo ? '' : S.name, mn = ctx.solo ? '' : M.name;
+  for (const r of RESONANCES) if (r.when(p)) resonances.push({ id: r.id, text: r.say(sn, mn, p), zh: r.zh(sn, mn, p) });
 
   const first = ctx.order === 'ai-first' ? a : h, second = first === h ? a : h;
   const words = [first, second].map(x => ({ text: x.word || '', by: x === h ? 'human' : 'ai' })).filter(w => w.text);
@@ -213,7 +247,7 @@ export function merge(h, a, ctx = {}) {
 
   return {
     recipe: code,
-    title: words.map(w => w.text).join(' ') || 'An unnamed charm',
+    title: joinWords(words.map(w => w.text)) || 'An unnamed charm',
     words,
     halves: { silk: by.silk, metal: by.metal },
     picks: Object.fromEntries(Object.entries(p).map(([slot, opt]) => [slot, { ...opt, by: by[halfOfSlot(slot)] }])),
@@ -227,10 +261,10 @@ export function merge(h, a, ctx = {}) {
     flags: {},
     resonances,
     lines: [
-      { key: 'blessing', label: halves.silk.line.label, text: S.line || '', by: by.silk },
-      { key: 'promise', label: halves.metal.line.label, text: M.line || '', by: by.metal }
+      { key: 'blessing', half: 'silk', label: halves.silk.line.label, text: S.line || '', by: by.silk },
+      { key: 'promise', half: 'metal', label: halves.metal.line.label, text: M.line || '', by: by.metal }
     ],
-    ledger: ['silk', 'metal'].flatMap(half => halves[half].slots.map(slot => ({ slot, title: slots[slot].title, name: p[slot].name, meaning: p[slot].meaning, by: by[half] }))),
+    ledger: ['silk', 'metal'].flatMap(half => halves[half].slots.map(slot => ({ slot, id: p[slot].id, title: slots[slot].title, name: p[slot].name, meaning: p[slot].meaning, by: by[half] }))),
     why: { human: h.why || '', ai: a.why || '' },
     wish: { human: h.wish || '', ai: a.wish || '' },
     chance: { human: h.chance || [], ai: a.chance || [] }
@@ -248,3 +282,38 @@ export function revealSteps(spec) {
   steps.push({ kind: 'lines', lines: spec.lines });
   return steps;
 }
+
+/* ------------------------------------------------------------------ 中文 */
+export const zh = {
+  title: '护身符', noun: '一个护身符', tagline: '一串可以随身带着的小串珠，丝绸小袋里藏着悄悄话。',
+  hand: 'a little talisman',
+  card: '一串可以随身带着的小串珠。你们一人一颗地串上去，丝绸小袋里藏着两句悄悄话。',
+  cardSolo: '一串可以随身带着的小串珠。每一颗珠子都有自己的意思，丝绸小袋里藏着一句悄悄话。',
+  halves: {
+    silk: { title: '丝绸', blurb: '柔软的部分：丝绸小袋、绣在上面的图案、系绳，以及第 1、3、5 颗珠子', line: { label: '绣在小袋上的话', hint: '一句短短的祝福，像绣在丝绸上那样' } },
+    metal: { title: '金属', blurb: '坚硬的部分：金属、挂在小袋旁的吊坠，以及第 2、4、6 颗珠子', line: { label: '刻在吊坠背面的话', hint: '一句话：这个护身符许下的承诺' } }
+  },
+  waitingLine: '珠串还有一半没串上',
+  themeName: '它是为了', themePrompt: { label: '这个护身符是为了什么？（可以不填）', placeholder: '比如：为了三月那趟远行' },
+  wishTitle: () => '解开小袋',
+  text: { word: { label: '名字里的一个词', hint: '两个词合在一起，就是它的名字，比如“安静”+“勇气”' }, wish: { label: '放进小袋的一句话', hint: '可以不写；它会一直折在小袋里，直到最后' } },
+  groups: { 'Birthstones': '生日石', 'Soft & warm': '柔软与温暖', 'Stones that catch light': '会捕捉光的石头', 'Earth stones': '大地之石' },
+  beadTitle: k => `第 ${k} 颗珠子`, beadPrompt: k => `串在第 ${k} 个位置的珠子。`,
+  beads: {
+    garnet: ['石榴石', '专一'], amethyst: ['紫水晶', '安静的心'], aqua: ['海蓝宝', '平静地渡过'], herkimer: ['赫基蒙钻', '在压力下依然清澈'],
+    emerald: ['祖母绿', '一直在更新的爱'], pearl: ['淡水珍珠', '耐心，慢慢长成'], moonstone: ['月光石', '给分开的那些夜晚'], ruby: ['红宝石', '一颗勇敢的心'],
+    peridot: ['橄榄石', '难熬之后的光'], sapphire: ['蓝宝石', '忠诚'], opal: ['欧泊', '所有颜色同时出现'], citrine: ['黄水晶', '每天的小快乐'],
+    turquoise: ['绿松石', '平安的旅程'], tanzanite: ['坦桑石', '稀有，只遇见一次'],
+    baroque: ['巴洛克珍珠', '因为不规则，才好看'], shell: ['贝母', '可以带着走的家'], amber: ['琥珀', '被留住温度的一刻'], rose: ['粉晶', '温柔'],
+    morganite: ['摩根石', '不害怕的爱'], frost: ['磨砂玻璃', '柔和、安静的光'],
+    labradorite: ['拉长石', '在你没想到的时候，闪一下'], sunstone: ['太阳石', '冷天里的温暖'], clear: ['白水晶', '我们之间没有隐瞒'], fluorite: ['萤石', '清醒的头脑'], smoky: ['茶晶', '陪你撑过难熬的日子'],
+    jade: ['浅色玉', '稳稳地长大'], lapis: ['青金石', '温柔地说真话'], tiger: ['虎眼石', '稳稳的勇气'], malachite: ['孔雀石', '温柔地改变'], aventurine: ['绿东陵', '一点点好运'], onyx: ['黑玛瑙', '安静的力量']
+  },
+  slots: {
+    silk: { title: '丝绸', prompt: '小袋用什么丝绸？', options: { ivory: ['象牙白', '干净的开始'], blush: ['淡粉', '有一点害羞的温暖'], lilac: ['淡紫', '做梦'], indigo: ['深靛蓝', '深沉，像夜'], sage: ['鼠尾草绿', '休息'], vermilion: ['朱红', '老派的守护'], sky: ['浅天蓝', '开阔的空气'] } },
+    motif: { title: '刺绣', prompt: '小袋上绣点什么？', options: { plain: ['素面', '有些话，不说更好'], crescent: ['弯月', '给黑暗时刻的一点光'], blossom: ['梅花', '寒冷里开的第一朵花'], wave: ['波浪', '出发，然后回来'], crane: ['鹤', '长长久久，一起'], star: ['星星', '一个找得到的坐标'] } },
+    cord: { title: '系绳', prompt: '用什么绳子系小袋？', options: { red: ['红绳', '连着两个人的红线'], gold: ['金绳', '值得留下的东西'], white: ['白绳', '简单地守住一个约定'], navy: ['藏青绳', '像夜一样稳'], pink: ['粉绳', '喜欢'], moss: ['苔绿绳', '根'] } },
+    metal: { title: '金属', prompt: '用什么金属？', options: { silver: ['亮银', '清澈、朴素'], gold: ['柔金', '一直都在的温暖'], rose: ['玫瑰金', '越戴越好看的温柔'], brass: ['古铜', '好像它本来就在那里'] } },
+    charm: { title: '吊坠', prompt: '小袋旁边挂着什么？', options: { moon: ['弯月', '夜里，我也在'], star: ['星星', '可以用来认路的东西'], heart: ['心', '直接说出来'], butterfly: ['玻璃蝴蝶', '改变，也留下'], key: ['小钥匙', '你有一把'], bell: ['小铃铛', '听见你来了'], flower: ['白花', '一直在开的东西'], leaf: ['绿叶', '新的开始'], cherry: ['樱桃', '一对，一直'] } }
+  }
+};
